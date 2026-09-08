@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Separador de Código em Módulos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #00d4ff;
+            overflow: hidden;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #00d4ff;
+            padding: 12px;
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background: #0f0f1e;
+            color: #e0e0e0;
+            border: none;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #00d4ff;
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        button.danger {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        button.danger:hover {
+            background: #ff4444;
+            color: white;
+        }
+
+        .output-list {
+            list-style: none;
+        }
+
+        .output-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .output-item:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .output-item.active {
+            background: rgba(0, 212, 255, 0.3);
+            font-weight: bold;
+        }
+
+        .output-item-name {
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .output-item-info {
+            color: #888;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            color: #00d4ff;
+            margin-bottom: 12px;
+        }
+
+        .modal-content p {
+            color: #888;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            background: #0f0f1e;
+            border: 1px solid #00d4ff;
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .status {
+            color: #00ff88;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .status.error {
+            color: #ff4444;
+        }
+
+        .status.warning {
+            color: #ffaa00;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ENTRADA -->
+        <div class="panel">
+            <div class="controls">
+                <button onclick="loadFromFile()">📂 Carregar HTML</button>
+                <button onclick="loadExample()">📋 Exemplo</button>
+                <button class="danger" onclick="clearInput()">🗑️ Limpar</button>
+            </div>
+            <div class="panel-header">📥 CÓDIGO ORIGINAL (Cole aqui ou carregue arquivo)</div>
+            <div class="panel-content">
+                <textarea id="input-code" placeholder="Cole seu código HTML/JS aqui..."></textarea>
+            </div>
+            <input type="file" id="file-input" accept=".html,.js" style="display: none;" onchange="handleFileLoad(event)">
+        </div>
+
+        <!-- PROCESSAMENTO -->
+        <div class="panel">
+            <div class="controls">
+                <button onclick="separateCode()">⚡ SEPARAR CÓDIGO</button>
+                <button onclick="analyzeCode()">🔍 ANALISAR</button>
+                <button class="danger" onclick="clearOutput()">🗑️ Limpar</button>
+            </div>
+            <div class="panel-header">🔧 PROCESSAMENTO</div>
+            <div class="panel-content">
+                <div id="analysis-output" style="color: #888; font-size: 12px; line-height: 1.6;"></div>
+                <div class="progress" style="margin-top: 20px;">
+                    <div class="progress-bar" id="progress"></div>
+                </div>
+                <div class="status" id="status">Pronto para processar...</div>
+            </div>
+        </div>
+
+        <!-- SAÍDA -->
+        <div class="panel">
+            <div class="controls">
+                <button onclick="downloadModules()">💾 Baixar ZIP</button>
+                <button onclick="copySelected()">📋 Copiar Selecionado</button>
+                <button onclick="previewStructure()">👁️ Visualizar</button>
+            </div>
+            <div class="panel-header">📤 MÓDULOS GERADOS</div>
+            <div class="panel-content">
+                <ul class="output-list" id="output-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE VISUALIZAÇÃO -->
+    <div id="preview-modal" class="modal">
+        <div class="modal-content">
+            <h2>📊 Estrutura de Módulos</h2>
+            <pre id="preview-content" style="background: #0f0f1e; padding: 12px; border-radius: 4px; overflow-x: auto; color: #00d4ff; font-size: 11px;"></pre>
+            <div class="modal-buttons">
+                <button onclick="closePreview()" style="flex: 1;">✕ Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DOWNLOAD -->
+    <div id="download-modal" class="modal">
+        <div class="modal-content">
+            <h2>📦 Configurar Download</h2>
+            <p>Escolha o formato de saída:</p>
+            <div style="margin: 12px 0;">
+                <label style="color: #888; display: block; margin-bottom: 8px;">
+                    <input type="radio" name="format" value="zip" checked> 📦 ZIP (Recomendado)
+                </label>
+                <label style="color: #888; display: block; margin-bottom: 8px;">
+                    <input type="radio" name="format" value="json"> 📄 JSON
+                </label>
+                <label style="color: #888; display: block;">
+                    <input type="radio" name="format" value="folder"> 📁 Copiar Estrutura
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="executeDownload()" style="flex: 1;">✓ Download</button>
+                <button onclick="closeDownloadModal()" class="danger" style="flex: 1;">✕ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ ESTADO GLOBAL ============
+        let state = {
+            originalCode: '',
+            modules: {},
+            analysis: {
+                functions: [],
+                variables: [],
+                imports: [],
+                styles: [],
+                html: ''
+            }
+        };
+
+        // ============ CARREGAR ARQUIVO ============
+        function loadFromFile() {
+            document.getElementById('file-input').click();
+        }
+
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('input-code').value = e.target.result;
+                updateStatus('✓ Arquivo carregado!', 'success');
+            };
+            reader.readAsText(file);
+        }
+
+        // ============ EXEMPLO ============
+        function loadExample() {
+            const example = `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #1a1a2e; color: #e0e0e0; }
+        .btn { padding: 8px; background: #00d4ff; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        function initEditor() {
+            console.log('Editor iniciado');
+        }
+        
+        function analyzeProject() {
+            const files = getFiles();
+            return files.map(f => extractFunctions(f));
+        }
+        
+        function extractFunctions(code) {
+            return code.match(/function\\s+\\w+/g) || [];
+        }
+        
+        function getFiles() {
+            return ['file1.js', 'file2.js'];
+        }
+        
+        initEditor();
+    </script>
+</body>
+</html>`;
+            document.getElementById('input-code').value = example;
+            updateStatus('✓ Exemplo carregado!', 'success');
+        }
+
+        // ============ ANÁLISE ============
+        function analyzeCode() {
+            const code = document.getElementById('input-code').value;
+            if (!code.trim()) {
+                updateStatus('❌ Cole um código primeiro!', 'error');
+                return;
+            }
+
+            state.originalCode = code;
+            state.analysis = {
+                functions: [],
+                variables: [],
+                imports: [],
+                styles: [],
+                html: ''
+            };
+
+            // Extrair HTML
+            const htmlMatch = code.match(/<body[^>]*>[\s\S]*<\/body>/i);
+            if (htmlMatch) state.analysis.html = htmlMatch[0];
+
+            // Extrair CSS
+            const styleMatches = code.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [];
+            state.analysis.styles = styleMatches;
+
+            // Extrair funções
+            const funcRegex = /function\s+(\w+)\s*\(([^)]*)\)\s*{/g;
+            let match;
+            while ((match = funcRegex.exec(code)) !== null) {
+                state.analysis.functions.push({
+                    name: match[1],
+                    params: match[2],
+                    type: 'function'
+                });
+            }
+
+            // Extrair variáveis globais
+            const varRegex = /(?:let|const|var)\s+(\w+)\s*=/g;
+            while ((match = varRegex.exec(code)) !== null) {
+                state.analysis.variables.push(match[1]);
+            }
+
+            // Extrair imports
+            const importRegex = /(?:import|require)\s+(?:.*\s+)?from\s+['"]([^'"]+)['"]/g;
+            while ((match = importRegex.exec(code)) !== null) {
+                state.analysis.imports.push(match[1]);
+            }
+
+            displayAnalysis();
+        }
+
+        function displayAnalysis() {
+            let output = `<strong>📊 ANÁLISE DO CÓDIGO</strong><br><br>`;
+            output += `<strong>🔍 Funções encontradas: ${state.analysis.functions.length}</strong><br>`;
+            state.analysis.functions.forEach(f => {
+                output += `  • ${f.name}(${f.params})<br>`;
+            });
+
+            output += `<br><strong>📦 Variáveis globais: ${state.analysis.variables.length}</strong><br>`;
+            state.analysis.variables.slice(0, 10).forEach(v => {
+                output += `  • ${v}<br>`;
+            });
+
+            output += `<br><strong>📥 Imports/Requires: ${state.analysis.imports.length}</strong><br>`;
+            state.analysis.imports.forEach(i => {
+                output += `  • ${i}<br>`;
+            });
+
+            output += `<br><strong>🎨 Estilos CSS: ${state.analysis.styles.length}</strong><br>`;
+            output += `<strong>📄 HTML: ${state.analysis.html.length} caracteres</strong><br>`;
+
+            document.getElementById('analysis-output').innerHTML = output;
+            updateStatus('✓ Análise concluída!', 'success');
+        }
+
+        // ============ SEPARAÇÃO DE CÓDIGO ============
+        function separateCode() {
+            const code = document.getElementById('input-code').value;
+            if (!code.trim()) {
+                updateStatus('❌ Cole um código primeiro!', 'error');
+                return;
+            }
+
+            state.modules = {};
+            updateProgress(0);
+
+            // 1. Extrair HTML
+            const htmlMatch = code.match(/<body[^>]*>[\s\S]*<\/body>/i);
+            state.modules['index.html'] = generateHTML(code, htmlMatch ? htmlMatch[0] : '');
+            updateProgress(20);
+
+            // 2. Extrair CSS
+            const styles = code.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [];
+            let cssContent = '';
+            styles.forEach(s => {
+                const match = s.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+                if (match) cssContent += match[1] + '\n\n';
+            });
+            if (cssContent) {
+                state.modules['css/styles.css'] = cssContent;
+            }
+            updateProgress(40);
+
+            // 3. Extrair JavaScript em funções
+            const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+            if (scriptMatch) {
+                const jsCode = scriptMatch[1];
+                
+                // Core
+                state.modules['js/core.js'] = extractCore(jsCode);
+                updateProgress(50);
+
+                // Funções de Editor
+                state.modules['js/editor.js'] = extractModule(jsCode, 'editor');
+                updateProgress(60);
+
+                // Funções de Mapper
+                state.modules['js/mapper.js'] = extractModule(jsCode, 'mapper');
+                updateProgress(70);
+
+                // Funções de Sincronização
+                state.modules['js/sync.js'] = extractSyncFunctions(jsCode);
+                updateProgress(80);
+
+                // Utilitários
+                state.modules['js/utils.js'] = extractUtils(jsCode);
+                updateProgress(90);
+            }
+
+            // 4. Criar arquivo de configuração
+            state.modules['package.json'] = generatePackageJson();
+            updateProgress(95);
+
+            // 5. Criar README
+            state.modules['README.md'] = generateReadme();
+            updateProgress(100);
+
+            displayModules();
+            updateStatus('✓ Código separado com sucesso!', 'success');
+        }
+
+        function extractCore(jsCode) {
+            let core = `// ============ ESTADO GLOBAL ============\n`;
+            core += `let state = {\n`;
+            core += `    files: {},\n`;
+            core += `    currentFile: null,\n`;
+            core += `    analysis: {},\n`;
+            core += `    config: {}\n`;
+            core += `};\n\n`;
+
+            // Extrair variáveis globais
+            const varRegex = /(?:let|const|var)\s+(\w+)\s*=\s*([^;]+);/g;
+            let match;
+            while ((match = varRegex.exec(jsCode)) !== null) {
+                if (!match[1].startsWith('_')) {
+                    core += `// ${match[1]}\n`;
+                }
+            }
+
+            core += `\n// ============ INICIALIZAÇÃO ============\n`;
+            core += `function init() {\n`;
+            core += `    loadFromStorage();\n`;
+            core += `    renderUI();\n`;
+            core += `}\n\n`;
+
+            core += `function loadFromStorage() {\n`;
+            core += `    const saved = localStorage.getItem('iara-state');\n`;
+            core += `    if (saved) state = JSON.parse(saved);\n`;
+            core += `}\n\n`;
+
+            core += `function saveToStorage() {\n`;
+            core += `    localStorage.setItem('iara-state', JSON.stringify(state));\n`;
+            core += `}\n\n`;
+
+            return core;
+        }
+
+        function extractModule(jsCode, moduleName) {
+            let module = `// ============ MÓDULO: ${moduleName.toUpperCase()} ============\n\n`;
+
+            const funcRegex = new RegExp(`function\\s+\\w*${moduleName}\\w*\\s*\\([^)]*\\)\\s*{[^}]*}`, 'gi');
+            const matches = jsCode.match(funcRegex) || [];
+
+            if (matches.length === 0) {
+                module += `// Funções relacionadas a ${moduleName}\n\n`;
+                module += `function ${moduleName}Init() {\n`;
+                module += `    console.log('${moduleName} iniciado');\n`;
+                module += `}\n\n`;
+            } else {
+                matches.forEach(func => {
+                    module += func + '\n\n';
+                });
+            }
+
+            return module;
+        }
+
+        function extractSyncFunctions(jsCode) {
+            let sync = `// ============ SINCRONIZAÇÃO: MAPPER ↔ EDITOR ============\n\n`;
+            sync += `/**\n`;
+            sync += ` * Função principal que envia dados do Mapper para o Editor\n`;
+            sync += ` * @param {Object} data - Dados do mapper\n`;
+            sync += ` */\n`;
+            sync += `function sendMapperToEditor(data) {\n`;
+            sync += `    if (!data) {\n`;
+            sync += `        console.error('Nenhum dado para enviar');\n`;
+            sync += `        return false;\n`;
+            sync += `    }\n\n`;
+            sync += `    try {\n`;
+            sync += `        // Atualizar estado\n`;
+            sync += `        state.currentFile = data.fileName || 'mapper-output';\n`;
+            sync += `        state.files[state.currentFile] = data.content || '';\n`;
+            sync += `        saveToStorage();\n\n`;
+            sync += `        // Atualizar UI\n`;
+            sync += `        loadFileInEditor(state.currentFile);\n`;
+            sync += `        renderFileTree();\n\n`;
+            sync += `        // Feedback\n`;
+            sync += `        console.log('✓ Dados enviados ao editor');\n`;
+            sync += `        return true;\n`;
+            sync += `    } catch (error) {\n`;
+            sync += `        console.error('Erro ao enviar:', error);\n`;
+            sync += `        return false;\n`;
+            sync += `    }\n`;
+            sync += `}\n\n`;
+
+            sync += `/**\n`;
+            sync += ` * Função que recebe dados do Editor para o Mapper\n`;
+            sync += ` */\n`;
+            sync += `function sendEditorToMapper(fileContent) {\n`;
+            sync += `    return {\n`;
+            sync += `        fileName: state.currentFile,\n`;
+            sync += `        content: fileContent,\n`;
+            sync += `        timestamp: new Date().toISOString()\n`;
+            sync += `    };\n`;
+            sync += `}\n\n`;
+
+            sync += `// Event Listeners para sincronização\n`;
+            sync += `document.addEventListener('DOMContentLoaded', () => {\n`;
+            sync += `    // Sincronizar quando arquivo é salvo\n`;
+            sync += `    document.addEventListener('file-saved', (e) => {\n`;
+            sync += `        console.log('Arquivo salvo:', e.detail);\n`;
+            sync += `    });\n\n`;
+            sync += `    // Sincronizar quando mapper envia dados\n`;
+            sync += `    document.addEventListener('mapper-send', (e) => {\n`;
+            sync += `        sendMapperToEditor(e.detail);\n`;
+            sync += `    });\n`;
+            sync += `});\n`;
+
+            return sync;
+        }
+
+        function extractUtils(jsCode) {
+            let utils = `// ============ UTILITÁRIOS ============\n\n`;
+            utils += `function formatDate(date) {\n`;
+            utils += `    return new Date(date).toLocaleString('pt-BR');\n`;
+            utils += `}\n\n`;
+
+            utils += `function generateId() {\n`;
+            utils += `    return '_' + Math.random().toString(36).substr(2, 9);\n`;
+            utils += `}\n\n`;
+
+            utils += `function debounce(func, wait) {\n`;
+            utils += `    let timeout;\n`;
+            utils += `    return function executedFunction(...args) {\n`;
+            utils += `        const later = () => {\n`;
+            utils += `            clearTimeout(timeout);\n`;
+            utils += `            func(...args);\n`;
+            utils += `        };\n`;
+            utils += `        clearTimeout(timeout);\n`;
+            utils += `        timeout = setTimeout(later, wait);\n`;
+            utils += `    };\n`;
+            utils += `}\n\n`;
+
+            utils += `function throttle(func, limit) {\n`;
+            utils += `    let inThrottle;\n`;
+            utils += `    return function(...args) {\n`;
+            utils += `        if (!inThrottle) {\n`;
+            utils += `            func.apply(this, args);\n`;
+            utils += `            inThrottle = true;\n`;
+            utils += `            setTimeout(() => inThrottle = false, limit);\n`;
+            utils += `        }\n`;
+            utils += `    };\n`;
+            utils += `}\n`;
+
+            return utils;
+        }
+
+        function generateHTML(fullCode, bodyContent) {
+            let html = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n`;
+            html += `    <meta charset="UTF-8">\n`;
+            html += `    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n`;
+            html += `    <title>Iara Suite</title>\n`;
+            html += `    <link rel="stylesheet" href="css/styles.css">\n`;
+            html += `</head>\n<body>\n`;
+            html += bodyContent || `    <div id="app"></div>\n`;
+            html += `\n    <!-- SCRIPTS -->\n`;
+            html += `    <script src="js/core.js"><\/script>\n`;
+            html += `    <script src="js/utils.js"><\/script>\n`;
+            html += `    <script src="js/editor.js"><\/script>\n`;
+            html += `    <script src="js/mapper.js"><\/script>\n`;
+            html += `    <script src="js/sync.js"><\/script>\n`;
+            html += `    <script>\n`;
+            html += `        // Inicializar quando página carregar\n`;
+            html += `        window.addEventListener('load', init);\n`;
+            html += `    <\/script>\n`;
+            html += `</body>\n</html>\n`;
+            return html;
+        }
+
+        function generatePackageJson() {
+            return JSON.stringify({
+                name: "iara-suite",
+                version: "3.0.0",
+                description: "Editor de código com Mapper avançado",
+                main: "index.html",
+                scripts: {
+                    start: "python -m http.server 8000",
+                    build: "echo 'Build script'"
+                },
+                keywords: ["editor", "mapper", "code-analysis"],
+                author: "Iara",
+                license: "MIT",
+                modules: {
+                    core: "js/core.js",
+                    editor: "js/editor.js",
+                    mapper: "js/mapper.js",
+                    sync: "js/sync.js",
+                    utils: "js/utils.js"
+                }
+            }, null, 2);
+        }
+
+        function generateReadme() {
+            return `# 🚀 Iara Suite v3.0
+
+## 📁 Estrutura de Módulos
+
+\`\`\`
+projeto/
+├── index.html          # Arquivo principal
+├── css/
+│   └── styles.css      # Estilos
+├── js/
+│   ├── core.js         # Estado global e inicialização
+│   ├── editor.js       # Gerenciamento de arquivos
+│   ├── mapper.js       # Análise de projetos
+│   ├── sync.js         # SINCRONIZAÇÃO MAPPER ↔ EDITOR ⭐
+│   └── utils.js        # Funções utilitárias
+├── package.json        # Configuração
+└── README.md           # Este arquivo
+\`\`\`
+
+## 🔑 Função Principal de Sincronização
+
+### \`sendMapperToEditor(data)\`
+Envia dados do Mapper para o Editor.
+
+**Parâmetros:**
+- \`data.fileName\` - Nome do arquivo
+- \`data.content\` - Conteúdo do arquivo
+- \`data.timestamp\` - Timestamp (opcional)
+
+**Exemplo:**
+\`\`\`javascript
+sendMapperToEditor({
+    fileName: 'analise.md',
+    content: '# Análise do Projeto...'
+});
+\`\`\`
+
+## 🎯 Como Usar
+
+1. Abra \`index.html\` no navegador
+2. Importe seus arquivos
+3. Analise com o Mapper
+4. Clique em "Enviar ao Editor"
+5. Os dados serão sincronizados automaticamente
+
+## 📦 Módulos
+
+- **core.js**: Gerencia estado global
+- **editor.js**: Controla editor de código
+- **mapper.js**: Analisa projetos
+- **sync.js**: Sincroniza Mapper ↔ Editor ⭐
+- **utils.js**: Funções auxiliares
+
+---
+
+**Gerado automaticamente pelo Separador de Código**
+`;
+        }
+
+        // ============ EXIBIÇÃO ============
+        function displayModules() {
+            const list = document.getElementById('output-list');
+            list.innerHTML = '';
+
+            Object.entries(state.modules).forEach(([name, content], index) => {
+                const item = document.createElement('li');
+                item.className = 'output-item';
+                item.innerHTML = `
+                    <div class="output-item-name">📄 ${name}</div>
+                    <div class="output-item-info">${content.length} caracteres | ${content.split('\n').length} linhas</div>
+                `;
+                item.onclick = () => selectModule(name, item);
+                list.appendChild(item);
+            });
+        }
+
+        function selectModule(name, element) {
+            document.querySelectorAll('.output-item').forEach(e => e.classList.remove('active'));
+            element.classList.add('active');
+            
+            const content = state.modules[name];
+            // Você pode adicionar visualização aqui
+        }
+
+        function copySelected() {
+            const active = document.querySelector('.output-item.active');
+            if (!active) {
+                updateStatus('⚠️ Selecione um módulo', 'warning');
+                return;
+            }
+
+            const name = active.querySelector('.output-item-name').textContent.replace('📄 ', '');
+            const content = state.modules[name];
+            
+            navigator.clipboard.writeText(content).then(() => {
+                updateStatus(`✓ ${name} copiado!`, 'success');
+            });
+        }
+
+        function previewStructure() {
+            let structure = `📁 ESTRUTURA DE MÓDULOS\n`;
+            structure += `${'='.repeat(50)}\n\n`;
+
+            Object.keys(state.modules).forEach(name => {
+                const indent = name.split('/').length - 1;
+                const prefix = '  '.repeat(indent);
+                structure += `${prefix}📄 ${name}\n`;
+            });
+
+            structure += `\n${'='.repeat(50)}\n`;
+            structure += `\n⭐ FUNÇÃO PRINCIPAL DE SINCRONIZAÇÃO:\n`;
+            structure += `   sendMapperToEditor(data)\n`;
+            structure += `   ↓\n`;
+            structure += `   Localizado em: js/sync.js\n`;
+
+            document.getElementById('preview-content').textContent = structure;
+            document.getElementById('preview-modal').classList.add('active');
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('active');
+        }
+
+        // ============ DOWNLOAD ============
+        function downloadModules() {
+            if (Object.keys(state.modules).length === 0) {
+                updateStatus('❌ Separe o código primeiro!', 'error');
+                return;
+            }
+            document.getElementById('download-modal').classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('download-modal').classList.remove('active');
+        }
+
+        async function executeDownload() {
+            const format = document.querySelector('input[name="format"]:checked').value;
+            closeDownloadModal();
+
+            if (format === 'json') {
+                downloadJSON();
+            } else if (format === 'folder') {
+                downloadAsFolder();
+            } else {
+                downloadAsZIP();
+            }
+        }
+
+        function downloadJSON() {
+            const json = JSON.stringify(state.modules, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'modules.json';
+            a.click();
+            updateStatus('✓ JSON baixado!', 'success');
+        }
+
+        async function downloadAsZIP() {
+            try {
+                // Carregar JSZip
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.onload = () => {
+                    const zip = new JSZip();
+                    
+                    Object.entries(state.modules).forEach(([name, content]) => {
+                        zip.file(name, content);
+                    });
+
+                    zip.generateAsync({ type: 'blob' }).then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'iara-suite-modulos.zip';
+                        a.click();
+                        updateStatus('✓ ZIP baixado!', 'success');
+                    });
+                };
+                document.head.appendChild(script);
+            } catch (e) {
+                updateStatus('❌ Erro ao criar ZIP', 'error');
+            }
+        }
+
+        function downloadAsFolder() {
+            let text = 'Estrutura de Módulos:\n\n';
+            Object.entries(state.modules).forEach(([name, content]) => {
+                text += `\n${'='.repeat(60)}\n`;
+                text += `ARQUIVO: ${name}\n`;
+                text += `${'='.repeat(60)}\n`;
+                text += content + '\n';
+            });
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'iara-suite-completo.txt';
+            a.click();
+            updateStatus('✓ Arquivo completo baixado!', 'success');
+        }
+
+        // ============ UTILITÁRIOS ============
+        function updateProgress(percent) {
+            document.getElementById('progress').style.width = percent + '%';
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+        }
+
+        function clearInput() {
+            document.getElementById('input-code').value = '';
+            updateStatus('Entrada limpa', 'info');
+        }
+
+        function clearOutput() {
+            state.modules = {};
+            document.getElementById('output-list').innerHTML = '';
+            document.getElementById('analysis-output').innerHTML = '';
+            updateStatus('Saída limpa', 'info');
+        }
+    </script>
+</body>
+</html>
