@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Editor Visual HTML</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        /* ═══ PAINEL ESQUERDO ═══ */
+        .painel-esquerdo {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .painel-esquerdo h2 {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .btn-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .btn-secundario {
+            background: #475569;
+        }
+
+        .btn-secundario:hover {
+            background: #64748b;
+        }
+
+        /* ═══ PAINEL CENTRAL ═══ */
+        .painel-central {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .preview {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            color: #000;
+        }
+
+        .preview * {
+            outline: 2px dashed transparent;
+            transition: outline 0.2s;
+            cursor: pointer;
+        }
+
+        .preview *:hover {
+            outline: 2px dashed #3b82f6;
+        }
+
+        .preview *.selecionado {
+            outline: 3px solid #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        /* ═══ PAINEL DIREITO ═══ */
+        .painel-direito {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .painel-direito h2 {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .propriedade {
+            margin-bottom: 15px;
+        }
+
+        .propriedade label {
+            display: block;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .propriedade input,
+        .propriedade select {
+            width: 100%;
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #f1f5f9;
+            font-size: 12px;
+        }
+
+        .propriedade input:focus,
+        .propriedade select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .cor-preview {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .info-elemento {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .info-elemento strong {
+            color: #3b82f6;
+        }
+
+        /* ═══ SCROLLBAR ═══ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* ═══ MODAL ═══ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.ativo {
+            display: flex;
+        }
+
+        .modal-conteudo {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-conteudo h2 {
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .modal-conteudo textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: none;
+        }
+
+        .modal-botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-botoes button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-botoes .btn-confirmar {
+            background: #22c55e;
+            color: white;
+        }
+
+        .modal-botoes .btn-cancelar {
+            background: #475569;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PAINEL ESQUERDO -->
+        <div class="painel-esquerdo">
+            <h2>📁 Arquivo</h2>
+            <div class="btn-grupo">
+                <button class="btn" onclick="importarHTML()">
+                    📥 Importar HTML
+                </button>
+                <button class="btn btn-secundario" onclick="exportarHTML()">
+                    📤 Exportar HTML
+                </button>
+                <button class="btn btn-secundario" onclick="baixarHTML()">
+                    💾 Baixar HTML
+                </button>
+            </div>
+
+            <h2 style="margin-top: 20px;">🎨 Estilos Rápidos</h2>
+            <div class="btn-grupo">
+                <button class="btn btn-secundario" onclick="aplicarTema('claro')">
+                    ☀️ Tema Claro
+                </button>
+                <button class="btn btn-secundario" onclick="aplicarTema('escuro')">
+                    🌙 Tema Escuro
+                </button>
+                <button class="btn btn-secundario" onclick="aplicarTema('azul')">
+                    🔵 Tema Azul
+                </button>
+                <button class="btn btn-secundario" onclick="aplicarTema('verde')">
+                    🟢 Tema Verde
+                </button>
+            </div>
+
+            <h2 style="margin-top: 20px;">🔧 Ferramentas</h2>
+            <div class="btn-grupo">
+                <button class="btn btn-secundario" onclick="resetarEstilos()">
+                    🔄 Resetar Estilos
+                </button>
+                <button class="btn btn-secundario" onclick="mostrarCodigo()">
+                    💻 Ver Código
+                </button>
+            </div>
+        </div>
+
+        <!-- PAINEL CENTRAL -->
+        <div class="painel-central">
+            <div class="preview" id="preview">
+                <p>Importe um HTML para começar...</p>
+            </div>
+        </div>
+
+        <!-- PAINEL DIREITO -->
+        <div class="painel-direito">
+            <h2>🎯 Propriedades</h2>
+            <div class="info-elemento" id="infoElemento">
+                Clique em um elemento para editar
+            </div>
+
+            <div id="propriedades" style="display: none;">
+                <!-- COR DE FUNDO -->
+                <div class="propriedade">
+                    <label>
+                        🎨 Cor de Fundo
+                        <input type="color" id="corFundo" onchange="atualizarPropriedade('backgroundColor')">
+                    </label>
+                </div>
+
+                <!-- COR DO TEXTO -->
+                <div class="propriedade">
+                    <label>
+                        📝 Cor do Texto
+                        <input type="color" id="corTexto" onchange="atualizarPropriedade('color')">
+                    </label>
+                </div>
+
+                <!-- TAMANHO DO TEXTO -->
+                <div class="propriedade">
+                    <label>
+                        📏 Tamanho do Texto (px)
+                        <input type="number" id="tamanhoTexto" min="8" max="72" onchange="atualizarPropriedade('fontSize')">
+                    </label>
+                </div>
+
+                <!-- PADDING -->
+                <div class="propriedade">
+                    <label>
+                        📦 Espaçamento Interno (px)
+                        <input type="number" id="padding" min="0" max="50" onchange="atualizarPropriedade('padding')">
+                    </label>
+                </div>
+
+                <!-- BORDER RADIUS -->
+                <div class="propriedade">
+                    <label>
+                        🔘 Cantos Arredondados (px)
+                        <input type="number" id="borderRadius" min="0" max="50" onchange="atualizarPropriedade('borderRadius')">
+                    </label>
+                </div>
+
+                <!-- LARGURA -->
+                <div class="propriedade">
+                    <label>
+                        ↔️ Largura (%)
+                        <input type="number" id="largura" min="10" max="100" onchange="atualizarPropriedade('width')">
+                    </label>
+                </div>
+
+                <!-- ALTURA -->
+                <div class="propriedade">
+                    <label>
+                        ↕️ Altura (px)
+                        <input type="number" id="altura" min="20" max="500" onchange="atualizarPropriedade('height')">
+                    </label>
+                </div>
+
+                <!-- SOMBRA -->
+                <div class="propriedade">
+                    <label>
+                        ✨ Sombra
+                        <select id="sombra" onchange="atualizarPropriedade('boxShadow')">
+                            <option value="">Nenhuma</option>
+                            <option value="0 2px 4px rgba(0,0,0,0.1)">Leve</option>
+                            <option value="0 4px 8px rgba(0,0,0,0.2)">Média</option>
+                            <option value="0 8px 16px rgba(0,0,0,0.3)">Forte</option>
+                        </select>
+                    </label>
+                </div>
+
+                <!-- PESO DA FONTE -->
+                <div class="propriedade">
+                    <label>
+                        🔤 Peso da Fonte
+                        <select id="fontWeight" onchange="atualizarPropriedade('fontWeight')">
+                            <option value="normal">Normal</option>
+                            <option value="600">Semi-bold</option>
+                            <option value="700">Bold</option>
+                            <option value="800">Extra-bold</option>
+                        </select>
+                    </label>
+                </div>
+
+                <!-- BORDA -->
+                <div class="propriedade">
+                    <label>
+                        🖼️ Borda (px)
+                        <input type="number" id="borda" min="0" max="10" onchange="atualizarPropriedade('border')">
+                    </label>
+                </div>
+
+                <!-- COR DA BORDA -->
+                <div class="propriedade">
+                    <label>
+                        🎨 Cor da Borda
+                        <input type="color" id="corBorda" onchange="atualizarPropriedade('borderColor')">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA IMPORTAR HTML -->
+    <div class="modal" id="modalImportar">
+        <div class="modal-conteudo">
+            <h2>📥 Importar HTML</h2>
+            <textarea id="htmlInput" placeholder="Cole seu código HTML aqui..."></textarea>
+            <div class="modal-botoes">
+                <button class="btn-confirmar" onclick="confirmarImportar()">✅ Importar</button>
+                <button class="btn-cancelar" onclick="fecharModal('modalImportar')">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA VER CÓDIGO -->
+    <div class="modal" id="modalCodigo">
+        <div class="modal-conteudo">
+            <h2>💻 Código HTML Gerado</h2>
+            <textarea id="codigoOutput" readonly></textarea>
+            <div class="modal-botoes">
+                <button class="btn-confirmar" onclick="copiarCodigo()">📋 Copiar</button>
+                <button class="btn-cancelar" onclick="fecharModal('modalCodigo')">❌ Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let elementoSelecionado = null;
+
+        // ── IMPORTAR HTML ──
+        function importarHTML() {
+            document.getElementById('modalImportar').classList.add('ativo');
+        }
+
+        function confirmarImportar() {
+            const html = document.getElementById('htmlInput').value;
+            if (html.trim()) {
+                document.getElementById('preview').innerHTML = html;
+                adicionarEventosElementos();
+                fecharModal('modalImportar');
+                document.getElementById('htmlInput').value = '';
+            }
+        }
+
+        // ── ADICIONAR EVENTOS AOS ELEMENTOS ──
+        function adicionarEventosElementos() {
+            const preview = document.getElementById('preview');
+            const elementos = preview.querySelectorAll('*');
+            
+            elementos.forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selecionarElemento(el);
+                });
+            });
+        }
+
+        // ── SELECIONAR ELEMENTO ──
+        function selecionarElemento(el) {
+            if (elementoSelecionado) {
+                elementoSelecionado.classList.remove('selecionado');
+            }
+            
+            elementoSelecionado = el;
+            elementoSelecionado.classList.add('selecionado');
+            
+            // Mostrar informações
+            const tag = el.tagName.toLowerCase();
+            const classe = el.className || 'sem classe';
+            const id = el.id || 'sem id';
+            
+            document.getElementById('infoElemento').innerHTML = `
+                <strong>Tag:</strong> &lt;${tag}&gt;<br>
+                <strong>Classe:</strong> ${classe}<br>
+                <strong>ID:</strong> ${id}
+            `;
+            
+            // Carregar propriedades
+            carregarPropriedades(el);
+            document.getElementById('propriedades').style.display = 'block';
+        }
+
+        // ── CARREGAR PROPRIEDADES ──
+        function carregarPropriedades(el) {
+            const styles = window.getComputedStyle(el);
+            
+            document.getElementById('corFundo').value = rgbToHex(styles.backgroundColor);
+            document.getElementById('corTexto').value = rgbToHex(styles.color);
+            document.getElementById('tamanhoTexto').value = parseInt(styles.fontSize);
+            document.getElementById('padding').value = parseInt(styles.padding);
+            document.getElementById('borderRadius').value = parseInt(styles.borderRadius);
+            document.getElementById('largura').value = parseInt(styles.width);
+            document.getElementById('altura').value = parseInt(styles.height);
+            document.getElementById('fontWeight').value = styles.fontWeight;
+            document.getElementById('borda').value = parseInt(styles.borderWidth);
+            document.getElementById('corBorda').value = rgbToHex(styles.borderColor);
+        }
+
+        // ── ATUALIZAR PROPRIEDADE ──
+        function atualizarPropriedade(propriedade) {
+            if (!elementoSelecionado) return;
+            
+            const valores = {
+                'backgroundColor': document.getElementById('corFundo').value,
+                'color': document.getElementById('corTexto').value,
+                'fontSize': document.getElementById('tamanhoTexto').value + 'px',
+                'padding': document.getElementById('padding').value + 'px',
+                'borderRadius': document.getElementById('borderRadius').value + 'px',
+                'width': document.getElementById('largura').value + '%',
+                'height': document.getElementById('altura').value + 'px',
+                'boxShadow': document.getElementById('sombra').value,
+                'fontWeight': document.getElementById('fontWeight').value,
+                'border': document.getElementById('borda').value + 'px solid ' + document.getElementById('corBorda').value,
+                'borderColor': document.getElementById('corBorda').value
+            };
+            
+            if (valores[propriedade]) {
+                elementoSelecionado.style[propriedade] = valores[propriedade];
+            }
+        }
+
+        // ── CONVERTER RGB PARA HEX ──
+        function rgbToHex(rgb) {
+            if (!rgb || rgb === 'rgba(0, 0, 0, 0)') return '#ffffff';
+            
+            const match = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (!match) return '#ffffff';
+            
+            const hex = (x) => {
+                return ("0" + parseInt(x).toString(16)).slice(-2);
+            };
+            
+            return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
+        }
+
+        // ── EXPORTAR HTML ──
+        function exportarHTML() {
+            const preview = document.getElementById('preview');
+            const html = preview.innerHTML;
+            document.getElementById('codigoOutput').value = html;
+            document.getElementById('modalCodigo').classList.add('ativo');
+        }
+
+        // ── COPIAR CÓDIGO ──
+        function copiarCodigo() {
+            const textarea = document.getElementById('codigoOutput');
+            textarea.select();
+            document.execCommand('copy');
+            alert('✅ Código copiado!');
+        }
+
+        // ── BAIXAR HTML ──
+        function baixarHTML() {
+            const preview = document.getElementById('preview');
+            const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Editado</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+${preview.innerHTML}
+</body>
+</html>`;
+            
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'projeto-editado.html';
+            a.click();
+        }
+
+        // ── APLICAR TEMAS ──
+        function aplicarTema(tema) {
+            if (!elementoSelecionado) return;
+            
+            const temas = {
+                'claro': { bg: '#ffffff', text: '#000000' },
+                'escuro': { bg: '#1e293b', text: '#f1f5f9' },
+                'azul': { bg: '#3b82f6', text: '#ffffff' },
+                'verde': { bg: '#22c55e', text: '#ffffff' }
+            };
+            
+            const t = temas[tema];
+            elementoSelecionado.style.backgroundColor = t.bg;
+            elementoSelecionado.style.color = t.text;
+            carregarPropriedades(elementoSelecionado);
+        }
+
+        // ── RESETAR ESTILOS ──
+        function resetarEstilos() {
+            if (!elementoSelecionado) return;
+            elementoSelecionado.style.cssText = '';
+            carregarPropriedades(elementoSelecionado);
+        }
+
+        // ── MOSTRAR CÓDIGO ──
+        function mostrarCodigo() {
+            exportarHTML();
+        }
+
+        // ── FECHAR MODAL ──
+        function fecharModal(id) {
+            document.getElementById(id).classList.remove('ativo');
+        }
+
+        // Fechar modal ao clicar fora
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('ativo');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
