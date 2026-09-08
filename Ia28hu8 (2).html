@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Editor Jurídico</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --primary: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    #nav {
+      height: 44px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .nav-logo { font-size: 14px; font-weight: 700; color: var(--primary); }
+    .nav-sep { width: 1px; height: 24px; background: var(--border); }
+    .nav-btn { background: transparent; border: none; color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: .15s; }
+    .nav-btn:hover { background: var(--bg3); color: var(--text); }
+    .nav-spacer { flex: 1; }
+
+    #container { flex: 1; display: flex; overflow: hidden; }
+
+    #sidebar {
+      width: 220px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #sidebar.hidden { width: 0; border: none; }
+
+    #sidebar-top {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      min-height: 40px;
+    }
+    #sidebar-top span { font-size: 10px; font-weight: 700; color: var(--muted); flex: 1; }
+    .sb-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 12px; transition: .15s; }
+    .sb-btn:hover { background: var(--bg3); color: var(--text); }
+
+    #file-tree { flex: 1; overflow-y: auto; padding: 4px 0; }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 1px 4px;
+      transition: .12s;
+      position: relative;
+      min-height: 26px;
+    }
+    .tree-row:hover { background: var(--bg3); }
+    .tree-row.active { background: var(--primary); color: #000; }
+    .tree-row:hover .tree-actions { opacity: 1; }
+
+    .tree-icon { font-size: 12px; flex-shrink: 0; width: 12px; }
+    .tree-icon.folder { transition: transform .15s; }
+    .tree-icon.folder.open { transform: rotate(90deg); }
+    .tree-name { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .tree-actions {
+      opacity: 0;
+      display: flex;
+      gap: 2px;
+      position: absolute;
+      right: 4px;
+      background: var(--bg3);
+      border-radius: 4px;
+      padding: 2px;
+      transition: opacity .12s;
+    }
+
+    .tree-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 10px;
+      transition: .1s;
+      line-height: 1;
+    }
+    .tree-action-btn:hover { background: rgba(255,255,255,.15); color: var(--text); }
+
+    .tree-children { padding-left: 14px; }
+    .tree-children.collapsed { display: none; }
+
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      min-height: 40px;
+    }
+
+    #filename {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      max-width: 160px;
+      min-width: 60px;
+      transition: .15s;
+    }
+    #filename:focus { border-color: var(--primary); background: var(--bg3); outline: none; }
+
+    .lang-badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .tb-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      transition: .15s;
+      white-space: nowrap;
+    }
+    .tb-btn:hover { background: var(--bg3); }
+    .tb-btn.active { background: var(--bg3); border-color: var(--primary); color: var(--primary); }
+
+    #work { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    #code-wrap { flex: 1; display: flex; overflow: hidden; background: var(--bg); }
+
+    #line-nums {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 10px 0;
+      min-width: 40px;
+      text-align: right;
+      overflow: hidden;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .ln { display: block; padding: 0 10px; font-size: 12px; line-height: 1.6; color: var(--muted); font-family: 'Courier New', monospace; }
+
+    #code-ta {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 12px;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+      overflow-y: auto;
+    }
+
+    #preview-section {
+      display: none;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 200px;
+      border-top: 2px solid var(--border);
+    }
+    #preview-section.visible { display: flex; }
+
+    #preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      height: 32px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      cursor: row-resize;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    #preview-label { font-size: 11px; color: var(--muted); flex: 1; }
+    .preview-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 3px 8px; border-radius: 4px; transition: .15s; }
+    .preview-btn:hover { background: var(--bg3); color: var(--text); }
+
+    #preview-frame { flex: 1; border: none; background: #fff; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.open { display: flex; }
+
+    .modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      width: min(400px, 90vw);
+    }
+
+    .modal-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .modal-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 12px;
+      transition: .15s;
+    }
+    .modal-input:focus { border-color: var(--primary); }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      transition: .15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--primary); color: #000; }
+    .btn-primary:hover { background: #7ab8ff; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--primary); }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--green);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 2000;
+      animation: slideIn .3s;
+    }
+    .toast.error { background: var(--red); }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    #ctx-menu {
+      display: none;
+      position: fixed;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px;
+      z-index: 2000;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+  </style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="nav-logo">⚖️ Editor</div>
+  <div class="nav-sep"></div>
+  <button class="nav-btn" onclick="toggleSidebar()">☰</button>
+  <button class="nav-btn" onclick="openNewFileModal()">📄+</button>
+  <button class="nav-btn" onclick="openNewFolderModal()">📁+</button>
+  <button class="nav-btn" onclick="document.getElementById('import-zip').click()">📦</button>
+  <button class="nav-btn" onclick="exportZip()">📥</button>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn tb-btn" id="pm-off" onclick="setPM('off')">📝</button>
+  <button class="nav-btn tb-btn" id="pm-split" onclick="setPM('split')">⚡</button>
+  <button class="nav-btn tb-btn" id="pm-full" onclick="setPM('full')">📺</button>
+  <button class="nav-btn" onclick="saveFile()">💾</button>
+</nav>
+
+<div id="container">
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <span>ARQUIVOS</span>
+      <button class="sb-btn" onclick="openNewFileModal()">📄</button>
+      <button class="sb-btn" onclick="openNewFolderModal()">📁</button>
+      <button class="sb-btn" onclick="document.getElementById('import-zip').click()">📦</button>
+      <button class="sb-btn" onclick="toggleSidebar()">✕</button>
+      <input type="file" id="import-zip" accept=".zip" style="display:none" onchange="handleImport(event)">
+    </div>
+    <div id="file-tree"></div>
+  </div>
+
+  <div id="main">
+    <div id="toolbar">
+      <button class="tb-btn" onclick="toggleSidebar()">☰</button>
+      <input id="filename" type="text" value="sem arquivo" onblur="renameCurrentFile()" onkeydown="if(event.key==='Enter')this.blur()">
+      <span class="lang-badge" id="lang-badge"></span>
+      <div style="flex:1"></div>
+      <button class="tb-btn" onclick="downloadFile()">⬇</button>
+      <button class="tb-btn" onclick="saveFile()">💾</button>
+    </div>
+
+    <div id="work">
+      <div id="code-wrap">
+        <div id="line-nums"></div>
+        <textarea id="code-ta" placeholder="Selecione um arquivo…" oninput="onCodeInput()" onscroll="syncScroll()" onkeydown="codeKD(event)" spellcheck="false"></textarea>
+      </div>
+
+      <div id="preview-section">
+        <div id="preview-bar" onmousedown="startVDrag(event)">
+          <button class="preview-btn" onclick="togglePreviewMin()">⬆</button>
+          <span id="preview-label"></span>
+          <button class="preview-btn" onclick="setPM('off')">✕</button>
+        </div>
+        <iframe id="preview-frame"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="new-file-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-title">📄 Novo Arquivo</div>
+    <input id="new-file-name" class="modal-input" type="text" placeholder="index.html" onkeydown="if(event.key==='Enter')createNewFile()">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('new-file-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createNewFile()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<div id="new-folder-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-title">📁 Nova Pasta</div>
+    <input id="new-folder-name" class="modal-input" type="text" placeholder="pasta" onkeydown="if(event.key==='Enter')createNewFolder()">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('new-folder-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createNewFolder()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<div id="rename-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Renomear</div>
+    <input id="rename-input" class="modal-input" type="text" onkeydown="if(event.key==='Enter')confirmRename()">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('rename-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmRename()">Renomear</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctx-menu">
+  <button style="width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px;transition:.15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="ctxRename()">✏️ Renomear</button>
+  <button style="width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px;transition:.15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="ctxDuplicate()">⧉ Duplicar</button>
+  <button style="width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px;transition:.15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="ctxDownload()">⬇ Baixar</button>
+  <button style="width:100%;text-align:left;background:transparent;border:none;color:var(--red);padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px;transition:.15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="ctxDelete()">🗑️ Excluir</button>
+</div>
+
+<script>
+// ===== HELPERS =====
+const qs = s => document.querySelector(s);
+const qsa = s => [...document.querySelectorAll(s)];
+const ls = k => { try { return localStorage.getItem(k) } catch { return null } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch {} };
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const getExt = p => (p.split('.').pop() || '').toLowerCase();
+
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type === 'err' ? ' error' : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+function dlBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 6000);
+}
+
+// ===== STATE =====
+let files = {};
+let curFile = null;
+let folderOpen = {};
+let prevMode = 'off';
+let prevTimer = null;
+let vDragging = false, vDragStartY = 0, vDragStartH = 0;
+let ctxPath = null;
+let renameType = null;
+
+const FICON = n => ({
+  html: '🌐', htm: '🌐', css: '🎨', scss: '🎨', sass: '🎨', less: '🎨',
+  js: '📜', mjs: '📜', cjs: '📜', jsx: '⚛', ts: '📘', tsx: '⚛',
+  json: '📋', yaml: '📋', yml: '📋', toml: '📋',
+  md: '📝', txt: '📄', sh: '⚙', bat: '⚙',
+  py: '🐍', java: '☕', kt: '🟠', php: '🐘', rb: '💎', go: '🐹', rs: '🦀',
+  sql: '🗄', prisma: '🗄', graphql: '🔷',
+  png: '🖼', jpg: '🖼', jpeg: '🖼', gif: '🖼', svg: '🖼', webp: '🖼', ico: '🖼',
+  pdf: '📕', zip: '📦', tar: '📦', gz: '📦', env: '🔒'
+})[getExt(n)] || '📄';
+
+// ===== INIT =====
+function init() {
+  const saved = ls('editor-files');
+  if (saved) try { files = JSON.parse(saved) } catch {}
+  
+  if (!Object.keys(files).length) {
+    files['index.html'] = '<!DOCTYPE html>\n<html>\n<head>\n  <title>Projeto</title>\n</head>\n<body>\n  <h1>Olá!</h1>\n</body>\n</html>';
+  }
+  
+  renderTree();
+  const first = Object.keys(files)[0];
+  if (first) openFile(first);
+}
+
+// ===== TREE =====
+function buildTree(fileMap) {
+  const root = { __type: 'folder', __name: '', children: {} };
+  for (const path of Object.keys(fileMap)) {
+    const parts = path.replace(/^\\/+/, '').split('/');
+    let node = root;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (i === parts.length - 1) {
+        node.children[p] = { __type: 'file', __name: p, __path: path };
+      } else {
+        if (!node.children[p]) node.children[p] = { __type: 'folder', __name: p, children: {} };
+        node = node.children[p];
+      }
+    }
+  }
+  return root;
+}
+
+function renderTree() {
+  const root = buildTree(files);
+  qs('#file-tree').innerHTML = renderNode(root.children, '');
+}
+
+function renderNode(children, parentPath) {
+  const entries = Object.entries(children).sort(([an, av], [bn, bv]) => {
+    if (av.__type === 'folder' && bv.__type === 'file') return -1;
+    if (av.__type === 'file' && bv.__type === 'folder') return 1;
+    return an.localeCompare(bn);
+  });
+
+  return entries.map(([name, node]) => {
+    const fullPath = parentPath ? parentPath + '/' + name : name;
+    if (node.__type === 'folder') {
+      const open = folderOpen[fullPath] !== false;
+      return `
+        <div class="tree-folder">
+          <div class="tree-row" onclick="toggleFolder('${fullPath}',event)" oncontextmenu="openCtx(event,'folder','${fullPath}')">
+            <span class="tree-icon folder ${open ? 'open' : ''}">▶</span>
+            <span class="tree-icon">📁</span>
+            <span class="tree-name">${esc(name)}</span>
+            <div class="tree-actions">
+              <button class="tree-action-btn" onclick="event.stopPropagation();openNewFileModal('${fullPath}')">📄</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();openNewFolderModal('${fullPath}')">📁</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();openRenameModal('folder','${fullPath}')">✏️</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();deleteItem('${fullPath}','folder')">🗑️</button>
+            </div>
+          </div>
+          <div class="tree-children ${open ? '' : 'collapsed'}" id="fc-${fullPath.replace(/[^a-z0-9]/gi, '_')}">
+            ${renderNode(node.children, fullPath)}
+          </div>
+        </div>
+      `;
+    } else {
+      const active = node.__path === curFile ? 'active' : '';
+      return `
+        <div class="tree-file">
+          <div class="tree-row ${active}" onclick="openFile('${node.__path}')" oncontextmenu="openCtx(event,'file','${node.__path}')">
+            <span class="tree-icon">${FICON(name)}</span>
+            <span class="tree-name">${esc(name)}</span>
+            <div class="tree-actions">
+              <button class="tree-action-btn" onclick="event.stopPropagation();openRenameModal('file','${node.__path}')">✏️</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();dupFile('${node.__path}')">⧉</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();downloadFile('${node.__path}')">⬇</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();deleteItem('${node.__path}','file')">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+function toggleFolder(path, e) {
+  if (e) e.stopPropagation();
+  folderOpen[path] = folderOpen[path] === false ? true : false;
+  renderTree();
+}
+
+// ===== FILE OPS =====
+function openFile(path) {
+  if (curFile && files[curFile] !== undefined) {
+    files[curFile] = qs('#code-ta').value;
+    saveAll();
+  }
+  curFile = path;
+  qs('#code-ta').value = files[path] || '';
+  qs('#filename').value = path.split('/').pop();
+  qs('#lang-badge').textContent = getExt(path) || 'txt';
+  renderTree();
+  updateLineNums();
+  if (getExt(path) === 'html') refreshPreview();
+  else setNonHtmlPreview();
+}
+
+function openNewFileModal(folder = '') {
+  window._newFileFolder = folder;
+  qs('#new-file-name').value = '';
+  qs('#new-file-modal').classList.add('open');
+  setTimeout(() => qs('#new-file-name').focus(), 100);
+}
+
+function openNewFolderModal(folder = '') {
+  window._newFolderParent = folder;
+  qs('#new-folder-name').value = '';
+  qs('#new-folder-modal').classList.add('open');
+  setTimeout(() => qs('#new-folder-name').focus(), 100);
+}
+
+function createNewFile() {
+  const name = qs('#new-file-name').value.trim();
+  if (!name) return toast('Nome inválido', 'err');
+  
+  const folder = window._newFileFolder || '';
+  const path = folder ? folder + '/' + name : name;
+  
+  if (files[path] !== undefined) return toast('Arquivo já existe', 'err');
+  
+  files[path] = '';
+  saveAll();
+  renderTree();
+  openFile(path);
+  closeModal('new-file-modal');
+  toast('✅ Arquivo criado!');
+}
+
+function createNewFolder() {
+  const name = qs('#new-folder-name').value.trim();
+  if (!name) return toast('Nome inválido', 'err');
+  
+  const parent = window._newFolderParent || '';
+  const path = parent ? parent + '/' + name : name;
+  const keeper = path + '/.gitkeep';
+  
+  files[keeper] = '';
+  folderOpen[path] = true;
+  saveAll();
+  renderTree();
+  closeModal('new-folder-modal');
+  toast('✅ Pasta criada!');
+}
+
+function renameCurrentFile() {
+  if (!curFile) return;
+  const newName = qs('#filename').value.trim();
+  if (!newName) {
+    qs('#filename').value = curFile.split('/').pop();
+    return;
+  }
+  
+  const dir = curFile.includes('/') ? curFile.slice(0, curFile.lastIndexOf('/') + 1) : '';
+  const newPath = dir + newName;
+  
+  if (newPath === curFile) return;
+  if (files[newPath] !== undefined) {
+    toast('Nome já existe', 'err');
+    qs('#filename').value = curFile.split('/').pop();
+    return;
+  }
+  
+  files[newPath] = files[curFile];
+  delete files[curFile];
+  curFile = newPath;
+  qs('#lang-badge').textContent = getExt(newPath) || 'txt';
+  saveAll();
+  renderTree();
+  toast('✅ Renomeado!');
+}
+
+function openRenameModal(type, path) {
+  renameType = type;
+  ctxPath = path;
+  const name = path.split('/').pop();
+  qs('#rename-input').value = name;
+  qs('#rename-modal').classList.add('open');
+  setTimeout(() => qs('#rename-input').select(), 100);
+}
+
+function confirmRename() {
+  if (!ctxPath) return;
+  const newName = qs('#rename-input').value.trim();
+  if (!newName) return toast('Nome inválido', 'err');
+  
+  const dir = ctxPath.includes('/') ? ctxPath.slice(0, ctxPath.lastIndexOf('/') + 1) : '';
+  const newPath = dir + newName;
+  
+  if (renameType === 'file') {
+    if (files[newPath] !== undefined && newPath !== ctxPath) return toast('Nome já existe', 'err');
+    files[newPath] = files[ctxPath];
+    delete files[ctxPath];
+    if (curFile === ctxPath) curFile = newPath;
+  } else {
+    const prefix = ctxPath + '/';
+    const newPrefix = newPath + '/';
+    for (const k of Object.keys(files)) {
+      if (k.startsWith(prefix)) {
+        files[newPrefix + k.slice(prefix.length)] = files[k];
+        delete files[k];
+        if (curFile === k) curFile = newPrefix + k.slice(prefix.length);
+      }
+    }
+    const newFO = {};
+    for (const [k, v] of Object.entries(folderOpen)) {
+      if (k === ctxPath) newFO[newPath] = v;
+      else if (k.startsWith(ctxPath + '/')) newFO[newPath + k.slice(ctxPath.length)] = v;
+      else newFO[k] = v;
+    }
+    folderOpen = newFO;
+  }
+  
+  saveAll();
+  renderTree();
+  if (curFile) {
+    qs('#filename').value = curFile.split('/').pop();
+    qs('#lang-badge').textContent = getExt(curFile) || 'txt';
+  }
+  closeModal('rename-modal');
+  toast('✅ Renomeado!');
+}
+
+function dupFile(path) {
+  const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+  const base = path.split('/').pop().replace(/(\.[^.]+)$/, '');
+  const ext = path.includes('.') ? '.' + getExt(path) : '';
+  let newPath = dir + base + '_copia' + ext;
+  let i = 2;
+  while (files[newPath] !== undefined) newPath = dir + base + '_copia' + (i++) + ext;
+  
+  files[newPath] = files[path];
+  saveAll();
+  renderTree();
+  openFile(newPath);
+  toast('⧉ Duplicado!');
+}
+
+function downloadFile(path = null) {
+  const p = path || curFile;
+  if (!p) return toast('Nenhum arquivo selecionado', 'err');
+  const content = files[p] || '';
+  dlBlob(new Blob([content], { type: 'text/plain' }), p.split('/').pop());
+}
+
+function deleteItem(path, type) {
+  if (!confirm(`Excluir "${path}"?`)) return;
+  
+  if (type === 'file') {
+    delete files[path];
+    if (curFile === path) {
+      curFile = null;
+      qs('#code-ta').value = '';
+      qs('#filename').value = 'sem arquivo';
+      qs('#lang-badge').textContent = '';
+    }
+  } else {
+    for (const k of Object.keys(files)) {
+      if (k.startsWith(path + '/')) delete files[k];
+    }
+    if (curFile?.startsWith(path + '/')) {
+      curFile = null;
+      qs('#code-ta').value = '';
+      qs('#filename').value = 'sem arquivo';
+      qs('#lang-badge').textContent = '';
+    }
+  }
+  
+  saveAll();
+  renderTree();
+  toast('🗑️ Excluído!');
+}
+
+// ===== CONTEXT MENU =====
+function openCtx(e, type, path) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxPath = path;
+  renameType = type;
+  const menu = qs('#ctx-menu');
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 180) + 'px';
+  menu.style.display = 'block';
+}
+
+function ctxRename() {
+  if (!ctxPath) return;
+  qs('#ctx-menu').style.display = 'none';
+  openRenameModal(renameType, ctxPath);
+}
+
+function ctxDuplicate() {
+  if (!ctxPath || renameType !== 'file') return;
+  qs('#ctx-menu').style.display = 'none';
+  dupFile(ctxPath);
+}
+
+function ctxDownload() {
+  if (!ctxPath || renameType !== 'file') return;
+  qs('#ctx-menu').style.display = 'none';
+  downloadFile(ctxPath);
+}
+
+function ctxDelete() {
+  if (!ctxPath) return;
+  qs('#ctx-menu').style.display = 'none';
+  deleteItem(ctxPath, renameType);
+}
+
+// ===== EDITOR =====
+function onCodeInput() {
+  if (curFile) files[curFile] = qs('#code-ta').value;
+  updateLineNums();
+  clearTimeout(prevTimer);
+  if (prevMode !== 'off' && getExt(curFile || '') === 'html') {
+    prevTimer = setTimeout(refreshPreview, 600);
+  }
+}
+
+function updateLineNums() {
+  const ta = qs('#code-ta');
+  const ln = qs('#line-nums');
+  const lines = ta.value.split('\n').length;
+  ln.innerHTML = Array.from({ length: lines }, (_, i) => `<span class="ln">${i + 1}</span>`).join('');
+}
+
+function syncScroll() {
+  const ta = qs('#code-ta');
+  const ln = qs('#line-nums');
+  if (ln) ln.scrollTop = ta.scrollTop;
+}
+
+function codeKD(e) {
+  const ta = e.target;
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+    onCodeInput();
+  }
+  if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    saveFile();
+  }
+}
+
+function saveFile() {
+  if (!curFile) return;
+  files[curFile] = qs('#code-ta').value;
+  saveAll();
+  toast('💾 Salvo!');
+}
+
+function saveAll() {
+  lsSet('editor-files', JSON.stringify(files));
+}
+
+// ===== PREVIEW =====
+function setPM(mode) {
+  prevMode = mode;
+  qsa('.tb-btn[id^="pm-"]').forEach(b => b.classList.remove('active'));
+  const btn = qs('#pm-' + mode);
+  if (btn) btn.classList.add('active');
+  
+  const ps = qs('#preview-section');
+  const pw = qs('#preview-frame');
+  if (mode === 'off') {
+    ps.classList.remove('visible');
+    ps.style.height = '';
+  } else {
+    ps.classList.add('visible');
+    ps.style.height = mode === 'full' ? '65vh' : '200px';
+    pw.style.display = '';
+    refreshPreview();
+  }
+}
+
+function togglePreviewMin() {
+  if (prevMode === 'off') return;
+  const ps = qs('#preview-section');
+  const btn = qs('#preview-bar .preview-btn:first-child');
+  const pf = qs('#preview-frame');
+  if (ps.style.height === '32px') {
+    ps.style.height = '200px';
+    pf.style.display = '';
+    btn.textContent = '⬆';
+  } else {
+    ps.style.height = '32px';
+    pf.style.display = 'none';
+    btn.textContent = '⬇';
+  }
+}
+
+function startVDrag(e) {
+  if (prevMode === 'off') return;
+  vDragging = true;
+  vDragStartY = e.clientY;
+  vDragStartH = qs('#preview-section').getBoundingClientRect().height;
+  document.addEventListener('mousemove', onVDrag);
+  document.addEventListener('mouseup', stopVDrag);
+}
+
+function onVDrag(e) {
+  if (!vDragging) return;
+  const col = qs('#work').getBoundingClientRect().height;
+  const delta = vDragStartY - e.clientY;
+  const newH = Math.max(60, Math.min(col - 60, vDragStartH + delta));
+  qs('#preview-section').style.height = newH + 'px';
+}
+
+function stopVDrag() {
+  vDragging = false;
+  document.removeEventListener('mousemove', onVDrag);
+  document.removeEventListener('mouseup', stopVDrag);
+}
+
+function refreshPreview() {
+  if (!curFile) return;
+  const ext = getExt(curFile);
+  const frame = qs('#preview-frame');
+  const lbl = qs('#preview-label');
+  
+  if (ext === 'html') {
+    lbl.textContent = '🌐 ' + curFile;
+    frame.srcdoc = files[curFile] || '';
+  } else if (ext === 'css') {
+    lbl.textContent = '🎨 Preview CSS';
+    frame.srcdoc = `<html><head><style>${files[curFile] || ''}</style></head><body style="background:#1e293b;color:#e2e8f0;padding:20px"><h2>Preview CSS</h2><p>Estilos aplicados.</p></body></html>`;
+  } else if (ext === 'md') {
+    lbl.textContent = '📝 Preview Markdown';
+    frame.srcdoc = `<html><head><style>body{font-family:sans-serif;padding:20px;background:#0f172a;color:#e2e8f0;line-height:1.7}pre{background:#1e293b;padding:10px;border-radius:6px}</style></head><body><pre style="white-space:pre-wrap">${esc(files[curFile] || '')}</pre></body></html>`;
+  } else {
+    lbl.textContent = '📄 ' + curFile;
+    frame.srcdoc = `<html><head><style>body{background:#1e293b;color:#94a3b8;font-family:monospace;padding:20px;font-size:13px;line-height:1.6;white-space:pre-wrap}</style></head><body>${esc(files[curFile] || '')}</body></html>`;
+  }
+}
+
+function setNonHtmlPreview() {
+  qs('#preview-frame').srcdoc = `<body style="background:#1e293b;color:#94a3b8;font-family:sans-serif;padding:20px;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:32px;margin-bottom:8px">📄</div><div>Preview para .html</div></div></body>`;
+}
+
+// ===== IMPORT/EXPORT =====
+async function handleImport(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  
+  if (!window.JSZip) return toast('JSZip não carregado', 'err');
+  
+  try {
+    const z = await JSZip.loadAsync(f);
+    const nf = {};
+    for (const [p, obj] of Object.entries(z.files)) {
+      if (obj.dir) continue;
+      try {
+        nf[p] = await obj.async('string');
+      } catch {}
+    }
+    files = nf;
+    folderOpen = {};
+    renderTree();
+    const first = Object.keys(files)[0];
+    if (first) openFile(first);
+    saveAll();
+    toast(`📦 ${Object.keys(files).length} arquivos!`);
+  } catch (err) {
+    toast('Erro: ' + err.message, 'err');
+  }
+  e.target.value = '';
+}
+
+async function exportZip() {
+  if (!window.JSZip) return toast('JSZip não carregado', 'err');
+  if (curFile) files[curFile] = qs('#code-ta').value;
+  
+  const z = new JSZip();
+  for (const [n, c] of Object.entries(files)) {
+    z.file(n, c || '');
+  }
+  
+  dlBlob(await z.generateAsync({ type: 'blob', compression: 'DEFLATE' }), 'projeto-' + Date.now() + '.zip');
+  toast('📥 ZIP exportado!');
+}
+
+// ===== MODALS =====
+function closeModal(id) {
+  qs('#' + id).classList.remove('open');
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+  qs('#sidebar').classList.toggle('hidden');
+}
+
+// ===== EVENTS =====
+document.addEventListener('click', () => {
+  qs('#ctx-menu').style.display = 'none';
+});
+
+// ===== START =====
+init();
+</script>
+
+</body>
+</html>
