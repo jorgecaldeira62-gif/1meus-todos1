@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>📦 Build & Deploy</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:8px}
+.header-title{font-size:15px;font-weight:700;color:#fff}
+
+/* BOTÕES */
+button{cursor:pointer;border:none;font-family:inherit}
+.btn{padding:7px 14px;border-radius:10px;font-size:12px;font-weight:600;transition:all 0.15s}
+.btn-green{background:linear-gradient(135deg,#1a4731,#1f6feb22);border:1px solid #3fb95060;color:#3fb950}
+.btn-green:hover{background:linear-gradient(135deg,#238636,#1f6feb33)}
+.btn-amber{background:#2d1f0022;border:1px solid #e3b34140;color:#e3b341}
+.btn-amber:hover{background:#2d1f0044}
+.btn-orange{background:#2d150022;border:1px solid #f0883e40;color:#f0883e}
+.btn-orange:hover{background:#2d150044}
+.btn-gray{background:#21262d;border:1px solid #30363d;color:#c9d1d9}
+.btn-gray:hover{background:#30363d}
+.btn-icon{background:none;border:none;color:#8b949e;padding:4px;border-radius:6px;display:flex;align-items:center}
+.btn-icon:hover{background:#21262d;color:#c9d1d9}
+.btn-full{width:100%}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:8px}
+
+/* SEÇÕES */
+.section{padding:12px 16px;border-bottom:1px solid #21262d}
+.section-title{font-size:11px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#8b949e}
+.stats-grid div{display:flex;align-items:center;gap:4px}
+
+/* PLATAFORMAS */
+.platforms{padding:12px 16px}
+.platform-card{border-radius:14px;overflow:hidden;margin-bottom:8px;border:1px solid}
+.platform-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.15s}
+.platform-header:hover{filter:brightness(1.1)}
+.platform-icon{font-size:18px;flex-shrink:0}
+.platform-info{flex:1;text-align:left}
+.platform-name{font-size:13px;font-weight:700}
+.platform-desc{font-size:11px;opacity:.6;margin-top:1px}
+.platform-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.btn-zip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.1);border:none;font-size:11px;font-weight:700;color:#fff;transition:background 0.15s}
+.btn-zip:hover{background:rgba(255,255,255,.2)}
+.btn-zip:disabled{opacity:.5}
+.chevron{font-size:12px;color:inherit;opacity:.7;transition:transform 0.2s}
+.chevron.open{transform:rotate(90deg)}
+.platform-body{border-top:1px solid rgba(255,255,255,.08);background:#0d1117cc;display:none;padding:12px}
+.platform-body.open{display:block}
+
+/* CORES DAS PLATAFORMAS */
+.p-eas{background:#0d1f3a22;border-color:#1f6feb40;color:#79c0ff}
+.p-capacitor{background:#0d2a2a22;border-color:#2dd4bf40;color:#5eead4}
+.p-ghpages{background:#0d2818;border-color:#3fb95040;color:#3fb950}
+.p-electron{background:#1a0d3a22;border-color:#a371f740;color:#d2a8ff}
+.p-pwa{background:#2d150022;border-color:#f0883e40;color:#ffa657}
+.p-git{background:#2d0f2022;border-color:#f7768e40;color:#ff7eb6}
+.p-netlify{background:#0d2a2a22;border-color:#00c7b740;color:#00c7b7}
+.p-vercel{background:#1a1a1a;border-color:#ffffff30;color:#e6edf3}
+.p-clean{background:#1a1a1a22;border-color:#8b949e40;color:#c9d1d9}
+
+/* CODE BLOCK */
+.code-block{background:#0d1117;border:1px solid #21262d;border-radius:10px;overflow:hidden;margin:6px 0}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#161b22;border-bottom:1px solid #21262d}
+.code-label{font-size:10px;color:#8b949e;font-family:monospace}
+.btn-copy{display:flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;background:none;border:none;font-size:10px;color:#8b949e;transition:color 0.15s}
+.btn-copy:hover{color:#c9d1d9}
+.btn-copy.copied{color:#3fb950}
+pre{padding:10px;font-size:10px;font-family:'Courier New',monospace;color:#c9d1d9;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+
+/* ALERTAS */
+.alert{border-radius:8px;padding:8px 10px;font-size:11px;margin-bottom:8px;display:flex;gap:7px;align-items:flex-start;line-height:1.4}
+.alert-yellow{background:#2d1f0022;border-left:3px solid #e3b341;color:#e3b341}
+.alert-blue{background:#0d1f3a;border-left:3px solid #58a6ff;color:#79c0ff}
+.alert-green{background:#0d2818;border-left:3px solid #3fb950;color:#3fb950}
+.alert-teal{background:#0d2a2a22;border-left:3px solid #00c7b7;color:#00c7b7}
+.alert-gray{background:#1a1a1a;border-left:3px solid #8b949e;color:#c9d1d9}
+
+/* INPUTS */
+.input-group{margin-bottom:8px}
+.input-label{font-size:11px;color:#8b949e;margin-bottom:3px;display:block}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+input[type=text],input[type=password]{width:100%;padding:7px 10px;background:#21262d;border:1px solid #30363d;border-radius:8px;color:#c9d1d9;font-size:12px;outline:none;font-family:inherit}
+input:focus{border-color:#58a6ff}
+
+/* BANNER VERSÃO */
+.version-banner{background:linear-gradient(135deg,#1a0d3a22,#0d1f3a22);border-bottom:1px solid #30363d;padding:12px 16px}
+.version-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.version-badge{font-size:10px;padding:2px 7px;border-radius:8px;background:#23863640;border:1px solid #3fb95040;color:#3fb950;font-weight:700}
+.changelog{background:#00000033;border:1px solid #30363d;border-radius:10px;padding:10px;space-y:4px}
+.changelog-item{font-size:10px;color:#c9d1d9;line-height:1.6}
+
+/* EXECUTÁVEIS */
+.exe-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;text-decoration:none;margin-bottom:6px;transition:filter 0.15s}
+.exe-card:hover{filter:brightness(1.15)}
+.exe-linux{background:#1a0d3a22;border:1px solid #a371f740;color:#d2a8ff}
+.exe-windows{background:#0d1f3a22;border:1px solid #1f6feb40;color:#79c0ff}
+.exe-info{flex:1}
+.exe-name{font-size:12px;font-weight:700}
+.exe-sub{font-size:10px;opacity:.6;margin-top:2px}
+.exe-size{font-size:10px;opacity:.5;text-align:right}
+
+/* CERTIFICADO */
+.cert{background:#0d281822;border:1px solid #3fb95030;border-radius:10px;padding:10px;margin-top:8px}
+.cert-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cert-badge{font-size:9px;padding:2px 6px;border-radius:8px;background:#23863640;border:1px solid #3fb95040;color:#3fb950;font-weight:700;margin-left:auto}
+.cert-item{display:flex;gap:6px;margin-bottom:4px;font-size:10px;line-height:1.4}
+.cert-title{font-weight:700;color:#aff0c0}
+.cert-desc{color:#3fb95080}
+
+/* BACKUP GRID */
+.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.backup-item{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#21262d22;border:1px solid #30363d;border-radius:10px;text-decoration:none;transition:background 0.15s;font-size:11px;font-weight:500}
+.backup-item:hover{background:#21262d}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;transition:opacity 0.3s;pointer-events:none}
+.toast-ok{background:#238636;color:#fff}
+.toast-err{background:#da3633;color:#fff}
+
+/* IMPORT */
+.drop-area{border:2px dashed #30363d;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:10px;transition:all 0.2s}
+.drop-area:hover,.drop-area.over{border-color:#58a6ff;background:#0d1f3a22}
+.drop-icon{font-size:28px;margin-bottom:6px}
+
+/* PROGRESS */
+.progress-bar{height:3px;background:#21262d;border-radius:2px;overflow:hidden;margin:6px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,#1f6feb,#58a6ff);border-radius:2px;transition:width 0.3s}
+
+a{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <span style="font-size:18px">📦</span>
+    <span class="header-title">Build & Deploy</span>
+    <span id="proj-badge" style="display:none;font-size:11px;padding:2px 8px;border-radius:8px;background:#21262d;color:#8b949e;border:1px solid #30363d"></span>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button class="btn btn-gray btn-sm" onclick="document.getElementById('fi-import').click()">📂 Importar ZIP</button>
+    <input type="file" id="fi-import" accept=".zip" style="display:none" onchange="importarProjeto(this)"/>
+  </div>
+</div>
+
+<!-- IMPORT STATUS -->
+<div id="import-status" style="display:none" class="section">
+  <div class="alert alert-blue">
+    <span>⏳</span><div id="import-msg">Lendo ZIP...</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="import-progress" style="width:0%"></div></div>
+</div>
+
+<!-- BOTÕES PRINCIPAIS -->
+<div class="section">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button class="btn btn-green btn-full" onclick="baixarTodos()" id="btn-todos" style="padding:12px;font-size:14px;border-radius:14px">
+      <span id="btn-todos-txt">🗜️ Baixar TODOS os ZIPs (9 plataformas)</span>
+    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <button class="btn btn-amber" onclick="gerarPlano()">
+        <span id="plano-txt">📋 Gerar PLANO.md</span>
+      </button>
+      <button class="btn btn-orange" onclick="abrirPlayground()">
+        💻 Playground HTML
+      </button>
+    </div>
+  </div>
+  <div id="status-msg" style="display:none;margin-top:8px;text-align:center;font-size:12px;padding:6px;border-radius:8px"></div>
+</div>
+
+<!-- STATS DO PROJETO -->
+<div class="section">
+  <div class="section-title">📊 Projeto atual</div>
+  <div class="stats-grid">
+    <div>📄 <span id="stat-files">0</span> arquivo(s)</div>
+    <div>📦 <span id="stat-pkg">sem package.json</span></div>
+    <div>🌐 <span id="stat-html">sem index.html</span></div>
+    <div>🔑 Token: <span id="stat-token">não configurado</span></div>
+  </div>
+</div>
+
+<!-- BANNER VERSÃO -->
+<div class="version-banner">
+  <div class="version-header">
+    <span style="font-size:18px">📦</span>
+    <span style="font-size:13px;font-weight:700;color:#fff">Maikon Juridico Pro</span>
+    <span class="version-badge">v1.2.0</span>
+    <span style="margin-left:auto;font-size:10px;color:#8b949e">Build: 17/06/2026</span>
+  </div>
+  <div class="changelog">
+    <div style="font-size:10px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">O que há de novo</div>
+    <div class="changelog-item">🚀 Terminal Real — npm install + npm run dev via SSE streaming</div>
+    <div class="changelog-item">🔍 Preview automático — detecta porta e abre instantaneamente</div>
+    <div class="changelog-item">⚙️ /api/exec-stream — executa qualquer comando shell em tempo real</div>
+    <div class="changelog-item">🔄 /api/proxy/:port/* — proxy para servers do usuário</div>
+    <div class="changelog-item">💾 /api/settings — salva chaves AI no disco</div>
+    <div class="changelog-item">🛡 100% standalone — zero dependência de servidor externo</div>
+  </div>
+</div>
+
+<!-- EXECUTÁVEIS -->
+<div class="section">
+  <div class="section-title">🖥️ Executável Desktop — Electron</div>
+  <a class="exe-card exe-linux" href="#" onclick="simDownload('linux')">
+    <span style="font-size:20px">🐧</span>
+    <div class="exe-info">
+      <div class="exe-name">Linux — AppImage <span style="font-size:10px;color:#3fb950;font-weight:400">v1.2.0</span></div>
+      <div class="exe-sub">Build 17/06/2026 · 64-bit · Baixe, dê permissão e execute</div>
+    </div>
+    <div class="exe-size">849 MB<br>⬇️</div>
+  </a>
+  <a class="exe-card exe-windows" href="#" onclick="simDownload('windows')">
+    <span style="font-size:20px">🪟</span>
+    <div class="exe-info">
+      <div class="exe-name">Windows — Portátil <span style="font-size:10px;color:#3fb950;font-weight:400">v1.2.0</span></div>
+      <div class="exe-sub">Build 17/06/2026 · 64-bit · Extraia e execute o .exe</div>
+    </div>
+    <div class="exe-size">888 MB<br>⬇️</div>
+  </a>
+
+  <div class="cert">
+    <div class="cert-header">
+      <span style="font-size:13px">🛡️</span>
+      <span style="font-size:11px;font-weight:700;color:#3fb950">Certificado de Independência</span>
+      <span class="cert-badge">✓ LIMPO</span>
+    </div>
+    <div class="cert-item"><span>✅</span><div><span class="cert-title">Servidor local 100% offline</span><span class="cert-desc"> — Roda em 127.0.0.1 com porta aleatória</span></div></div>
+    <div class="cert-item"><span>✅</span><div><span class="cert-title">Zero dependência Replit</span><span class="cert-desc"> — Funciona sem internet</span></div></div>
+    <div class="cert-item"><span>✅</span><div><span class="cert-title">Terminal real no PC</span><span class="cert-desc"> — npm, git, python rodam de verdade</span></div></div>
+    <div class="cert-item"><span>✅</span><div><span class="cert-title">Projetos salvos no seu PC</span><span class="cert-desc"> — ~/MaikonJuridicoPro/projetos/</span></div></div>
+    <div class="cert-item"><span>✅</span><div><span class="cert-title">COOP/COEP habilitados</span><span class="cert-desc"> — Headers corretos para WebContainer</span></div></div>
+  </div>
+</div>
+
+<!-- BACKUP PRÉ-GERADO -->
+<div class="section">
+  <div class="section-title">💾 Projetos de Deploy — Pacotes prontos</div>
+  <div class="backup-grid" id="backup-grid">
+    <!-- gerado por JS -->
+  </div>
+  <div style="font-size:10px;color:#8b949e;text-align:center;margin-top:6px">Código-fonte sem dependências do Replit · Pronto para importar e rodar</div>
+</div>
+
+<!-- CONFIGURAÇÕES -->
+<div class="section">
+  <div class="section-title">⚙️ Configurações</div>
+  <div class="input-group">
+    <label class="input-label">Token EAS (Expo)</label>
+    <div style="display:flex;gap:6px">
+      <input type="password" id="eas-token" placeholder="expo_..." oninput="salvarConfig()"/>
+      <button class="btn btn-gray btn-sm" onclick="document.getElementById('eas-token').type=document.getElementById('eas-token').type==='password'?'text':'password'">👁️</button>
+    </div>
+  </div>
+  <div class="input-row">
+    <div class="input-group">
+      <label class="input-label">Usuário GitHub</label>
+      <input type="text" id="gh-user" placeholder="seu-usuario" oninput="salvarConfig()"/>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Repositório</label>
+      <input type="text" id="gh-repo" placeholder="meu-projeto" oninput="salvarConfig()"/>
+    </div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Token GitHub</label>
+    <input type="password" id="gh-token" placeholder="ghp_..." oninput="salvarConfig()"/>
+  </div>
+</div>
+
+<!-- PLATAFORMAS -->
+<div class="platforms" id="platforms-container">
+  <!-- gerado por JS -->
+</div>
+
+<!-- PLAYGROUND -->
+<div id="playground-overlay" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:100;flex-direction:column">
+  <div class="header">
+    <div class="header-left"><span>💻</span><span class="header-title">Playground HTML</span></div>
+    <button class="btn-icon" onclick="fecharPlayground()">✕</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden">
+    <div style="display:flex;flex-direction:column;border-right:1px solid #30363d">
+      <div style="padding:6px 10px;background:#161b22;border-bottom:1px solid #30363d;font-size:11px;color:#8b949e">HTML</div>
+      <textarea id="playground-code" style="flex:1;background:#0d1117;color:#c9d1d9;border:none;padding:10px;font-family:monospace;font-size:11px;resize:none;outline:none" oninput="atualizarPreview()" placeholder="<!DOCTYPE html>..."></textarea>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <div style="padding:6px 10px;background:#161b22;border-bottom:1px solid #30363d;font-size:11px;color:#8b949e;display:flex;justify-content:space-between">
+        Preview
+        <button class="btn btn-gray btn-sm" onclick="baixarPlayground()">⬇️ Baixar</button>
+      </div>
+      <iframe id="playground-preview" style="flex:1;border:none;background:#fff"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="opacity:0"></div>
+
+<script>
+// ══════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════
+let VFS = {}; // Virtual File System: {path: content}
+let PROJECT_NAME = 'meu-projeto';
+
+// ══════════════════════════════════════════
+// PLATAFORMAS
+// ══════════════════════════════════════════
+const PLATFORMS = [
+  {id:'eas',       icon:'📱', label:'APK via EAS (Expo)',       desc:'Build APK/AAB pelo serviço EAS da Expo',      cls:'p-eas'},
+  {id:'capacitor', icon:'⚡', label:'APK via Capacitor',        desc:'Empacota o projeto web como APK Android',     cls:'p-capacitor'},
+  {id:'githubpages',icon:'🌐',label:'GitHub Pages',             desc:'Publica no GitHub Pages gratuitamente',       cls:'p-ghpages'},
+  {id:'electron',  icon:'🖥', label:'Executável (Electron)',    desc:'Executável Desktop Win/Mac/Linux',            cls:'p-electron'},
+  {id:'pwa',       icon:'📲', label:'PWA (Instalável no Cel.)', desc:'Instala como app no celular sem APK',         cls:'p-pwa'},
+  {id:'git',       icon:'🚀', label:'Deploy via Git',           desc:'Configura e publica via repositório Git',     cls:'p-git'},
+  {id:'netlify',   icon:'🔷', label:'Netlify (grátis)',         desc:'Deploy gratuito com URL pública em minutos',  cls:'p-netlify'},
+  {id:'vercel',    icon:'▲',  label:'Vercel (grátis)',          desc:'Deploy grátis + SSL automático via Vercel',   cls:'p-vercel'},
+  {id:'clean',     icon:'✨', label:'Versão Limpa (Standalone)', desc:'ZIP limpo sem dependências do Replit',       cls:'p-clean'},
+];
+
+const BACKUP_ITEMS = [
+  {name:'clean',        icon:'✨', label:'Versão Limpa',     color:'#c9d1d9'},
+  {name:'netlify',      icon:'🔷', label:'Netlify',          color:'#00c7b7'},
+  {name:'vercel',       icon:'▲',  label:'Vercel',           color:'#e6edf3'},
+  {name:'github-pages', icon:'🌐', label:'GitHub Pages',     color:'#3fb950'},
+  {name:'pwa',          icon:'📲', label:'PWA',              color:'#ffa657'},
+  {name:'eas',          icon:'📱', label:'EAS (Expo APK)',   color:'#79c0ff'},
+  {name:'capacitor',    icon:'⚡', label:'Capacitor APK',    color:'#5eead4'},
+  {name:'electron',     icon:'🖥', label:'Electron Desktop', color:'#d2a8ff'},
+];
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.onload = () => {
+  carregarConfig();
+  renderBackupGrid();
+  renderPlatforms();
+  atualizarStats();
+};
+
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
+function salvarConfig(){
+  localStorage.setItem('sk-eas-token', document.getElementById('eas-token').value);
+  localStorage.setItem('sk-gh-user',   document.getElementById('gh-user').value);
+  localStorage.setItem('sk-gh-repo',   document.getElementById('gh-repo').value);
+  localStorage.setItem('sk-gh-token',  document.getElementById('gh-token').value);
+  atualizarStats();
+}
+function carregarConfig(){
+  document.getElementById('eas-token').value = localStorage.getItem('sk-eas-token')||'';
+  document.getElementById('gh-user').value   = localStorage.getItem('sk-gh-user')||'';
+  document.getElementById('gh-repo').value   = localStorage.getItem('sk-gh-repo')||'';
+  document.getElementById('gh-token').value  = localStorage.getItem('sk-gh-token')||'';
+}
+function getConfig(){
+  return {
+    easToken: document.getElementById('eas-token').value,
+    ghUser:   document.getElementById('gh-user').value,
+    ghRepo:   document.getElementById('gh-repo').value,
+    ghToken:  document.getElementById('gh-token').value,
+  };
+}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function atualizarStats(){
+  const files = Object.keys(VFS);
+  document.getElementById('stat-files').textContent = files.length;
+  document.getElementById('stat-pkg').textContent   = files.includes('package.json') ? 'package.json ✓' : 'sem package.json';
+  document.getElementById('stat-html').textContent  = files.some(f=>f==='index.html'||f.endsWith('/index.html')) ? 'index.html ✓' : 'sem index.html';
+  const tok = document.getElementById('eas-token').value;
+  document.getElementById('stat-token').textContent = tok ? 'configurado ✓' : 'não configurado';
+  if(PROJECT_NAME){
+    const b = document.getElementById('proj-badge');
+    b.textContent = '📁 '+PROJECT_NAME;
+    b.style.display='inline-block';
+  }
+}
+
+// ══════════════════════════════════════════
+// IMPORTAR ZIP
+// ══════════════════════════════════════════
+async function importarProjeto(inp){
+  const f = inp.files[0]; if(!f) return;
+  const st = document.getElementById('import-status');
+  const msg = document.getElementById('import-msg');
+  const prog = document.getElementById('import-progress');
+  st.style.display='block';
+  msg.textContent='Carregando JSZip...';
+  prog.style.width='10%';
+  try{
+    const JSZ = await loadJSZ();
+    msg.textContent='Lendo ZIP...';
+    prog.style.width='30%';
+    const zip = await JSZ.loadAsync(await f.arrayBuffer());
+    prog.style.width='60%';
+    VFS = {};
+    const entries = Object.entries(zip.files).filter(([,e])=>!e.dir);
+    let i=0;
+    for(const [path,entry] of entries){
+      const txt = await entry.async('text').catch(()=>'');
+      VFS[path] = txt;
+      i++;
+      prog.style.width = (60 + Math.round(i/entries.length*35))+'%';
+    }
+    prog.style.width='100%';
+    // detectar nome do projeto
+    try{
+      const pkg = JSON.parse(VFS['package.json']||'{}');
+      PROJECT_NAME = (pkg.name||f.name.replace('.zip','')).replace(/@[^/]+\//,'');
+    }catch{ PROJECT_NAME = f.name.replace('.zip',''); }
+    msg.textContent = `✅ ${entries.length} arquivos importados — ${PROJECT_NAME}`;
+    document.getElementById('import-status').querySelector('.alert').className='alert alert-green';
+    atualizarStats();
+    toast(`✅ Projeto "${PROJECT_NAME}" importado!`,'ok');
+  }catch(e){
+    msg.textContent='❌ Erro: '+e.message;
+    document.getElementById('import-status').querySelector('.alert').className='alert alert-yellow';
+  }
+  inp.value='';
+}
+
+// ══════════════════════════════════════════
+// RENDER BACKUP GRID
+// ══════════════════════════════════════════
+function renderBackupGrid(){
+  const el = document.getElementById('backup-grid');
+  el.innerHTML = BACKUP_ITEMS.map(item=>`
+    <a class="backup-item" href="#" onclick="baixarZip('${item.name}');return false" style="color:${item.color}">
+      <span style="font-size:14px">${item.icon}</span>
+      <span style="flex:1">${item.label}</span>
+      <span style="font-size:10px;opacity:.5">⬇️</span>
+    </a>`).join('');
+}
+
+// ══════════════════════════════════════════
+// RENDER PLATAFORMAS
+// ══════════════════════════════════════════
+function renderPlatforms(){
+  const el = document.getElementById('platforms-container');
+  el.innerHTML = PLATFORMS.map(p=>`
+    <div class="platform-card ${p.cls}" id="card-${p.id}">
+      <div class="platform-header" onclick="togglePlatform('${p.id}')">
+        <span class="platform-icon">${p.icon}</span>
+        <div class="platform-info">
+          <div class="platform-name">${p.label}</div>
+          <div class="platform-desc">${p.desc}</div>
+        </div>
+        <div class="platform-actions">
+          <button class="btn-zip" id="btn-${p.id}" onclick="event.stopPropagation();baixarZip('${p.id}')">
+            <span id="btn-${p.id}-ico">⬇️</span> ZIP
+          </button>
+          <span class="chevron" id="chev-${p.id}">▶</span>
+        </div>
+      </div>
+      <div class="platform-body" id="body-${p.id}">
+        ${getPlatformContent(p.id)}
+      </div>
+    </div>`).join('');
+}
+
+function togglePlatform(id){
+  const body = document.getElementById('body-'+id);
+  const chev = document.getElementById('chev-'+id);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function getPlatformContent(id){
+  const cfg = getConfig();
+  const contents = {
+    eas:`
+      <div class="alert alert-yellow"><span>⚠️</span><span>Requer conta <a href="https://expo.dev" target="_blank" style="text-decoration:underline">expo.dev</a> + EAS CLI instalado</span></div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px;font-weight:700">Comandos:</div>
+      ${codeBlock('npm install -g @expo/eas-cli\nnpm install\nexpo login\neas login\neas build --platform android --profile preview')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Build local (sem internet):</div>
+      ${codeBlock('eas build --platform android --profile preview --local')}`,
+
+    capacitor:`
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px;font-weight:700">Instalar Capacitor:</div>
+      ${codeBlock('npm install\nnpm install @capacitor/core @capacitor/android @capacitor/cli\nnpx cap init\nnpx cap add android')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Build APK linha de comando:</div>
+      ${codeBlock('npm run build && npx cap sync\ncd android && ./gradlew assembleDebug\n# APK: android/app/build/outputs/apk/debug/')}`,
+
+    githubpages:`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+        <div><label class="input-label">Usuário GitHub</label><input type="text" id="ghp-user" placeholder="usuario" value="${cfg.ghUser}" oninput="document.getElementById('gh-user').value=this.value;salvarConfig()"/></div>
+        <div><label class="input-label">Repositório</label><input type="text" id="ghp-repo" placeholder="meu-repo" value="${cfg.ghRepo}" oninput="document.getElementById('gh-repo').value=this.value;salvarConfig()"/></div>
+      </div>
+      ${codeBlock(`git init && git add .\ngit commit -m "inicial"\ngit remote add origin https://github.com/${cfg.ghUser||'USUARIO'}/${cfg.ghRepo||'repo'}.git\ngit push -u origin main`)}
+      <div style="font-size:11px;color:#8b949e;margin-top:6px">O workflow .github/workflows/deploy.yml fará o deploy automático no push.</div>`,
+
+    electron:`
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px;font-weight:700">Instalar:</div>
+      ${codeBlock('npm install\nnpm install --save-dev electron electron-builder concurrently wait-on')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Build executável:</div>
+      ${codeBlock('npm run build\nnpm run electron:build\n# Saída em dist-electron/\n# Windows: .exe | Linux: .AppImage | macOS: .dmg')}`,
+
+    pwa:`
+      <div class="alert alert-blue"><span>💡</span><span>O ZIP inclui manifest.json e sw.js. Adicione as tags no index.html conforme o README.</span></div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px;font-weight:700">Tags necessárias no HTML:</div>
+      ${codeBlock('<link rel="manifest" href="/manifest.json">\n<meta name="theme-color" content="#2d5a1b">')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Hospedar com HTTPS:</div>
+      ${codeBlock('npm run build\n# Hospedar dist/ em Netlify, Vercel ou GitHub Pages')}`,
+
+    git:`
+      ${codeBlock(`git init && git add . && git commit -m "inicial"\ngit remote add origin https://github.com/${cfg.ghUser||'USER'}/${cfg.ghRepo||'REPO'}.git\ngit push -u origin main`)}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Vercel (deploy rápido):</div>
+      ${codeBlock('npx vercel')}`,
+
+    netlify:`
+      <div class="alert alert-teal"><span>🔷</span><span>Deploy grátis em <a href="https://netlify.com" target="_blank" style="text-decoration:underline">netlify.com</a> — sem cartão de crédito.</span></div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px;font-weight:700">Arrastar pasta (mais fácil):</div>
+      ${codeBlock('npm install\nnpm run build\n# Acesse https://app.netlify.com/drop\n# Arraste a pasta dist/')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Via CLI:</div>
+      ${codeBlock('npx netlify-cli deploy --dir dist --prod')}`,
+
+    vercel:`
+      <div class="alert alert-gray"><span>▲</span><span>Deploy grátis em <a href="https://vercel.com" target="_blank" style="text-decoration:underline">vercel.com</a> — SSL automático + CDN global.</span></div>
+      ${codeBlock('npm install\nnpm run build\nnpx vercel\n# Siga o assistente: Framework → Vite')}`,
+
+    clean:`
+      <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Versão limpa sem nenhuma dependência do Replit. Pronta para rodar localmente.</div>
+      ${codeBlock('npm install\nnpm run dev\n# Acesse http://localhost:5173')}
+      <div style="font-size:11px;color:#8b949e;margin:8px 0 4px;font-weight:700">Publicar online:</div>
+      ${codeBlock('npm run build\n# Arraste dist/ para https://app.netlify.com/drop')}
+      <div style="background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:10px;margin-top:8px;font-size:11px;color:#8b949e">
+        ✓ Todos os ${Object.keys(VFS).length} arquivo(s) do projeto<br>
+        ✓ package.json limpo (sem @replit/*)<br>
+        ✓ vite.config.ts sem plugins Replit<br>
+        ✓ .gitignore + README.md com instruções
+      </div>`,
+  };
+  return contents[id]||'';
+}
+
+function codeBlock(code){
+  const id='cb'+Math.random().toString(36).slice(2,7);
+  return `<div class="code-block">
+    <div class="code-header">
+      <span class="code-label">terminal</span>
+      <button class="btn-copy" id="${id}" onclick="copiarCodigo('${id}','${escJs(code)}')">📋 Copiar</button>
+    </div>
+    <pre>${escHtml(code)}</pre>
+  </div>`;
+}
+
+function copiarCodigo(id,code){
+  navigator.clipboard.writeText(code.replace(/\\n/g,'\n')).then(()=>{
+    const b=document.getElementById(id);
+    if(b){b.textContent='✅ Copiado';b.classList.add('copied');setTimeout(()=>{b.textContent='📋 Copiar';b.classList.remove('copied');},2000);}
+  });
+}
+
+// ══════════════════════════════════════════
+// GERAR ZIPS
+// ══════════════════════════════════════════
+async function baixarZip(target){
+  const btn = document.getElementById('btn-'+target);
+  const ico = document.getElementById('btn-'+target+'-ico');
+  if(btn){btn.disabled=true;}
+  if(ico){ico.textContent='⏳';}
+  try{
+    const JSZ = await loadJSZ();
+    const blob = await gerarZip(target, JSZ);
+    const slug = PROJECT_NAME.toLowerCase().replace(/\s+/g,'-');
+    salvarBlob(blob, `${slug}-${target}.zip`);
+    toast(`✅ ZIP ${target} gerado!`,'ok');
+  }catch(e){
+    toast('❌ Erro: '+e.message,'err');
+  }finally{
+    if(btn){btn.disabled=false;}
+    if(ico){ico.textContent='⬇️';}
+  }
+}
+
+async function baixarTodos(){
+  const btn = document.getElementById('btn-todos');
+  const txt = document.getElementById('btn-todos-txt');
+  btn.disabled=true;
+  const targets=['clean','netlify','vercel','githubpages','pwa','capacitor','eas','electron','git'];
+  try{
+    const JSZ = await loadJSZ();
+    const superZip = new JSZ();
+    for(let i=0;i<targets.length;i++){
+      txt.textContent=`⏳ Gerando ${targets[i]} (${i+1}/${targets.length})...`;
+      const blob = await gerarZip(targets[i], JSZ);
+      const buf = await blob.arrayBuffer();
+      const slug = PROJECT_NAME.toLowerCase().replace(/\s+/g,'-');
+      superZip.file(`${slug}-${targets[i]}.zip`, buf);
+    }
+    txt.textContent='⏳ Compactando tudo...';
+    const final = await superZip.generateAsync({type:'blob'});
+    const slug = PROJECT_NAME.toLowerCase().replace(/\s+/g,'-');
+    salvarBlob(final, `${slug}-todos-os-builds.zip`);
+    toast('✅ Todos os ZIPs gerados!','ok');
+  }catch(e){
+    toast('❌ Erro: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+    txt.textContent='🗜️ Baixar TODOS os ZIPs (9 plataformas)';
+  }
+}
+
+// ══════════════════════════════════════════
+// GERAÇÃO DE CONTEÚDO POR PLATAFORMA
+// ══════════════════════════════════════════
+async function gerarZip(target, JSZ){
+  const zip = new JSZ();
+  const cfg = getConfig();
+  const pkg = parsePkg();
+  const name = (pkg.name||PROJECT_NAME).toLowerCase().replace(/\s+/g,'-').replace(/@[^/]+\//,'');
+  const version = pkg.version||'1.0.0';
+
+  // Adicionar arquivos do VFS (exceto configs que serão substituídas)
+  const skip = new Set(['package.json','vite.config.ts','vite.config.js']);
+  for(const [path,content] of Object.entries(VFS)){
+    if(!skip.has(path)) zip.file(path, content);
+  }
+  zip.file('.gitignore', GITIGNORE);
+
+  const viteConfig = gerarViteConfig();
+
+  if(target==='clean'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('README.md', gerarReadme(name, PROJECT_NAME));
+
+  }else if(target==='eas'){
+    zip.file('app.json', JSON.stringify(gerarAppJson(name, PROJECT_NAME, version, cfg.easToken), null,2));
+    zip.file('eas.json', JSON.stringify(gerarEasJson(cfg.easToken), null,2));
+    zip.file('babel.config.js', `module.exports = function(api) {\n  api.cache(true);\n  return { presets: ['babel-preset-expo'] };\n};\n`);
+    zip.file('.env.example', `EXPO_TOKEN=${cfg.easToken||'seu_token_eas_aqui'}\n`);
+    zip.file('package.json', JSON.stringify(gerarPkgEas(pkg, name, version), null,2));
+    zip.file('README-EAS.md', gerarReadmeEas(name));
+
+  }else if(target==='capacitor'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgCapacitor(pkg, name, version));
+    zip.file('capacitor.config.ts', gerarCapacitorConfig(name, PROJECT_NAME));
+    zip.file('scripts/build-android.sh', `#!/bin/bash\nset -e\nnpm run build\nnpx cap sync android\necho "Pronto! Abra android/ no Android Studio."\n`);
+    zip.file('README-CAPACITOR.md', gerarReadmeCapacitor(name, PROJECT_NAME));
+
+  }else if(target==='githubpages'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('.github/workflows/deploy.yml', gerarWorkflowGhPages());
+    zip.file('README-GHPAGES.md', gerarReadmeGhPages(name, cfg.ghUser, cfg.ghRepo));
+
+  }else if(target==='electron'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', JSON.stringify(gerarPkgElectron(pkg, name, version), null,2));
+    zip.file('electron/main.js', gerarElectronMain(PROJECT_NAME));
+    zip.file('electron/preload.js', gerarElectronPreload());
+    zip.file('electron-builder.yml', gerarElectronBuilder(name, PROJECT_NAME));
+    zip.file('README-ELECTRON.md', gerarReadmeElectron());
+
+  }else if(target==='pwa'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('public/manifest.json', JSON.stringify(gerarManifest(name, PROJECT_NAME), null,2));
+    zip.file('public/sw.js', gerarServiceWorker(PROJECT_NAME));
+    zip.file('index.html', gerarIndexHtmlPwa(PROJECT_NAME));
+    zip.file('README-PWA.md', gerarReadmePwa(PROJECT_NAME));
+
+  }else if(target==='git'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('.github/workflows/ci.yml', gerarWorkflowCI());
+    zip.file('README-GIT.md', gerarReadmeGit(name, cfg.ghUser, cfg.ghRepo));
+
+  }else if(target==='netlify'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('netlify.toml', gerarNetlifyToml());
+    zip.file('README-NETLIFY.md', gerarReadmeNetlify(PROJECT_NAME));
+
+  }else if(target==='vercel'){
+    zip.file('vite.config.ts', viteConfig);
+    zip.file('package.json', gerarPkgClean(pkg, name));
+    zip.file('vercel.json', JSON.stringify(gerarVercelJson(), null,2));
+    zip.file('.vercelignore', 'node_modules\n.env\n*.log\n');
+    zip.file('README-VERCEL.md', gerarReadmeVercel(PROJECT_NAME));
+  }
+
+  return zip.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}});
+}
+
+// ══════════════════════════════════════════
+// HELPERS DE CONTEÚDO
+// ══════════════════════════════════════════
+function parsePkg(){
+  try{ return JSON.parse(VFS['package.json']||'{}'); }catch{ return {}; }
+}
+function cleanDeps(deps={}){
+  const r={};
+  for(const[k,v]of Object.entries(deps)){
+    if(!k.startsWith('@replit/')&&!k.startsWith('@workspace/')) r[k]=v;
+  }
+  return r;
+}
+
+const GITIGNORE=`node_modules/\ndist/\nbuild/\n.expo/\n*.local\n.env\n.DS_Store\n*.log\nandroid/\nios/\n`;
+
+function gerarViteConfig(){
+  return `import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { "@": path.resolve(import.meta.dirname, "src") },
+  },
+  server: { port: 5173, host: "0.0.0.0" },
+  build: { outDir: "dist" },
+});
+`;}
+
+function gerarPkgClean(pkg, name){
+  return JSON.stringify({
+    name, version:pkg.version||'1.0.0', type:'module',
+    scripts:{dev:'vite',build:'vite build',preview:'vite preview'},
+    dependencies:cleanDeps(pkg.dependencies),
+    devDependencies:{...cleanDeps(pkg.devDependencies),vite:'^6.0.0','@vitejs/plugin-react':'^4.0.0','@tailwindcss/vite':'^4.0.0',tailwindcss:'^4.0.0'},
+  },null,2);
+}
+
+function gerarPkgEas(pkg, name, version){
+  return {
+    name, version, main:'node_modules/expo/AppEntry.js',
+    scripts:{start:'expo start',android:'expo run:android',ios:'expo run:ios',web:'expo start --web','build:apk':'eas build --platform android --profile preview'},
+    dependencies:{expo:'~51.0.0','expo-status-bar':'~1.12.1',react:'18.2.0','react-native':'0.74.1',...cleanDeps(pkg.dependencies)},
+    devDependencies:{'@babel/core':'^7.20.0',typescript:'^5.1.3'},
+  };
+}
+
+function gerarPkgCapacitor(pkg, name, version){
+  return JSON.stringify({
+    name, version, type:'module',
+    scripts:{dev:'vite',build:'vite build','build:android':'npm run build && npx cap sync android'},
+    dependencies:{...cleanDeps(pkg.dependencies),'@capacitor/core':'^6.0.0','@capacitor/android':'^6.0.0','@capacitor/cli':'^6.0.0'},
+    devDependencies:{...cleanDeps(pkg.devDependencies),vite:'^6.0.0','@vitejs/plugin-react':'^4.0.0'},
+  },null,2);
+}
+
+function gerarPkgElectron(pkg, name, version){
+  return {
+    name, version, main:'electron/main.js', type:'commonjs',
+    scripts:{dev:'vite',build:'vite build','electron:dev':'concurrently "npm run dev" "wait-on http://localhost:5173 && electron ."','electron:build':'npm run build && electron-builder'},
+    dependencies:cleanDeps(pkg.dependencies),
+    devDependencies:{...cleanDeps(pkg.devDependencies),electron:'^29.0.0','electron-builder':'^24.0.0',concurrently:'^8.0.0','wait-on':'^7.0.0',vite:'^6.0.0','@vitejs/plugin-react':'^4.0.0'},
+  };
+}
+
+function gerarAppJson(name, displayName, version, token){
+  return {expo:{
+    name:displayName, slug:name, version,
+    orientation:'portrait', icon:'./assets/icon.png',
+    splash:{image:'./assets/splash.png',resizeMode:'contain',backgroundColor:'#ffffff'},
+    android:{adaptiveIcon:{foregroundImage:'./assets/adaptive-icon.png',backgroundColor:'#ffffff'},package:`com.${name.replace(/-/g,'')}.app`},
+    ios:{supportsTablet:true,bundleIdentifier:`com.${name.replace(/-/g,'')}.app`},
+    extra:{eas:{projectId:''}},
+  }};
+}
+
+function gerarEasJson(token){
+  return {
+    cli:{version:'>= 5.9.1'},
+    build:{
+      development:{developmentClient:true,distribution:'internal',env:{}},
+      preview:{distribution:'internal',android:{buildType:'apk'},env:{}},
+      production:{android:{buildType:'apk'},env:{EXPO_TOKEN:token||''}},
+    },
+    submit:{production:{}},
+  };
+}
+
+function gerarCapacitorConfig(name, displayName){
+  return `import { CapacitorConfig } from '@capacitor/cli';
+const config: CapacitorConfig = {
+  appId: 'com.${name.replace(/-/g,'')}.app',
+  appName: '${displayName}',
+  webDir: 'dist',
+  server: { androidScheme: 'https' },
+};
+export default config;
+`;}
+
+function gerarElectronMain(displayName){
+  return `const { app, BrowserWindow } = require('electron');
+const path = require('path');
+const isDev = process.env.NODE_ENV === 'development';
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1280, height: 800,
+    webPreferences: { nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js') },
+    title: '${displayName}',
+  });
+  if (isDev) { win.loadURL('http://localhost:5173'); win.webContents.openDevTools(); }
+  else { win.loadFile(path.join(__dirname, '../dist/index.html')); }
+}
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+});
+app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+`;}
+
+function gerarElectronPreload(){
+  return `const { contextBridge } = require('electron');
+contextBridge.exposeInMainWorld('electronAPI', { platform: process.platform, versions: process.versions });
+`;}
+
+function gerarElectronBuilder(name, displayName){
+  return `appId: com.${name.replace(/-/g,'')}.app
+productName: "${displayName}"
+directories:
+  buildResources: assets
+  output: dist-electron
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+mac:
+  target: dmg
+linux:
+  target: AppImage
+`;}
+
+function gerarManifest(name, displayName){
+  return {
+    name:displayName, short_name:name, start_url:'/',
+    display:'standalone', background_color:'#111a0a', theme_color:'#2d5a1b',
+    description:`App ${displayName} — instalável sem loja`,
+    icons:[
+      {src:'icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
+      {src:'icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'},
+    ],
+  };
+}
+
+function gerarServiceWorker(displayName){
+  return `// Service Worker — ${displayName}
+const CACHE_NAME = 'pwa-cache-v1';
+const ASSETS = ['/', '/index.html'];
+self.addEventListener('install', e => { self.skipWaiting(); e.
+))); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))); self.clients.claim(); });
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+    if (res && res.status === 200) { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(e.request, clone)); }
+    return res;
+  }).catch(() => caches.match('/index.html'))));
+});
+`;}
+
+function gerarIndexHtmlPwa(displayName){
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#2d5a1b"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="${displayName}"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <title>${displayName}</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(r => console.log('[PWA] SW registrado:', r.scope))
+          .catch(e => console.warn('[PWA] SW falhou:', e));
+      });
+    }
+  </script>
+</body>
+</html>
+`;}
+
+function gerarWorkflowGhPages(){
+  return `name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: ./dist }
+  deploy:
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+`;}
+
+function gerarWorkflowCI(){
+  return `name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with: { name: dist, path: dist/ }
+`;}
+
+function gerarNetlifyToml(){
+  return `[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+`;}
+
+function gerarVercelJson(){
+  return {
+    buildCommand:'npm run build',
+    outputDirectory:'dist',
+    framework:'vite',
+    rewrites:[{source:'/(.*)',destination:'/index.html'}],
+  };
+}
+
+// ── READMEs ──
+function gerarReadme(name, displayName){
+  return `# ${displayName}\n\n## Instalação\n\`\`\`bash\nnpm install\n\`\`\`\n\n## Desenvolvimento\n\`\`\`bash\nnpm run dev\n# Acesse http://localhost:5173\n\`\`\`\n\n## Build\n\`\`\`bash\nnpm run build\n\`\`\`\n\n## Publicar\n\n### Netlify (grátis)\n1. \`npm run build\`\n2. Arraste \`dist/\` para https://app.netlify.com/drop\n\n### Vercel\n\`\`\`bash\nnpx vercel\n\`\`\`\n`;}
+
+function gerarReadmeEas(name){
+  return `# Build APK via EAS\n\n## Pré-requisitos\n\`\`\`bash\nnpm install -g @expo/eas-cli\nnpm install\nexpo login\neas login\n\`\`\`\n\n## Build APK\n\`\`\`bash\neas build --platform android --profile preview\n\`\`\`\n\n## Build local\n\`\`\`bash\neas build --platform android --profile preview --local\n\`\`\`\n`;}
+
+function gerarReadmeCapacitor(name, displayName){
+  return `# APK via Capacitor — ${displayName}\n\n## Instalar\n\`\`\`bash\nnpm install\nnpm install @capacitor/core @capacitor/android @capacitor/cli\nnpx cap init "${displayName}" "com.${name.replace(/-/g,'')}.app" --web-dir dist\nnpx cap add android\n\`\`\`\n\n## Build APK\n\`\`\`bash\nnpm run build\nnpx cap sync\ncd android && ./gradlew assembleDebug\n# APK: android/app/build/outputs/apk/debug/app-debug.apk\n\`\`\`\n`;}
+
+function gerarReadmeGhPages(name, user, repo){
+  return `# GitHub Pages — ${name}\n\n## Deploy\n\`\`\`bash\ngit init && git add .\ngit commit -m "inicial"\ngit remote add origin https://github.com/${user||'SEU_USUARIO'}/${repo||name}.git\ngit push -u origin main\n\`\`\`\n\n## Habilitar Pages\nSettings → Pages → Source → GitHub Actions\n\n## URL\nhttps://${user||'SEU_USUARIO'}.github.io/${repo||name}/\n`;}
+
+function gerarReadmeElectron(){
+  return `# Executável Desktop (Electron)\n\n## Instalar\n\`\`\`bash\nnpm install\n\`\`\`\n\n## Desenvolver\n\`\`\`bash\nnpm run electron:dev\n\`\`\`\n\n## Build executável\n\`\`\`bash\nnpm run electron:build\n\`\`\`\n\nSaída em \`dist-electron/\`:\n- **Windows**: \`.exe\`\n- **macOS**: \`.dmg\`\n- **Linux**: \`.AppImage\`\n`;}
+
+function gerarReadmePwa(displayName){
+  return `# PWA — ${displayName}\n\n## Publicar\n\`\`\`bash\nnpm install && npm run build\n# Arraste dist/ para https://app.netlify.com/drop\n\`\`\`\n\n## Instalar no celular\n1. Publique em HTTPS\n2. Acesse no Chrome Android\n3. Menu → "Adicionar à tela inicial"\n4. ✅ App instalado sem loja!\n`;}
+
+function gerarReadmeGit(name, user, repo){
+  return `# Deploy via Git — ${name}\n\n\`\`\`bash\ngit init && git add . && git commit -m "inicial"\ngit remote add origin https://github.com/${user||'USER'}/${repo||name}.git\ngit push -u origin main\n\`\`\`\n\n## Vercel\n\`\`\`bash\nnpx vercel\n\`\`\`\n`;}
+
+function gerarReadmeNetlify(displayName){
+  return `# Netlify — ${displayName}\n\n## Arrastar e soltar\n1. \`npm run build\`\n2. Acesse https://app.netlify.com/drop\n3. Arraste a pasta \`dist/\`\n\n## CLI\n\`\`\`bash\nnpx netlify-cli deploy --dir dist --prod\n\`\`\`\n`;}
+
+function gerarReadmeVercel(displayName){
+  return `# Vercel — ${displayName}\n\n## CLI\n\`\`\`bash\nnpm run build\nnpx vercel\n\`\`\`\n\n## Drag-and-drop\n1. \`npm run build\`\n2. Acesse https://vercel.com/new\n3. Arraste \`dist/\`\n`;}
+
+// ══════════════════════════════════════════
+// GERAR PLANO.md
+// ══════════════════════════════════════════
+function gerarPlano(){
+  const btn = document.getElementById('plano-txt');
+  const files = Object.keys(VFS);
+  const pkg = parsePkg();
+  const deps = {...(pkg.dependencies||{}), ...(pkg.devDependencies||{})};
+  const depNames = Object.keys(deps);
+
+  const hasReact    = depNames.includes('react') || files.some(f=>f.endsWith('.tsx')||f.endsWith('.jsx'));
+  const hasVite     = depNames.includes('vite');
+  const hasExpress  = depNames.includes('express');
+  const hasTS       = depNames.includes('typescript') || files.some(f=>f.endsWith('.ts')||f.endsWith('.tsx'));
+  const hasTailwind = depNames.includes('tailwindcss');
+  const hasPostgres = depNames.includes('pg')||depNames.includes('@neondatabase/serverless');
+  const hasPrisma   = depNames.includes('@prisma/client')||depNames.includes('prisma');
+  const hasPython   = files.some(f=>f.endsWith('.py'));
+  const hasHTML     = files.some(f=>f.endsWith('.html'));
+
+  const stackFront = [];
+  if(hasReact) stackFront.push(`React${hasVite?' + Vite':''}`);
+  if(hasTS)    stackFront.push('TypeScript');
+  if(hasTailwind) stackFront.push('Tailwind CSS');
+  if(hasPython)   stackFront.push('Python');
+  if(hasHTML && !hasReact && !hasPython) stackFront.push('HTML/CSS/JS');
+
+  const stackBack = [];
+  if(hasExpress)  stackBack.push('Node.js + Express');
+  if(hasPostgres) stackBack.push('PostgreSQL');
+  if(hasPrisma)   stackBack.push('Prisma ORM');
+
+  const totalLines = files.reduce((s,f)=>{
+    const c = VFS[f]||'';
+    return s + c.split('\n').length;
+  },0);
+
+  const appType = hasReact && hasExpress ? 'Full-Stack (React + Express)'
+    : hasReact ? 'Frontend (React)'
+    : hasExpress ? 'Backend/API (Node.js)'
+    : hasHTML ? 'Site Web (HTML/CSS/JS)'
+    : hasPython ? 'Aplicação Python'
+    : 'Projeto de Código';
+
+  const now = new Date().toLocaleString('pt-BR');
+  const slug = PROJECT_NAME.toLowerCase().replace(/\s+/g,'-');
+  const depDeps = Object.keys(pkg.dependencies||{});
+  const devDeps = Object.keys(pkg.devDependencies||{});
+
+  const plano = `# PLANO DO PROJETO: ${PROJECT_NAME}
+
+> Gerado em: ${now}
+> Arquivos: ${files.length} | Linhas de código: ~${totalLines.toLocaleString('pt-BR')}
+
+---
+
+## RESUMO EXECUTIVO
+
+- **Tipo:** ${appType}
+${stackFront.length ? `- **Frontend/Stack:** ${stackFront.join(', ')}` : ''}
+${stackBack.length ? `- **Backend/Dados:** ${stackBack.join(', ')}` : ''}
+${pkg.version ? `- **Versão:** ${pkg.version}` : ''}
+${pkg.description ? `- **Descrição:** ${pkg.description}` : ''}
+
+---
+
+## ARQUIVOS DO PROJETO (${files.length})
+
+\`\`\`
+${files.join('\n')}
+\`\`\`
+
+---
+
+## DEPENDÊNCIAS (${depNames.length} pacotes)
+
+${depDeps.length > 0 ? `### Produção (${depDeps.length})\n${depDeps.map(d=>`- \`${d}\` ${deps[d]}`).join('\n')}` : ''}
+
+${devDeps.length > 0 ? `### Desenvolvimento (${devDeps.length})\n${devDeps.map(d=>`- \`${d}\` ${deps[d]}`).join('\n')}` : ''}
+
+---
+
+## GUIA PARA RECRIAR DO ZERO
+
+\`\`\`bash
+# 1. Criar projeto
+npm create vite@latest ${slug} -- --template react-ts
+cd ${slug}
+
+# 2. Instalar dependências
+${depDeps.length > 0 ? `npm install ${depDeps.join(' ')}` : '# Nenhuma dependência de produção'}
+
+# 3. Rodar
+npm run dev
+\`\`\`
+
+---
+
+## CONTEXTO PARA IA
+
+\`\`\`
+Projeto: ${PROJECT_NAME}
+Tipo: ${appType}
+Stack: ${[...stackFront,...stackBack].join(', ')||'Não detectado'}
+Arquivos: ${files.length} | Linhas: ~${totalLines.toLocaleString('pt-BR')}
+
+Arquivos do projeto:
+${files.join('\n')}
+\`\`\`
+
+---
+
+## CHECKLIST
+
+- [ ] Node.js 20+ instalado
+- [ ] Dependências instaladas (npm install)
+${hasPostgres ? '- [ ] Banco de dados PostgreSQL configurado' : ''}
+${hasPrisma ? '- [ ] Migrações Prisma executadas' : ''}
+- [ ] Projeto rodando localmente
+- [ ] Build de produção testado (npm run build)
+
+---
+
+*Gerado pelo Build & Deploy — ${now}*
+`;
+
+  // Baixar como arquivo
+  const blob = new Blob([plano], {type:'text/markdown'});
+  salvarBlob(blob, `${slug}-PLANO.md`);
+  btn.textContent = '✅ PLANO.md baixado!';
+  setTimeout(()=>{ btn.textContent='📋 Gerar PLANO.md'; },2500);
+  toast('✅ PLANO.md gerado!','ok');
+}
+
+// ══════════════════════════════════════════
+// PLAYGROUND
+// ══════════════════════════════════════════
+function abrirPlayground(){
+  const ov = document.getElementById('playground-overlay');
+  ov.style.display='flex';
+  document.getElementById('playground-code').value=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Playground</title>
+  <style>
+    body { font-family: sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+    h1 { color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <h1>Olá, Playground! 👋</h1>
+  <p>Edite este HTML ao vivo.</p>
+  <script>
+    document.querySelector('h1').addEventListener('click', () => {
+      alert('Funcionando! ✅');
+    });
+  </script>
+</body>
+</html>`;
+  atualizarPreview();
+}
+
+function fecharPlayground(){
+  document.getElementById('playground-overlay').style.display='none';
+}
+
+function atualizarPreview(){
+  const code = document.getElementById('playground-code').value;
+  const iframe = document.getElementById('playground-preview');
+  const blob = new Blob([code],{type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  iframe.src = url;
+}
+
+function baixarPlayground(){
+  const code = document.getElementById('playground-code').value;
+  const blob = new Blob([code],{type:'text/html'});
+  salvarBlob(blob,'playground.html');
+}
+
+function simDownload(tipo){
+  toast(`⚠️ Arquivo ${tipo} não disponível nesta versão standalone`,'err');
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function salvarBlob(blob, nome){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=nome; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function toast(msg, tipo){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast '+(tipo==='ok'?'toast-ok':'toast-err');
+  el.style.opacity='1';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity='0'; },2800);
+}
+
+function escHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escJs(s){
+  return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+}
+
+function loadJSZ(){
+  return new Promise((res,rej)=>{
+    if(window.JSZip){ res(window.JSZip); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=()=>res(window.JSZip);
+    s.onerror=()=>rej(new Error('JSZip não carregou — verifique sua conexão'));
+    document.head.appendChild(s);
+  });
+}
+</script>
+</body>
+</html>
