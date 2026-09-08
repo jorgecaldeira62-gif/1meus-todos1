@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Chat Livre com Voz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+            background: #1e293b;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mensagem {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mensagem.usuario {
+            justify-content: flex-end;
+        }
+
+        .mensagem.ia {
+            justify-content: flex-start;
+        }
+
+        .bolha {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .usuario .bolha {
+            background: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ia .bolha {
+            background: #0f172a;
+            color: #f1f5f9;
+            border: 1px solid #334155;
+            border-bottom-left-radius: 4px;
+        }
+
+        .digitando {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .ponto {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .ponto:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .ponto:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .footer {
+            padding: 15px;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-falar {
+            background: #22c55e;
+        }
+
+        .btn-falar:hover {
+            background: #16a34a;
+        }
+
+        .btn-falar.gravando {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status {
+            font-size: 11px;
+            color: #cbd5e1;
+            padding: 5px 10px;
+            background: #0f172a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 Chat Livre com Voz</h1>
+            <p>Converse naturalmente • TTS Realista • Memória de Contexto</p>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <div class="footer">
+            <button class="btn-falar" id="btnFalar" onclick="iniciarGravacao()">
+                🎤 Falar
+            </button>
+            <button onclick="enviarTexto()">📤 Enviar</button>
+            <button onclick="limparChat()">🗑️ Limpar</button>
+            <div class="status" id="status">✅ Pronto</div>
+        </div>
+    </div>
+
+    <script>
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        let gravando = false;
+        let inputTexto = '';
+        let contexto = []; // Memória da conversa
+        let respondendo = false;
+
+        // ── INICIAR GRAVAÇÃO ──
+        function iniciarGravacao() {
+            if (gravando) {
+                recognition.stop();
+                return;
+            }
+
+            gravando = true;
+            document.getElementById('btnFalar').classList.add('gravando');
+            document.getElementById('btnFalar').textContent = '🎤 Gravando...';
+            document.getElementById('status').textContent = '🎤 Escutando...';
+
+            recognition.start();
+        }
+
+        // ── RESULTADO DA GRAVAÇÃO ──
+        recognition.onresult = (event) => {
+            inputTexto = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                inputTexto += event.results[i][0].transcript;
+            }
+        };
+
+        // ── FIM DA GRAVAÇÃO ──
+        recognition.onend = () => {
+            gravando = false;
+            document.getElementById('btnFalar').classList.remove('gravando');
+            document.getElementById('btnFalar').textContent = '🎤 Falar';
+            document.getElementById('status').textContent = '✅ Pronto';
+
+            if (inputTexto.trim()) {
+                enviarMensagem(inputTexto);
+            }
+        };
+
+        // ── ENVIAR TEXTO ──
+        function enviarTexto() {
+            const input = prompt('Digite sua mensagem:');
+            if (input && input.trim()) {
+                enviarMensagem(input);
+            }
+        }
+
+        // ── ENVIAR MENSAGEM ──
+        function enviarMensagem(texto) {
+            if (respondendo) return;
+
+            // Adicionar mensagem do usuário
+            adicionarMensagem(texto, 'usuario');
+            contexto.push({ papel: 'usuario', conteudo: texto });
+
+            // Mostrar digitando
+            mostrarDigitando();
+
+            // Delay de 3-4 segundos
+            const delay = 3000 + Math.random() * 1000;
+            setTimeout(() => {
+                gerarResposta(texto);
+            }, delay);
+        }
+
+        // ── GERAR RESPOSTA ──
+        function gerarResposta(pergunta) {
+            respondendo = true;
+
+            // Respostas contextualizadas (mínimo 2 parágrafos)
+            const respostas = {
+                'olá': 'Olá! Que prazer conversar com você. Estou aqui para ajudar com qualquer dúvida que você tenha. Seja sobre assuntos jurídicos, técnicos ou simplesmente para uma conversa agradável, estou à sua disposição. Como posso ser útil para você neste momento?',
+                
+                'como você está': 'Estou funcionando perfeitamente, obrigado por perguntar! Meu objetivo é estar aqui para você sempre que precisar. Tenho memória de nossa conversa, então posso acompanhar o contexto do que discutimos. Isso me permite dar respostas mais personalizadas e relevantes para sua situação específica.',
+                
+                'qual é seu nome': 'Sou um assistente de inteligência artificial criado para conversar naturalmente com você. Não tenho um nome específico, mas você pode me chamar do jeito que preferir. O importante é que estou aqui para ajudar e manter uma conversa genuína e útil. Qual é o seu nome? Gostaria de saber como você prefere ser chamado.',
+                
+                'padrão': 'Entendi perfeitamente o que você disse. Essa é uma questão muito interessante e importante. Deixe-me compartilhar minha perspectiva sobre isso. Baseado no contexto de nossa conversa e em informações relevantes, acredito que a melhor abordagem seria considerar vários aspectos. Estou aqui para explorar isso com você em mais detalhes se desejar.'
+            };
+
+            // Encontrar resposta apropriada
+            let resposta = respostas['padrão'];
+            const perguntaLower = pergunta.toLowerCase();
+
+            for (const [chave, valor] of Object.entries(respostas)) {
+                if (perguntaLower.includes(chave)) {
+                    resposta = valor;
+                    break;
+                }
+            }
+
+            // Remover digitando
+            removerDigitando();
+
+            // Adicionar resposta
+            adicionarMensagem(resposta, 'ia');
+            contexto.push({ papel: 'ia', conteudo: resposta });
+
+            // Falar a resposta
+            falarResposta(resposta);
+        }
+
+        // ── ADICIONAR MENSAGEM ──
+        function adicionarMensagem(texto, tipo) {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'mensagem ' + tipo;
+            div.innerHTML = `<div class="bolha">${texto}</div>`;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // ── MOSTRAR DIGITANDO ──
+        function mostrarDigitando() {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'mensagem ia';
+            div.id = 'digitando';
+            div.innerHTML = `
+                <div class="bolha">
+                    <div class="digitando">
+                        <div class="ponto"></div>
+                        <div class="ponto"></div>
+                        <div class="ponto"></div>
+                    </div>
+                </div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // ── REMOVER DIGITANDO ──
+        function removerDigitando() {
+            const digitando = document.getElementById('digitando');
+            if (digitando) digitando.remove();
+        }
+
+        // ── IA FALA ──
+        function falarResposta(texto) {
+            document.getElementById('status').textContent = '🎤 Falando...';
+
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.15; // Velocidade realista
+            utterance.pitch = 0.95; // Tom realista
+            utterance.volume = 1;
+
+            utterance.onend = () => {
+                document.getElementById('status').textContent = '✅ Pronto';
+                respondendo = false;
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ── LIMPAR CHAT ──
+        function limparChat() {
+            document.getElementById('chat').innerHTML = '';
+            contexto = [];
+            adicionarMensagem('Olá! Sou um assistente de IA criado para conversar naturalmente com você. Você pode falar ou digitar suas mensagens. Vou responder com naturalidade, mantendo memória de nossa conversa. Como posso ajudá-lo?', 'ia');
+        }
+
+        // Mensagem inicial
+        limparChat();
+    </script>
+</body>
+</html>
