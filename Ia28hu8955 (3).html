@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor HTML</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: monospace; background: #1a1a1a; color: #eee; height: 100vh; display: flex; flex-direction: column; }
+#nav { background: #222; padding: 10px; border-bottom: 1px solid #444; display: flex; gap: 10px; }
+button { background: #0066cc; color: #fff; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+button:hover { background: #0052a3; }
+#container { display: flex; flex: 1; overflow: hidden; }
+#sidebar { width: 250px; background: #222; border-right: 1px solid #444; overflow-y: auto; padding: 10px; }
+#main { flex: 1; display: flex; flex-direction: column; }
+#editor { flex: 1; display: flex; }
+#code { flex: 1; background: #1a1a1a; color: #0f0; font-family: monospace; font-size: 13px; padding: 10px; border: none; resize: none; outline: none; }
+#preview { flex: 1; background: #fff; border-left: 1px solid #444; }
+.file-item { padding: 8px; background: #2a2a2a; margin: 5px 0; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.file-item:hover { background: #333; }
+.file-item.active { background: #0066cc; }
+.file-actions { display: flex; gap: 5px; }
+.file-actions button { padding: 4px 8px; font-size: 10px; }
+#split-toggle { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div id="nav">
+  <button onclick="newFile()">📄 Novo</button>
+  <button onclick="importZip()">📦 Importar ZIP</button>
+  <button onclick="exportZip()">💾 Exportar ZIP</button>
+  <button onclick="togglePreview()">👁️ Preview</button>
+  <input type="file" id="zipInput" accept=".zip" style="display:none" onchange="handleZipImport(event)">
+</div>
+
+<div id="container">
+  <div id="sidebar"></div>
+  <div id="main">
+    <div id="editor">
+      <textarea id="code" placeholder="Selecione um arquivo..."></textarea>
+      <iframe id="preview" style="display:none;"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+let files = {};
+let currentFile = null;
+let previewVisible = false;
+
+// INIT
+function init() {
+  const saved = localStorage.getItem('files');
+  if (saved) {
+    try {
+      files = JSON.parse(saved);
+    } catch (e) {
+      files = {};
+    }
+  }
+  
+  if (Object.keys(files).length === 0) {
+    files['index.html'] = '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <title>Meu Projeto</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>Olá!</h1>\n  <script src="app.js"><\/script>\n</body>\n</html>';
+    files['style.css'] = 'body { font-family: Arial; background: #f0f0f0; padding: 20px; }\nh1 { color: #333; }';
+    files['app.js'] = 'console.log("Funcionando!");';
+  }
+  
+  renderSidebar();
+  
+  const first = Object.keys(files)[0];
+  if (first) openFile(first);
+}
+
+// SIDEBAR
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = '';
+  
+  Object.keys(files).sort().forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'file-item' + (name === currentFile ? ' active' : '');
+    
+    div.innerHTML = `
+      <span onclick="openFile('${name}')" style="flex:1; cursor:pointer;">${name}</span>
+      <div class="file-actions">
+        <button onclick="deleteFile('${name}')">🗑️</button>
+      </div>
+    `;
+    
+    sidebar.appendChild(div);
+  });
+}
+
+// ABRIR ARQUIVO
+function openFile(name) {
+  if (currentFile && files[currentFile] !== undefined) {
+    files[currentFile] = document.getElementById('code').value;
+  }
+  
+  currentFile = name;
+  document.getElementById('code').value = files[name] || '';
+  renderSidebar();
+  updatePreview();
+}
+
+// NOVO ARQUIVO
+function newFile() {
+  const name = prompt('Nome do arquivo:');
+  if (!name) return;
+  
+  if (files[name] !== undefined) {
+    alert('Arquivo já existe');
+    return;
+  }
+  
+  files[name] = '';
+  localStorage.setItem('files', JSON.stringify(files));
+  renderSidebar();
+  openFile(name);
+}
+
+// DELETAR ARQUIVO
+function deleteFile(name) {
+  if (!confirm('Deletar ' + name + '?')) return;
+  
+  delete files[name];
+  localStorage.setItem('files', JSON.stringify(files));
+  
+  if (currentFile === name) {
+    currentFile = null;
+    document.getElementById('code').value = '';
+  }
+  
+  renderSidebar();
+}
+
+// SALVAR
+document.getElementById('code').addEventListener('input', function() {
+  if (currentFile) {
+    files[currentFile] = this.value;
+    localStorage.setItem('files', JSON.stringify(files));
+    updatePreview();
+  }
+});
+
+// PREVIEW
+function updatePreview() {
+  if (!previewVisible || !currentFile) return;
+  
+  const ext = currentFile.split('.').pop().toLowerCase();
+  const iframe = document.getElementById('preview');
+  
+  if (ext === 'html') {
+    let html = files[currentFile];
+    
+    // Injetar CSS
+    Object.keys(files).forEach(name => {
+      if (name.endsWith('.css')) {
+        html = html.replace('</head>', `<style>${files[name]}</style></head>`);
+      }
+    });
+    
+    // Injetar JS
+    Object.keys(files).forEach(name => {
+      if (name.endsWith('.js')) {
+        html = html.replace('</body>', `<script>${files[name]}<\/script></body>`);
+      }
+    });
+    
+    iframe.srcdoc = html;
+  }
+}
+
+function togglePreview() {
+  previewVisible = !previewVisible;
+  document.getElementById('preview').style.display = previewVisible ? 'block' : 'none';
+  updatePreview();
+}
+
+// IMPORTAR ZIP
+function importZip() {
+  document.getElementById('zipInput').click();
+}
+
+async function handleZipImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const newFiles = {};
+    
+    for (const [path, obj] of Object.entries(zip.files)) {
+      if (obj.dir) continue;
+      try {
+        newFiles[path] = await obj.async('string');
+      } catch (e) {
+        console.log('Erro ao ler:', path);
+      }
+    }
+    
+    files = newFiles;
+    localStorage.setItem('files', JSON.stringify(files));
+    renderSidebar();
+    
+    const first = Object.keys(files)[0];
+    if (first) openFile(first);
+    
+    alert('✅ ZIP importado! ' + Object.keys(files).length + ' arquivos');
+  } catch (err) {
+    alert('❌ Erro: ' + err.message);
+  }
+  
+  event.target.value = '';
+}
+
+// EXPORTAR ZIP
+async function exportZip() {
+  if (!window.JSZip) {
+    alert('JSZip não carregou');
+    return;
+  }
+  
+  if (currentFile) {
+    files[currentFile] = document.getElementById('code').value;
+  }
+  
+  const zip = new JSZip();
+  
+  Object.keys(files).forEach(name => {
+    zip.file(name, files[name] || '');
+  });
+  
+  const blob = await zip.generateAsync({ type: 'blob' });
+  
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'projeto.zip';
+  a.click();
+  
+  alert('✅ ZIP exportado!');
+}
+
+// INICIAR
+init();
+</script>
+
+</body>
+</html>
