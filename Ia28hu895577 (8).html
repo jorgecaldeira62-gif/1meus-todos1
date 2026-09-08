@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 TTS - Text to Speech</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .secao {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #0f172a;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .secao h2 {
+            font-size: 16px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .controles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        label strong {
+            margin-bottom: 5px;
+            color: #f1f5f9;
+        }
+
+        input[type="text"],
+        input[type="range"],
+        select {
+            padding: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            cursor: pointer;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-parar {
+            background: #ef4444;
+        }
+
+        .btn-parar:hover {
+            background: #dc2626;
+        }
+
+        .status {
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 14px;
+            border-left: 4px solid #22c55e;
+        }
+
+        .status.falando {
+            border-left-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .status.erro {
+            border-left-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .info {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 10px;
+        }
+
+        .vozes-lista {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .voz-item {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .voz-item:hover {
+            border-color: #3b82f6;
+            background: #0f172a;
+        }
+
+        .voz-item.selecionada {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .slider-valor {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 TTS - Text to Speech</h1>
+
+        <!-- SEÇÃO DE CONFIGURAÇÃO -->
+        <div class="secao">
+            <h2>⚙️ Configurações</h2>
+            
+            <div class="controles">
+                <label>
+                    <strong>🗣️ Voz</strong>
+                    <select id="voz">
+                        <option value="">Padrão do sistema</option>
+                    </select>
+                </label>
+
+                <label>
+                    <strong>🔊 Volume</strong>
+                    <div style="display: flex; align-items: center;">
+                        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+                        <span class="slider-valor" id="volumeValor">100%</span>
+                    </div>
+                </label>
+
+                <label>
+                    <strong>⚡ Velocidade</strong>
+                    <div style="display: flex; align-items: center;">
+                        <input type="range" id="velocidade" min="0.5" max="2" step="0.1" value="1">
+                        <span class="slider-valor" id="velocidadeValor">1x</span>
+                    </div>
+                </label>
+
+                <label>
+                    <strong>🎵 Tom (Pitch)</strong>
+                    <div style="display: flex; align-items: center;">
+                        <input type="range" id="tom" min="0.5" max="2" step="0.1" value="1">
+                        <span class="slider-valor" id="tomValor">1x</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="info">
+                ℹ️ Funciona melhor no Chrome. Firefox também suporta.
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE TEXTO -->
+        <div class="secao">
+            <h2>📝 Texto para Falar</h2>
+            <textarea id="texto" placeholder="Digite o texto que deseja ouvir...">Olá! Bem-vindo ao leitor de texto. Você pode digitar qualquer coisa aqui e eu vou ler em voz alta para você.</textarea>
+            
+            <div class="botoes">
+                <button onclick="falar()">🎤 Falar</button>
+                <button class="btn-parar" onclick="parar()" id="btnParar" disabled>⏹️ Parar</button>
+                <button onclick="pausar()" id="btnPausar" disabled>⏸️ Pausar</button>
+                <button onclick="retomar()" id="btnRetomar" disabled>▶️ Retomar</button>
+            </div>
+
+            <div class="status" id="status">
+                ✅ Pronto para falar
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE VOZES DISPONÍVEIS -->
+        <div class="secao">
+            <h2>🗣️ Vozes Disponíveis</h2>
+            <div class="vozes-lista" id="vozesList"></div>
+            <div class="info" style="margin-top: 15px;">
+                ℹ️ Clique em uma voz para selecioná-la. As vozes disponíveis dependem do seu navegador e sistema operacional.
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE EXEMPLOS -->
+        <div class="secao">
+            <h2>📚 Exemplos Rápidos</h2>
+            <div class="botoes">
+                <button onclick="exemplo('Olá, como você está?')">Saudação</button>
+                <button onclick="exemplo('Esse é um teste de velocidade e tom.')">Teste</button>
+                <button onclick="exemplo('A inteligência artificial está revolucionando o mundo.')">IA</button>
+                <button onclick="exemplo('Você pode usar isso para ler documentos jurídicos.')">Jurídico</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let utterance = null;
+        let vozesSistema = [];
+
+        // ── CARREGAR VOZES ──
+        function carregarVozes() {
+            vozesSistema = window.speechSynthesis.getVoices();
+            
+            const selectVoz = document.getElementById('voz');
+            const vozesList = document.getElementById('vozesList');
+            
+            vozesList.innerHTML = '';
+            
+            vozesSistema.forEach((voz, index) => {
+                // Adicionar ao select
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voz.name} (${voz.lang})`;
+                selectVoz.appendChild(option);
+                
+                // Adicionar à lista de vozes
+                const item = document.createElement('div');
+                item.className = 'voz-item';
+                item.textContent = `${voz.name} (${voz.lang})`;
+                item.onclick = () => {
+                    selectVoz.value = index;
+                    document.querySelectorAll('.voz-item').forEach(v => v.classList.remove('selecionada'));
+                    item.classList.add('selecionada');
+                };
+                vozesList.appendChild(item);
+            });
+        }
+
+        // Carregar vozes quando estiverem prontas
+        window.speechSynthesis.onvoiceschanged = carregarVozes;
+        carregarVozes();
+
+        // ── ATUALIZAR SLIDERS ──
+        document.getElementById('volume').addEventListener('input', (e) => {
+            document.getElementById('volumeValor').textContent = 
+                Math.round(e.target.value * 100) + '%';
+        });
+
+        document.getElementById('velocidade').addEventListener('input', (e) => {
+            document.getElementById('velocidadeValor').textContent = 
+                e.target.value + 'x';
+        });
+
+        document.getElementById('tom').addEventListener('input', (e) => {
+            document.getElementById('tomValor').textContent = 
+                e.target.value + 'x';
+        });
+
+        // ── FALAR ──
+        function falar() {
+            const texto = document.getElementById('texto').value;
+            if (!texto.trim()) {
+                alert('Digite algo para falar!');
+                return;
+            }
+
+            // Parar fala anterior
+            window.speechSynthesis.cancel();
+
+            // Criar utterance
+            utterance = new SpeechSynthesisUtterance(texto);
+
+            // Configurar
+            const vozeIndex = document.getElementById('voz').value;
+            if (vozeIndex && vozesSistema[vozeIndex]) {
+                utterance.voice = vozesSistema[vozeIndex];
+            }
+
+            utterance.volume = parseFloat(document.getElementById('volume').value);
+            utterance.rate = parseFloat(document.getElementById('velocidade').value);
+            utterance.pitch = parseFloat(document.getElementById('tom').value);
+            utterance.lang = 'pt-BR';
+
+            // Eventos
+            utterance.onstart = () => {
+                document.getElementById('status').textContent = '🎤 Falando...';
+                document.getElementById('status').className = 'status falando';
+                document.getElementById('btnParar').disabled = false;
+                document.getElementById('btnPausar').disabled = false;
+            };
+
+            utterance.onend = () => {
+                document.getElementById('status').textContent = '✅ Concluído';
+                document.getElementById('status').className = 'status';
+                document.getElementById('btnParar').disabled = true;
+                document.getElementById('btnPausar').disabled = true;
+                document.getElementById('btnRetomar').disabled = true;
+            };
+
+            utterance.onerror = (event) => {
+                document.getElementById('status').textContent = 
+                    '❌ Erro: ' + event.error;
+                document.getElementById('status').className = 'status erro';
+            };
+
+            // Falar
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ── PARAR ──
+        function parar() {
+            window.speechSynthesis.cancel();
+            document.getElementById('status').textContent = '⏹️ Parado';
+            document.getElementById('status').className = 'status';
+            document.getElementById('btnParar').disabled = true;
+            document.getElementById('btnPausar').disabled = true;
+            document.getElementById('btnRetomar').disabled = true;
+        }
+
+        // ── PAUSAR ──
+        function pausar() {
+            window.speechSynthesis.pause();
+            document.getElementById('status').textContent = '⏸️ Pausado';
+            document.getElementById('btnPausar').disabled = true;
+            document.getElementById('btnRetomar').disabled = false;
+        }
+
+        // ── RETOMAR ──
+        function retomar() {
+            window.speechSynthesis.resume();
+            document.getElementById('status').textContent = '🎤 Retomando...';
+            document.getElementById('status').className = 'status falando';
+            document.getElementById('btnPausar').disabled = false;
+            document.getElementById('btnRetomar').disabled = true;
+        }
+
+        // ── EXEMPLO ──
+        function exemplo(texto) {
+            document.getElementById('texto').value = texto;
+            falar();
+        }
+    </script>
+</body>
+</html>
