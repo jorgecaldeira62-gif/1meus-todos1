@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Assistente</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  body { background: #0d1117; color: #e6edf3; font-family: system-ui, sans-serif; }
+  .msg-user { background: #1c2128; border-left: 3px solid #58a6ff; }
+  .msg-ai { background: #161b22; border-left: 3px solid #3fb950; }
+  .msg-ai pre { background: #0d1117; border-radius: 6px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+  .msg-ai code { font-family: 'Courier New', monospace; font-size: 13px; }
+  .msg-ai p { margin: 6px 0; line-height: 1.6; }
+  .msg-ai ul, .msg-ai ol { margin: 6px 0 6px 20px; }
+  textarea { resize: none; outline: none; }
+  .tab-active { background: #21262d; color: #58a6ff; border-bottom: 2px solid #58a6ff; }
+  .tab-inactive { color: #8b949e; }
+  .tab-inactive:hover { color: #e6edf3; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #161b22; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  select, input, textarea { background: #161b22; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; }
+  select:focus, input:focus, textarea:focus { border-color: #58a6ff; outline: none; }
+  .btn { border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; transition: all .15s; border: none; }
+  .btn-primary { background: #238636; color: white; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+  .btn-secondary:hover { background: #30363d; }
+  .btn-danger { background: #21262d; color: #f85149; border: 1px solid #30363d; }
+  .btn-danger:hover { background: #3d1f1f; }
+  .snippet-item:hover { background: #1c2128; }
+  .thinking { display: inline-block; }
+  .thinking span { animation: blink 1.4s infinite; }
+  .thinking span:nth-child(2) { animation-delay: .2s; }
+  .thinking span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+  #preview-frame { background: white; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<!-- Header / Tabs -->
+<div class="flex items-center border-b border-gray-700 px-3 shrink-0" style="background:#161b22; height:44px;">
+  <div class="flex items-center gap-1 mr-4">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span class="font-semibold text-sm">Meu Assistente</span>
+  </div>
+  <div class="flex items-center gap-0">
+    <button onclick="showTab('chat')" id="tab-chat" class="tab-active btn px-4 py-2 rounded-none text-sm font-medium">💬 Chat</button>
+    <button onclick="showTab('playground')" id="tab-playground" class="tab-inactive btn px-4 py-2 rounded-none text-sm font-medium">🎨 Playground</button>
+    <button onclick="showTab('settings')" id="tab-settings" class="tab-inactive btn px-4 py-2 rounded-none text-sm font-medium">⚙️ Configurações</button>
+  </div>
+</div>
+
+<!-- CHAT TAB -->
+<div id="panel-chat" class="flex flex-col flex-1 overflow-hidden">
+  <!-- Chat toolbar -->
+  <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-700 shrink-0 flex-wrap" style="background:#161b22;">
+    <select id="provider" onchange="updateModels()" class="text-xs h-7 px-2">
+      <option value="gemini">Gemini (Google)</option>
+      <option value="groq">Groq</option>
+      <option value="openai">OpenAI</option>
+    </select>
+    <select id="model" class="text-xs h-7 px-2 min-w-36"></select>
+    <div class="flex items-center gap-1 ml-auto">
+      <span class="text-xs text-gray-400">Contexto:</span>
+      <input type="range" id="ctx-slider" min="500" max="32000" step="500" value="8000" oninput="document.getElementById('ctx-val').textContent=this.value" class="w-20 h-1 accent-blue-400">
+      <span id="ctx-val" class="text-xs text-blue-400 w-10 text-right">8000</span>
+      <span class="text-xs text-gray-500">tokens</span>
+    </div>
+    <div class="flex items-center gap-1">
+      <label class="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+        <input type="checkbox" id="web-search" class="accent-blue-400"> 🔍 Web
+      </label>
+    </div>
+    <button onclick="clearChat()" class="btn btn-danger text-xs h-7 px-2">🗑 Limpar</button>
+  </div>
+
+  <!-- Memory indicator -->
+  <div id="memory-bar" class="text-xs px-3 py-1 text-gray-500 border-b border-gray-800" style="background:#0d1117;">
+    🧠 Memória: <span id="mem-count">0</span> mensagens no contexto
+  </div>
+
+  <!-- Messages -->
+  <div id="chat-messages" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3"></div>
+
+  <!-- Input -->
+  <div class="shrink-0 border-t border-gray-700 p-3" style="background:#161b22;">
+    <div class="flex gap-2">
+      <textarea id="chat-input" rows="3" placeholder="Digite sua mensagem... (Ctrl+Enter para enviar)"
+        class="flex-1 text-sm p-2 rounded-md"
+        onkeydown="if(event.ctrlKey&&event.key==='Enter'){sendMessage();}"></textarea>
+      <button onclick="sendMessage()" id="send-btn" class="btn btn-primary px-4 self-end">▶ Enviar</button>
+    </div>
+    <div class="flex items-center justify-between mt-1">
+      <span class="text-xs text-gray-500">Ctrl+Enter para enviar</span>
+      <button onclick="saveChatMemory()" class="text-xs text-blue-400 hover:underline">💾 Salvar conversa</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYGROUND TAB -->
+<div id="panel-playground" class="hidden flex-col flex-1 overflow-hidden">
+  <!-- Playground toolbar -->
+  <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-700 shrink-0 flex-wrap" style="background:#161b22;">
+    <div class="flex gap-1 rounded-md overflow-hidden border border-gray-700">
+      <button onclick="setPgMode('html')" id="pg-html" class="text-xs px-3 py-1 bg-blue-900 text-blue-300">HTML</button>
+      <button onclick="setPgMode('react')" id="pg-react" class="text-xs px-3 py-1 text-gray-400 hover:bg-gray-700">React</button>
+    </div>
+    <div class="flex gap-1 ml-2 border-l border-gray-700 pl-2">
+      <button onclick="setPgTab('html')" id="pgt-html" class="text-xs px-2 py-1 rounded bg-gray-700 text-white">HTML</button>
+      <button onclick="setPgTab('css')" id="pgt-css" class="text-xs px-2 py-1 rounded text-gray-400 hover:bg-gray-700">CSS</button>
+      <button onclick="setPgTab('js')" id="pgt-js" class="text-xs px-2 py-1 rounded text-gray-400 hover:bg-gray-700">JS</button>
+    </div>
+    <input id="pg-title" type="text" placeholder="Nome do arquivo..." class="text-xs h-7 px-2 ml-2 w-36">
+    <div class="flex gap-1 ml-auto">
+      <button onclick="runPreview()" class="btn btn-primary text-xs h-7 px-3">▶ Executar</button>
+      <label class="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+        <input type="checkbox" id="pg-auto" checked class="accent-blue-400"> Auto
+      </label>
+      <button onclick="saveSnippet()" class="btn btn-secondary text-xs h-7 px-2">💾</button>
+      <button onclick="downloadHtml()" class="btn btn-secondary text-xs h-7 px-2">⬇ .html</button>
+      <button onclick="openFullscreen()" class="btn btn-secondary text-xs h-7 px-2">⛶</button>
+      <button onclick="showSnippets()" class="btn btn-secondary text-xs h-7 px-2">📂 Salvos</button>
+    </div>
+  </div>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Editor -->
+    <div class="w-1/2 flex flex-col border-r border-gray-700">
+      <div class="flex items-center justify-between px-2 py-1 border-b border-gray-800 text-xs text-gray-500" style="background:#0d1117;">
+        <span id="pg-editor-label">Editando: HTML</span>
+        <span id="pg-line-count">0 linhas</span>
+      </div>
+      <div class="flex flex-1 overflow-hidden">
+        <div id="pg-line-nums" class="text-right pr-2 pt-2 text-xs font-mono text-gray-600 select-none overflow-hidden border-r border-gray-800 min-w-8" style="background:#0a0e14; line-height:1.625rem;"></div>
+        <textarea id="pg-editor" class="flex-1 p-2 text-xs font-mono bg-transparent border-0 rounded-none"
+          style="line-height:1.625rem; tab-size:2;"
+          oninput="onEditorChange()"
+          onkeydown="handleEditorTab(event)"
+          placeholder="Digite seu código aqui..."></textarea>
+      </div>
+    </div>
+    <!-- Preview -->
+    <div class="w-1/2 flex flex-col">
+      <div class="px-2 py-1 border-b border-gray-800 text-xs text-gray-500 flex items-center gap-2" style="background:#0d1117;">
+        <span>👁 Preview</span>
+        <span id="pg-live-dot" class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+        <span class="text-green-400">ao vivo</span>
+      </div>
+      <iframe id="preview-frame" class="flex-1 border-0" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+    </div>
+  </div>
+
+  <!-- Snippets sidebar (hidden by default) -->
+  <div id="snippets-sidebar" class="hidden absolute right-0 top-0 bottom-0 w-64 border-l border-gray-700 flex flex-col z-50" style="background:#161b22;">
+    <div class="flex items-center justify-between px-3 py-2 border-b border-gray-700">
+      <span class="text-sm font-medium">Codes Salvos</span>
+      <button onclick="hideSnippets()" class="text-gray-400 hover:text-white text-lg leading-none">×</button>
+    </div>
+    <div id="snippets-list" class="flex-1 overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div id="panel-settings" class="hidden flex-1 overflow-y-auto p-6">
+  <div class="max-w-lg mx-auto">
+    <h2 class="text-lg font-semibold mb-6 text-blue-400">⚙️ Configurações</h2>
+
+    <div class="space-y-6">
+      <!-- Gemini -->
+      <div class="rounded-lg border border-gray-700 p-4" style="background:#161b22;">
+        <h3 class="font-medium mb-1 flex items-center gap-2">🤖 Gemini (Google) <span class="text-xs text-green-400 bg-green-900 px-2 py-0.5 rounded">Gratuito</span></h3>
+        <p class="text-xs text-gray-400 mb-3">Suporte a pesquisa na web nativa. Chave gratuita em: <a href="https://aistudio.google.com/apikey" target="_blank" class="text-blue-400 underline">aistudio.google.com</a></p>
+        <div class="flex gap-2">
+          <input type="password" id="key-gemini" placeholder="AIza..." class="flex-1 text-xs h-8 px-2">
+          <button onclick="saveKey('gemini')" class="btn btn-primary text-xs h-8 px-3">Salvar</button>
+        </div>
+      </div>
+
+      <!-- Groq -->
+      <div class="rounded-lg border border-gray-700 p-4" style="background:#161b22;">
+        <h3 class="font-medium mb-1">⚡ Groq <span class="text-xs text-green-400 bg-green-900 px-2 py-0.5 rounded">Gratuito</span></h3>
+        <p class="text-xs text-gray-400 mb-3">Ultra rápido, suporta LLama e outros. Chave em: <a href="https://console.groq.com/keys" target="_blank" class="text-blue-400 underline">console.groq.com</a></p>
+        <div class="flex gap-2">
+          <input type="password" id="key-groq" placeholder="gsk_..." class="flex-1 text-xs h-8 px-2">
+          <button onclick="saveKey('groq')" class="btn btn-primary text-xs h-8 px-3">Salvar</button>
+        </div>
+      </div>
+
+      <!-- OpenAI -->
+      <div class="rounded-lg border border-gray-700 p-4" style="background:#161b22;">
+        <h3 class="font-medium mb-1">🌐 OpenAI (GPT)</h3>
+        <p class="text-xs text-gray-400 mb-3">GPT-4o e outros. Requer créditos em: <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-400 underline">platform.openai.com</a></p>
+        <div class="flex gap-2">
+          <input type="password" id="key-openai" placeholder="sk-..." class="flex-1 text-xs h-8 px-2">
+          <button onclick="saveKey('openai')" class="btn btn-primary text-xs h-8 px-3">Salvar</button>
+        </div>
+      </div>
+
+      <!-- Claude note -->
+      <div class="rounded-lg border border-yellow-800 p-4" style="background:#1a1500;">
+        <h3 class="font-medium mb-1 text-yellow-400">⚠️ Claude (Anthropic)</h3>
+        <p class="text-xs text-gray-400">Claude não permite chamadas diretas do navegador por segurança. Para usar Claude, use o <strong>CodeLens Local</strong> (versão com servidor) ou use diretamente no claude.ai.</p>
+      </div>
+
+      <!-- Memory settings -->
+      <div class="rounded-lg border border-gray-700 p-4" style="background:#161b22;">
+        <h3 class="font-medium mb-2">🧠 Memória do Chat</h3>
+        <label class="flex items-center gap-2 text-sm">
+          <span>Guardar últimas</span>
+          <input type="number" id="mem-size" value="20" min="5" max="100" class="w-16 h-7 text-xs px-2">
+          <span>mensagens no contexto</span>
+        </label>
+        <p class="text-xs text-gray-500 mt-2">O assistente vai "lembrar" dessas mensagens mesmo em respostas longas.</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="exportData()" class="btn btn-secondary text-sm flex-1">⬇ Exportar dados</button>
+        <button onclick="importData()" class="btn btn-secondary text-sm flex-1">⬆ Importar dados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const DB_KEY = 'meu-assistente-v1';
+
+function loadDB() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; } catch { return {}; }
+}
+function saveDB(data) {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch {}
+}
+
+let db = loadDB();
+if (!db.snippets) db.snippets = [];
+if (!db.chatHistory) db.chatHistory = [];
+if (!db.keys) db.keys = {};
+if (!db.memSize) db.memSize = 20;
+
+// Playground state
+let pgState = {
+  mode: 'html',
+  tab: 'html',
+  html: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; margin: 0; background: #f0f4f8; }
+    .card { background: white; border-radius: 12px; padding: 40px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 500px; }
+    h1 { color: #2563eb; margin-bottom: 12px; }
+    button { background: #2563eb; color: white; border: none; padding: 12px 28px;
+      border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 16px; }
+    button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🚀 Playground</h1>
+    <p>Cole seu código HTML aqui e veja o resultado ao vivo!</p>
+    <button onclick="alert('Funcionou! ✅')">Clique aqui</button>
+  </div>
+</body>
+</html>`,
+  css: '',
+  js: '',
+  jsx: `const { useState } = React;
+
+function App() {
+  const [count, setCount] = useState(0);
+  return (
+    <div style={{textAlign:'center', padding:40, fontFamily:'sans-serif'}}>
+      <h1 style={{color:'#6366f1'}}>React Playground ⚛️</h1>
+      <div style={{fontSize:64, margin:'20px 0', fontWeight:'bold'}}>{count}</div>
+      <button onClick={() => setCount(c=>c+1)}
+        style={{background:'#6366f1',color:'white',border:'none',padding:'12px 24px',borderRadius:8,fontSize:16,cursor:'pointer',marginRight:8}}>
+        +1
+      </button>
+      <button onClick={() => setCount(0)}
+        style={{background:'#e2e8f0',border:'none',padding:'12px 24px',borderRadius:8,fontSize:16,cursor:'pointer'}}>
+        Reset
+      </button>
+    </div>
+  );
+}`,
+};
+
+// Chat state
+let chatMessages = [];
+let isLoading = false;
+let autoRunTimer = null;
+
+// ═══════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════
+function showTab(tab) {
+  ['chat','playground','settings'].forEach(t => {
+    document.getElementById(`panel-${t}`).classList.toggle('hidden', t !== tab);
+    document.getElementById(`panel-${t}`).classList.toggle('flex', t === tab && t !== 'settings');
+    const el = document.getElementById(`tab-${t}`);
+    el.className = el.className.replace(/tab-active|tab-inactive/g, t===tab?'tab-active':'tab-inactive') + ' btn px-4 py-2 rounded-none text-sm font-medium';
+  });
+  if (tab === 'playground') { setTimeout(runPreview, 100); }
+  if (tab === 'settings') { loadKeys(); }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════
+const MODELS = {
+  gemini: [
+    {value:'gemini-2.0-flash', label:'Gemini 2.0 Flash (rápido)'},
+    {value:'gemini-2.5-flash', label:'Gemini 2.5 Flash (melhor)'},
+    {value:'gemini-1.5-pro', label:'Gemini 1.5 Pro (avançado)'},
+  ],
+  groq: [
+    {value:'llama-3.3-70b-versatile', label:'LLaMA 3.3 70B (melhor)'},
+    {value:'llama-3.1-8b-instant', label:'LLaMA 3.1 8B (rápido)'},
+    {value:'mixtral-8x7b-32768', label:'Mixtral 8x7B (código)'},
+  ],
+  openai: [
+    {value:'gpt-4o', label:'GPT-4o (melhor)'},
+    {value:'gpt-4o-mini', label:'GPT-4o Mini (econômico)'},
+    {value:'gpt-3.5-turbo', label:'GPT-3.5 Turbo (básico)'},
+  ]
+};
+
+function updateModels() {
+  const p = document.getElementById('provider').value;
+  const sel = document.getElementById('model');
+  sel.innerHTML = MODELS[p].map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+}
+updateModels();
+
+function appendMessage(role, content, id) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `rounded-lg p-3 text-sm ${role==='user'?'msg-user':'msg-ai'}`;
+  if (id) div.id = id;
+  div.innerHTML = role==='user'
+    ? `<div class="text-blue-300 text-xs mb-1">👤 Você</div><div class="whitespace-pre-wrap">${escHtml(content)}</div>`
+    : `<div class="text-green-300 text-xs mb-1">🤖 IA</div><div class="md-content">${marked.parse(content)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const provider = document.getElementById('provider').value;
+  const key = db.keys[provider];
+  if (!key) {
+    alert(`Configure a chave da API para ${provider} nas Configurações!`);
+    showTab('settings');
+    return;
+  }
+
+  input.value = '';
+  chatMessages.push({role:'user', content: msg});
+  appendMessage('user', msg);
+  updateMemBar();
+
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('send-btn').textContent = '...';
+
+  const thinkingId = 'msg-thinking';
+  const thinkingDiv = appendMessage('assistant', '', thinkingId);
+  thinkingDiv.querySelector('.md-content').innerHTML = '<span class="thinking text-gray-400"><span>●</span><span>●</span><span>●</span></span>';
+
+  try {
+    const model = document.getElementById('model').value;
+    const ctxSize = parseInt(document.getElementById('ctx-slider').value);
+    const useSearch = document.getElementById('web-search').checked;
+    const memSize = parseInt(document.getElementById('mem-size')?.value || 20);
+    const history = chatMessages.slice(-(memSize*2+2)).slice(0,-1);
+
+    let reply = '';
+    if (provider === 'gemini') {
+      reply = await callGemini(key, model, history, msg, useSearch, ctxSize);
+    } else if (provider === 'groq') {
+      reply = await callGroq(key, model, history, msg, ctxSize);
+    } else {
+      reply = await callOpenAI(key, model, history, msg, ctxSize);
+    }
+
+    thinkingDiv.querySelector('.md-content').innerHTML = marked.parse(reply);
+    chatMessages.push({role:'assistant', content: reply});
+
+  } catch(e) {
+    thinkingDiv.querySelector('.md-content').innerHTML = `<span class="text-red-400">Erro: ${e.message}</span>`;
+  }
+
+  thinkingDiv.id = '';
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('send-btn').textContent = '▶ Enviar';
+  document.getElementById('chat-messages').scrollTop = 99999;
+  updateMemBar();
+  autoSaveChat();
+}
+
+async function callGemini(key, model, history, msg, useSearch, maxTokens) {
+  const contents = [
+    ...history.map(m => ({role: m.role==='user'?'user':'model', parts:[{text:m.content}]})),
+    {role:'user', parts:[{text:msg}]}
+  ];
+  const body = {
+    contents,
+    generationConfig: { maxOutputTokens: Math.min(maxTokens, 8192) },
+  };
+  if (useSearch) {
+    body.tools = [{googleSearch:{}}];
+  }
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '(sem resposta)';
+}
+
+async function callGroq(key, model, history, msg, maxTokens) {
+  const messages = [
+    {role:'system', content:'Você é um assistente útil especializado em programação e análise jurídica. Responda em português.'},
+    ...history,
+    {role:'user', content:msg}
+  ];
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body:JSON.stringify({model, messages, max_tokens: Math.min(maxTokens, 8192)})
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.choices?.[0]?.message?.content || '(sem resposta)';
+}
+
+async function callOpenAI(key, model, history, msg, maxTokens) {
+  const messages = [
+    {role:'system', content:'Você é um assistente útil especializado em programação e análise jurídica. Responda em português.'},
+    ...history,
+    {role:'user', content:msg}
+  ];
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body:JSON.stringify({model, messages, max_tokens: Math.min(maxTokens, 4096)})
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.choices?.[0]?.message?.content || '(sem resposta)';
+}
+
+function updateMemBar() {
+  document.getElementById('mem-count').textContent = chatMessages.length;
+}
+
+function clearChat() {
+  if (!confirm('Limpar conversa?')) return;
+  chatMessages = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  updateMemBar();
+}
+
+function autoSaveChat() {
+  db.chatHistory = chatMessages.slice(-100);
+  saveDB(db);
+}
+
+function saveChatMemory() {
+  const title = prompt('Nome para esta conversa:', `Conversa ${new Date().toLocaleDateString('pt-BR')}`);
+  if (!title) return;
+  if (!db.savedChats) db.savedChats = [];
+  db.savedChats.push({title, date: new Date().toISOString(), messages: [...chatMessages]});
+  saveDB(db);
+  alert('Conversa salva!');
+}
+
+// ═══════════════════════════════════════════════════════
+// PLAYGROUND
+// ═══════════════════════════════════════════════════════
+function setPgMode(mode) {
+  pgState.mode = mode;
+  ['html','react'].forEach(m => {
+    const btn = document.getElementById(`pg-${m}`);
+    btn.className = btn.className.replace(/bg-blue-900 text-blue-300|text-gray-400 hover:bg-gray-700/, 
+      m===mode ? 'bg-blue-900 text-blue-300' : 'text-gray-400 hover:bg-gray-700');
+  });
+  if (mode === 'react') {
+    document.querySelectorAll('[id^="pgt-"]').forEach(b => b.style.display='none');
+    document.getElementById('pgt-html').textContent = 'JSX';
+    document.getElementById('pgt-html').style.display = '';
+    setPgTab('html');
+    document.getElementById('pg-editor').value = pgState.jsx;
+  } else {
+    ['html','css','js'].forEach(t => document.getElementById(`pgt-${t}`).style.display='');
+    document.getElementById('pgt-html').textContent = 'HTML';
+    setPgTab('html');
+  }
+  updateLineNums();
+  runPreview();
+}
+
+function setPgTab(tab) {
+  pgState.tab = tab;
+  const labels = {html:'HTML', css:'CSS', js:'JavaScript'};
+  ['html','css','js'].forEach(t => {
+    const btn = document.getElementById(`pgt-${t}`);
+    if (btn) btn.className = `text-xs px-2 py-1 rounded ${t===tab?'bg-gray-700 text-white':'text-gray-400 hover:bg-gray-700'}`;
+  });
+  const key = pgState.mode==='react' ? 'jsx' : tab;
+  document.getElementById('pg-editor').value = pgState[key];
+  document.getElementById('pg-editor-label').textContent = `Editando: ${pgState.mode==='react'?'JSX':labels[tab]}`;
+  updateLineNums();
+}
+
+function onEditorChange() {
+  const val = document.getElementById('pg-editor').value;
+  const key = pgState.mode==='react' ? 'jsx' : pgState.tab;
+  pgState[key] = val;
+  updateLineNums();
+  if (document.getElementById('pg-auto').checked) {
+    clearTimeout(autoRunTimer);
+    autoRunTimer = setTimeout(runPreview, 600);
+  }
+}
+
+function handleEditorTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    ta.value = ta.value.substring(0,start) + '  ' + ta.value.substring(ta.selectionEnd);
+    ta.selectionStart = ta.selectionEnd = start + 2;
+    onEditorChange();
+  }
+}
+
+function updateLineNums() {
+  const val = document.getElementById('pg-editor').value;
+  const lines = val.split('\n').length;
+  document.getElementById('pg-line-nums').innerHTML = 
+    Array.from({length:lines},(_,i)=>`<div style="height:1.625rem">${i+1}</div>`).join('');
+  document.getElementById('pg-line-count').textContent = `${lines} linhas`;
+}
+
+function buildDoc() {
+  if (pgState.mode === 'react') {
+    const cleaned = pgState.jsx
+      .replace(/^import\s+React[^;]*;?\s*\n?/gm,'')
+      .replace(/^import\s+\{[^}]*\}\s+from\s+['"]react['"][;]?\s*\n?/gm,'')
+      .replace(/^export\s+default\s+function\s+(\w+)/gm,'function $1')
+      .replace(/^export\s+default\s+(\w+)\s*;?\s*$/gm,'');
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+<style>*{box-sizing:border-box}body{margin:0;font-family:sans-serif}${pgState.css}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef,useCallback,useMemo,createContext,useContext,Fragment}=React;
+${cleaned}
+try{ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));}
+catch(e){document.getElementById('root').innerHTML='<div style="color:red;padding:20px;white-space:pre">'+e.message+'</div>';}
+<\/script></body></html>`;
+  }
+  const h = pgState.html.trim().toLowerCase();
+  if (h.includes('<!doctype') || (h.includes('<html') && h.includes('</html'))) {
+    return pgState.html;
+  }
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${pgState.css}</style></head><body>${pgState.html}<script>${pgState.js}<\/script></body></html>`;
+}
+
+function runPreview() {
+  const doc = buildDoc();
+  const blob = new Blob([doc], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const frame = document.getElementById('preview-frame');
+  if (frame._prevUrl) URL.revokeObjectURL(frame._prevUrl);
+  frame._prevUrl = url;
+  frame.src = url;
+}
+
+function downloadHtml() {
+  const title = document.getElementById('pg-title').value || 'playground';
+  const ext = pgState.mode==='react' ? 'jsx' : 'html';
+  const content = pgState.mode==='react' ? pgState.jsx : buildDoc();
+  const blob = new Blob([content], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${title}.${ext}`;
+  a.click();
+}
+
+function openFullscreen() {
+  const blob = new Blob([buildDoc()], {type:'text/html;charset=utf-8'});
+  window.open(URL.createObjectURL(blob), '_blank');
+}
+
+function saveSnippet() {
+  const title = document.getElementById('pg-title').value || 'Sem título';
+  db.snippets.push({
+    id: Date.now(), title,
+    html: pgState.html, css: pgState.css, js: pgState.js,
+    jsx: pgState.jsx, mode: pgState.mode,
+    date: new Date().toISOString()
+  });
+  saveDB(db);
+  renderSnippets();
+  alert('Salvo! ✅');
+}
+
+function loadSnippet(id) {
+  const s = db.snippets.find(x => x.id === id);
+  if (!s) return;
+  pgState.html = s.html || '';
+  pgState.css = s.css || '';
+  pgState.js = s.js || '';
+  pgState.jsx = s.jsx || '';
+  pgState.mode = s.mode || 'html';
+  document.getElementById('pg-title').value = s.title;
+  setPgMode(pgState.mode);
+  hideSnippets();
+}
+
+function deleteSnippet(id) {
+  db.snippets = db.snippets.filter(x => x.id !== id);
+  saveDB(db);
+  renderSnippets();
+}
+
+function renderSnippets() {
+  const list = document.getElementById('snippets-list');
+  if (db.snippets.length === 0) {
+    list.innerHTML = '<p class="text-xs text-gray-500 p-3">Nenhum snippet salvo ainda.</p>';
+    return;
+  }
+  list.innerHTML = db.snippets.slice().reverse().map(s => `
+    <div class="snippet-item flex items-center justify-between px-3 py-2 cursor-pointer border-b border-gray-800" onclick="loadSnippet(${s.id})">
+      <div class="min-w-0">
+        <div class="text-xs font-medium truncate">${escHtml(s.title)}</div>
+        <div class="text-xs text-gray-500">${s.mode} · ${new Date(s.date).toLocaleDateString('pt-BR')}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteSnippet(${s.id})" class="text-red-400 hover:text-red-300 ml-2 shrink-0 text-lg leading-none">×</button>
+    </div>
+  `).join('');
+}
+
+function showSnippets() {
+  renderSnippets();
+  document.getElementById('snippets-sidebar').classList.remove('hidden');
+  document.getElementById('snippets-sidebar').classList.add('flex');
+}
+function hideSnippets() {
+  document.getElementById('snippets-sidebar').classList.add('hidden');
+  document.getElementById('snippets-sidebar').classList.remove('flex');
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+function saveKey(provider) {
+  const val = document.getElementById(`key-${provider}`).value.trim();
+  if (!val) { alert('Digite a chave antes de salvar.'); return; }
+  db.keys[provider] = val;
+  saveDB(db);
+  document.getElementById(`key-${provider}`).value = '';
+  document.getElementById(`key-${provider}`).placeholder = '✅ Chave salva';
+  setTimeout(() => { document.getElementById(`key-${provider}`).placeholder = '...'; }, 2000);
+}
+
+function loadKeys() {
+  Object.entries(db.keys).forEach(([p]) => {
+    const el = document.getElementById(`key-${p}`);
+    if (el) el.placeholder = '✅ Chave configurada';
+  });
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `meu-assistente-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (confirm('Importar dados? Os dados atuais serão substituídos.')) {
+          db = imported;
+          saveDB(db);
+          alert('Importado com sucesso!');
+        }
+      } catch { alert('Arquivo inválido.'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+updateLineNums();
+document.getElementById('pg-editor').value = pgState.html;
+
+// Restore last chat from db
+if (db.chatHistory?.length) {
+  chatMessages = db.chatHistory;
+  chatMessages.forEach(m => appendMessage(m.role==='user'?'user':'assistant', m.content));
+  updateMemBar();
+}
+</script>
+</body>
+</html>
