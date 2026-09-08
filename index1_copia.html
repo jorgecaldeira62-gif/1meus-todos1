@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playground Modular</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --panel2: #172033;
+      --editor: #020617;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #334155;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #059669;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --line: #1e293b;
+      --input: #020617;
+    }
+
+    :root.light {
+      --bg: #f1f5f9;
+      --panel: #ffffff;
+      --panel2: #e2e8f0;
+      --editor: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #059669;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --line: #e2e8f0;
+      --input: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      display: flex;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100vh;
+      background: var(--bg);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 54px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+
+    .brand,
+    .toolbar,
+    .mode-group,
+    .tab-group,
+    .status-group,
+    .button-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    .brand-icon {
+      color: #60a5fa;
+      font-size: 21px;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .project-title {
+      width: 150px;
+      padding: 7px 9px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      outline: none;
+      color: var(--text);
+      background: transparent;
+      font-size: 12px;
+    }
+
+    .project-title:focus {
+      border-color: var(--border);
+      background: var(--input);
+    }
+
+    .mode-group,
+    .tab-group {
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel2);
+    }
+
+    .btn,
+    .mode-btn,
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 6px 10px;
+      border-radius: 5px;
+      color: var(--text);
+      background: transparent;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .btn:hover,
+    .mode-btn:hover,
+    .tab-btn:hover {
+      background: var(--panel2);
+    }
+
+    .btn.primary,
+    .mode-btn.active,
+    .tab-btn.active {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn.success {
+      color: #fff;
+      background: var(--success);
+    }
+
+    .btn.danger {
+      color: #fff;
+      background: var(--danger);
+    }
+
+    .btn.warning {
+      color: #fff;
+      background: var(--warning);
+    }
+
+    .btn.outline {
+      border: 1px solid var(--border);
+    }
+
+    .icon-btn {
+      width: 31px;
+      padding: 0;
+    }
+
+    .status {
+      display: none;
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.success {
+      color: #a7f3d0;
+      background: #064e3b;
+    }
+
+    .status.error {
+      color: #fecaca;
+      background: #7f1d1d;
+    }
+
+    .status.info {
+      color: #bfdbfe;
+      background: #1e3a8a;
+    }
+
+    .main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      width: 285px;
+      min-width: 230px;
+      padding: 10px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .search-input,
+    .modal-input {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      outline: none;
+      color: var(--text);
+      background: var(--input);
+      font-size: 12px;
+    }
+
+    .search-input {
+      margin-bottom: 8px;
+    }
+
+    .project-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .project-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+      margin-bottom: 6px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel2);
+    }
+
+    .project-item:hover {
+      border-color: #60a5fa;
+    }
+
+    .project-info {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .project-name {
+      overflow: hidden;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: bold;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .project-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 2px;
+    }
+
+    .small-btn {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border-radius: 4px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+    }
+
+    .small-btn:hover {
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .empty {
+      padding: 25px 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .workspace {
+      display: flex;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .editor-panel,
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .editor-panel {
+      width: 50%;
+      border-right: 1px solid var(--border);
+    }
+
+    .editor-panel.collapsed {
+      display: none;
+    }
+
+    .preview-panel {
+      flex: 1;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 42px;
+      padding: 6px 9px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #34d399;
+      font-size: 10px;
+      font-weight: normal;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    .editor-tabs {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .editor-tabs .tab-btn {
+      min-height: 27px;
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+
+    .line-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .editor-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--editor);
+    }
+
+    .line-numbers {
+      width: 43px;
+      padding: 9px 7px 9px 0;
+      border-right: 1px solid var(--line);
+      color: var(--muted);
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.65rem;
+      text-align: right;
+      white-space: pre;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .code-editor {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      min-height: 0;
+      padding: 9px 11px;
+      border: 0;
+      outline: none;
+      resize: none;
+      color: var(--text);
+      background: var(--editor);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.65rem;
+      tab-size: 2;
+    }
+
+    .preview-frame {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      border: 0;
+      background: #fff;
+    }
+
+    .python-output {
+      flex: 1;
+      min-height: 0;
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      color: #d1fae5;
+      background: #020617;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .search-code-bar {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .search-code-bar input {
+      flex: 1;
+      min-width: 0;
+      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      outline: none;
+      color: var(--text);
+      background: var(--input);
+      font-size: 11px;
+    }
+
+    .search-result {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--panel);
+      font-size: 10px;
+      white-space: pre-wrap;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      background: rgb(0 0 0 / 70%);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(590px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: 0 20px 70px rgb(0 0 0 / 40%);
+    }
+
+    .modal h2 {
+      margin: 0 0 16px;
+      font-size: 17px;
+    }
+
+    .modal h3 {
+      margin: 18px 0 8px;
+      font-size: 13px;
+    }
+
+    .form-row {
+      margin-bottom: 10px;
+    }
+
+    .form-row label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .config-status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      color: var(--muted);
+      background: var(--editor);
+      font-size: 11px;
+      white-space: pre-wrap;
+    }
+
+    .mobile-buttons {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+
+      .editor-panel {
+        width: 50%;
+      }
+
+      .toolbar {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 650px) {
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      .topbar {
+        min-height: 108px;
+        align-items: flex-start;
+      }
+
+      .brand {
+        width: 100%;
+      }
+
+      .toolbar {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .mobile-buttons {
+        display: inline-flex;
+      }
+
+      .editor-panel,
+      .preview-panel {
+        width: 100%;
+      }
+
+      .editor-panel.mobile-hidden,
+      .preview-panel.mobile-hidden {
+        display: none;
+      }
+
+      .hide-mobile {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">◆</span>
+        <span class="brand-name">Playground</span>
+
+        <div class="mode-group">
+          <button class="mode-btn active" data-mode="html">HTML</button>
+          <button class="mode-btn" data-mode="react">React</button>
+          <button class="mode-btn" data-mode="python">Python</button>
+        </div>
+
+        <input
+          id="projectTitle"
+          class="project-title"
+          value="Sem título"
+          placeholder="Nome do projeto"
+        />
+      </div>
+
+      <div class="toolbar">
+        <button id="mobileEditorBtn" class="btn outline mobile-buttons">Código</button>
+        <button id="mobilePreviewBtn" class="btn outline mobile-buttons">Preview</button>
+        <button id="autoRunBtn" class="btn primary">◉ Ao vivo</button>
+        <button id="runBtn" class="btn primary">▶ Executar</button>
+        <button id="importBtn" class="btn outline">↑ Importar</button>
+        <button id="copyBtn" class="btn outline">⧉ Copiar</button>
+        <button id="downloadBtn" class="btn outline">↓ Baixar</button>
+        <button id="saveLocalBtn" class="btn success">Salvar local</button>
+        <button id="saveCloudBtn" class="btn primary">Salvar Supabase</button>
+        <button id="openBtn" class="btn outline">Abrir</button>
+        <button id="configBtn" class="btn outline">Banco</button>
+        <button id="themeBtn" class="btn outline icon-btn" title="Tema">☾</button>
+        <button id="fullscreenBtn" class="btn outline icon-btn" title="Abrir em nova janela">⛶</button>
+        <button id="resetBtn" class="btn outline icon-btn" title="Restaurar">↺</button>
+        <button id="clearBtn" class="btn outline icon-btn" title="Limpar">⌫</button>
+      </div>
+    </header>
+
+    <div id="status" class="status"></div>
+
+    <main class="main">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Projetos salvos</span>
+
+          <div class="button-group">
+            <button id="backupJsonBtn" class="small-btn" title="Backup JSON">JSON</button>
+            <button id="backupCsvBtn" class="small-btn" title="Backup CSV">CSV</button>
+            <button id="refreshBtn" class="small-btn" title="Atualizar">↻</button>
+          </div>
+        </div>
+
+        <input
+          id="projectSearch"
+          class="search-input"
+          placeholder="Pesquisar projetos..."
+        />
+
+        <button id="importBackupBtn" class="btn outline" style="margin-bottom:8px;">
+          Importar backup
+        </button>
+
+        <div id="projectList" class="project-list"></div>
+      </aside>
+
+      <section class="workspace">
+        <section id="editorPanel" class="editor-panel">
+          <div class="editor-tabs">
+            <button class="tab-btn active" data-tab="html">HTML</button>
+            <button class="tab-btn" data-tab="css">CSS</button>
+            <button class="tab-btn" data-tab="js">JS</button>
+            <button class="tab-btn" data-tab="jsx">JSX</button>
+            <button class="tab-btn" data-tab="python">Python</button>
+
+            <span id="lineCount" class="line-count">1 linha</span>
+
+            <button id="searchCodeBtn" class="btn outline">⌕ Código</button>
+            <button id="collapseEditorBtn" class="btn outline icon-btn" title="Minimizar editor">‹</button>
+          </div>
+
+          <div id="searchCodeBar" class="search-code-bar" hidden>
+            <input id="codeSearchInput" placeholder="Pesquisar dentro do código..." />
+            <button id="previousMatchBtn" class="btn outline">↑</button>
+            <button id="nextMatchBtn" class="btn outline">↓</button>
+            <button id="replaceCodeBtn" class="btn outline">Trocar</button>
+            <button id="closeCodeSearchBtn" class="btn outline">×</button>
+          </div>
+
+          <div id="searchResult" class="search-result" hidden></div>
+
+          <div class="editor-wrap">
+            <div id="lineNumbers" class="line-numbers">1</div>
+            <textarea
+              id="codeEditor"
+              class="code-editor"
+              spellcheck="false"
+            ></textarea>
+          </div>
+        </section>
+
+        <section id="previewPanel" class="preview-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>◉</span>
+              <span>Resultado</span>
+              <span id="liveIndicator" class="live">
+                <span class="live-dot"></span>
+                ao vivo
+              </span>
+            </div>
+
+            <button id="expandEditorBtn" class="btn outline icon-btn" title="Mostrar editor">
+              ›
+            </button>
+          </div>
+
+          <iframe
+            id="previewFrame"
+            class="preview-frame"
+            title="Preview"
+            sandbox="allow-scripts allow-modals allow-forms allow-popups"
+          ></iframe>
+
+          <pre id="pythonOutput" class="python-output" hidden></pre>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <input id="fileInput" type="file" hidden accept=".html,.htm,.css,.js,.jsx,.tsx,.py,.txt" />
+  <input id="backupInput" type="file" hidden accept=".csv,.json" />
+
+  <div id="configModal" class="modal-backdrop">
+    <div class="modal">
+      <h2>Configuração dos bancos</h2>
+
+      <h3>Supabase</h3>
+
+      <div class="form-row">
+        <label for="supabaseUrl">URL do projeto</label>
+        <input id="supabaseUrl" class="modal-input" placeholder="https://projeto.supabase.co" />
+      </div>
+
+      <div class="form-row">
+        <label for="supabaseKey">Chave pública anon</label>
+        <input id="supabaseKey" class="modal-input" type="password" placeholder="eyJ..." />
+      </div>
+
+      <div class="button-group">
+        <button id="testSupabaseBtn" class="btn primary">Testar conexão</button>
+        <button id="loadSupabaseBtn" class="btn outline">Carregar projetos</button>
+        <button id="clearSupabaseBtn" class="btn outline">Limpar</button>
+      </div>
+
+      <h3>SQLite local</h3>
+
+      <p style="color:var(--muted);font-size:12px;line-height:1.5;">
+        O banco SQLite local é executado através do sql.js e armazenado no IndexedDB do aparelho.
+      </p>
+
+      <button id="testSqliteBtn" class="btn outline">Testar SQLite</button>
+
+      <div id="configStatus" class="config-status">
+        Nenhum teste realizado.
+      </div>
+
+      <div class="modal-actions">
+        <button id="closeConfigBtn" class="btn outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="openModal" class="modal-backdrop">
+    <div class="modal">
+      <h2>Abrir projeto</h2>
+
+      <input
+        id="openSearchInput"
+        class="search-input"
+        placeholder="Pesquisar projetos..."
+      />
+
+      <div id="openProjectList"></div>
+
+      <div class="modal-actions">
+        <button id="closeOpenBtn" class="btn outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    const KEYS = {
+      state: "playground_state_v3",
+      localProjects: "playground_local_projects_v3",
+      config: "playground_supabase_config_v3",
+      theme: "playground_theme_v3",
+      sqlite: "playground_sqlite_database_v3"
+    };
+
+    const DEFAULT_HTML = `<div class="card">
+      <h1>Olá, Playground!</h1>
+      <p>Edite o HTML, o CSS e o JavaScript e veja o resultado ao vivo.</p>
+      <button id="helloButton">Clique aqui</button>
+    </div>`;
+
+    const DEFAULT_CSS = `body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #eef2ff;
+      font-family: Arial, sans-serif;
+    }
+
+    .card {
+      width: min(560px, 90%);
+      padding: 32px;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 20px 50px rgba(30, 41, 59, .18);
+      text-align: center;
+    }
+
+    h1 {
+      color: #2563eb;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 8px;
+      color: white;
+      background: #2563eb;
+      cursor: pointer;
+    }`;
+
+    const DEFAULT_JS = `document.getElementById("helloButton")?.addEventListener("click", () => {
+      alert("Funcionou!");
+    });`;
+
+    const DEFAULT_JSX = `function App() {
+      const [contador, setContador] = React.useState(0);
+
+      return (
+        <main style={{ padding: 30, fontFamily: "Arial" }}>
+          <h1>React funcionando</h1>
+          <p>Contador: {contador}</p>
+          <button onClick={() => setContador(contador + 1)}>
+            Somar
+          </button>
+        </main>
+      );
+    }`;
+
+    const DEFAULT_PYTHON = `nome = "Playground"
+print("Olá,", nome)
+print("O código Python foi preservado no editor.")`;
+
+    const state = {
+      mode: "html",
+      tab: "html",
+      title: "Sem título",
+      html: DEFAULT_HTML,
+      css: DEFAULT_CSS,
+      js: DEFAULT_JS,
+      jsx: DEFAULT_JSX,
+      python: DEFAULT_PYTHON,
+      currentLocalId: null,
+      currentCloudId: null,
+      autoRun: true,
+      editorCollapsed: false,
+      mobileView: "editor",
+      localProjects: [],
+      cloudProjects: [],
+      supabase: null,
+      sql: null,
+      sqlDb: null,
+      sqliteReady: false,
+      searchMatches: [],
+      searchIndex: 0
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function uuid() {
+      if (crypto.randomUUID) return crypto.randomUUID();
+
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+        const random = Math.random() * 16 | 0;
+        const value = char === "x" ? random : (random & 3 | 8);
+        return value.toString(16);
+      });
+    }
+
+    function parseJson(value, fallback) {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function notify(type, message, timeout = 5000) {
+      const element = $("status");
+
+      element.className = "status show " + type;
+      element.textContent = message;
+
+      clearTimeout(notify.timer);
+
+      if (timeout) {
+        notify.timer = setTimeout(() => {
+          element.className = "status";
+        }, timeout);
+      }
+    }
+
+    function configNotify(message, type = "") {
+      const element = $("configStatus");
+
+      element.textContent = message;
+      element.style.color =
+        type === "error"
+          ? "#fca5a5"
+          : type === "success"
+            ? "#86efac"
+            : "";
+    }
+
+    function saveEditorState() {
+      localStorage.setItem(
+        KEYS.state,
+        JSON.stringify({
+          mode: state.mode,
+          tab: state.tab,
+          title: state.title,
+          html: state.html,
+          css: state.css,
+          js: state.js,
+          jsx: state.jsx,
+          python: state.python,
+          currentLocalId: state.currentLocalId,
+          currentCloudId: state.currentCloudId,
+          autoRun: state.autoRun,
+          editorCollapsed: state.editorCollapsed,
+          mobileView: state.mobileView
+        })
+      );
+    }
+
+    function loadEditorState() {
+      const saved = parseJson(localStorage.getItem(KEYS.state), null);
+
+      if (saved) {
+        Object.assign(state, saved);
+      }
+
+      state.localProjects = parseJson(
+        localStorage.getItem(KEYS.localProjects),
+        []
+      );
+
+      const config = parseJson(localStorage.getItem(KEYS.config), {});
+
+      $("supabaseUrl").value = config.url || "";
+      $("supabaseKey").value = config.key || "";
+
+      applyTheme();
+      renderAll();
+    }
+
+    function saveLocalProjectList() {
+      localStorage.setItem(
+        KEYS.localProjects,
+        JSON.stringify(state.localProjects)
+      );
+    }
+
+    function getCurrentCode() {
+      return state[state.tab] || "";
+    }
+
+    function setCurrentCode(value) {
+      state[state.tab] = value;
+      saveEditorState();
+      updateEditor();
+
+      if (state.autoRun) {
+        schedulePreview();
+      }
+    }
+
+    function getPayload() {
+      return {
+        title: state.title.trim() || "Sem título",
+        html: state.html || "",
+        css: state.css || "",
+        js: state.js || "",
+        jsx: state.jsx || "",
+        python: state.python || "",
+        mode: state.mode
+      };
+    }
+
+    function getLocalRecord() {
+      const payload = getPayload();
+
+      return {
+        id: state.currentLocalId || uuid(),
+        sequence: Date.now(),
+        title: payload.title,
+        html: payload.html,
+        css: payload.css,
+        js: payload.js,
+        jsx: payload.jsx,
+        python: payload.python,
+        mode: payload.mode,
+        source: "local",
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    function detectCompleteDocument(code) {
+      const value = String(code || "").trim().toLowerCase();
+
+      return (
+        value.startsWith("<!doctype") ||
+        (
+          value.startsWith("<html") &&
+          value.includes("</html>")
+        )
+      );
+    }
+
+    function extractCompleteDocument(code) {
+      const lower = code.toLowerCase();
+      const doctypeIndex = lower.indexOf("<!doctype");
+      const htmlIndex = lower.indexOf("<html");
+      const index = doctypeIndex >= 0 ? doctypeIndex : htmlIndex;
+
+      return index > 0 ? code.slice(index) : code;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function preprocessJsx(code) {
+      return String(code || "")
+        .replace(/^\s*import\s+React[^;]*;?\s*$/gm, "")
+        .replace(/^\s*import\s+ReactDOM[^;]*;?\s*$/gm, "")
+        .replace(
+          /^\s*import\s+\{[^}]+\}\s+from\s+["']react["'];?\s*$/gm,
+          ""
+        )
+        .replace(/^\s*export\s+default\s+function\s+/gm, "function ")
+        .replace(/^\s*export\s+default\s+(\w+);?\s*$/gm, "");
+    }
+
+    function buildReactDocument() {
+      const jsx = preprocessJsx(state.jsx);
+
+      return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+  <style>${state.css}</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+${jsx}
+
+try {
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<App />);
+} catch (error) {
+  document.body.innerHTML =
+    "<pre style='padding:20px;color:red;white-space:pre-wrap'>" +
+    error.stack +
+    "</pre>";
+}
+  <\/script>
+</body>
+</html>`;
+    }
+
+    function buildDocument() {
+      if (state.mode === "react") {
+        return buildReactDocument();
+      }
+
+      if (state.mode === "python") {
+        return `<!doctype html>
+<html lang="pt-BR">
+<body style="font-family:monospace;padding:20px">
+  <h3>Modo Python</h3>
+  <p>O código Python está preservado no editor.</p>
+  <p>Para execução local será necessário Pyodide ou Python instalado.</p>
+  <pre>${escapeHtml(state.python)}</pre>
+</body>
+</html>`;
+      }
+
+      if (detectCompleteDocument(state.html)) {
+        return extractCompleteDocument(state.html);
+      }
+
+      return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>${state.css}</style>
+</head>
+<body>
+  ${state.html}
+  <script>
+    try {
+      ${state.js}
+    } catch (error) {
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        "<pre style='padding:12px;color:red;white-space:pre-wrap'>" +
+        error.stack +
+        "</pre>"
+      );
+    }
+  <\/script>
+</body>
+</html>`;
+    }
+
+    let previewTimer = null;
+
+    function schedulePreview() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(updatePreview, 350);
+    }
+
+    function updatePreview() {
+      saveEditorState();
+
+      if (state.mode === "python") {
+        $("previewFrame").hidden = true;
+        $("pythonOutput").hidden = false;
+        $("pythonOutput").textContent =
+          "Modo Python selecionado.\n\n" +
+          "O código foi preservado e pode ser baixado como .py.\n" +
+          "Para executar Python no aplicativo, será necessário adicionar Pyodide ou usar Python do sistema.";
+        return;
+      }
+
+      $("previewFrame").hidden = false;
+      $("pythonOutput").hidden = true;
+
+      const blob = new Blob([buildDocument()], {
+        type: "text/html;charset=utf-8"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const previousUrl = $("previewFrame").dataset.objectUrl;
+
+      $("previewFrame").src = url;
+      $("previewFrame").dataset.objectUrl = url;
+
+      if (previousUrl) {
+        setTimeout(() => URL.revokeObjectURL(previousUrl), 1000);
+      }
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+
+      if (mode === "react") {
+        state.tab = "jsx";
+      } else if (mode === "python") {
+        state.tab = "python";
+      } else if (!["html", "css", "js"].includes(state.tab)) {
+        state.tab = "html";
+      }
+
+      saveEditorState();
+      renderAll();
+      updatePreview();
+    }
+
+    function setTab(tab) {
+      state.tab = tab;
+
+      if (tab === "jsx") {
+        state.mode = "react";
+      }
+
+      if (tab === "python") {
+        state.mode = "python";
+      }
+
+      if (["html", "css", "js"].includes(tab)) {
+        state.mode = "html";
+      }
+
+      saveEditorState();
+      renderAll();
+    }
+
+    function updateEditor() {
+      const code = getCurrentCode();
+      const lines = Math.max(1, code.split("\n").length);
+
+      $("codeEditor").value = code;
+      $("lineNumbers").textContent = Array.from(
+        { length: lines },
+        (_, index) => index + 1
+      ).join("\n");
+
+      $("lineCount").textContent =
+        lines === 1 ? "1 linha" : `${lines} linhas`;
+
+      $("projectTitle").value = state.title;
+    }
+
+    function renderAll() {
+      document.querySelectorAll("[data-mode]").forEach((button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset.mode === state.mode
+        );
+      });
+
+      document.querySelectorAll("[data-tab]").forEach((button) => {
+        const tab = button.dataset.tab;
+
+        const visible =
+          state.mode === "html"
+            ? ["html", "css", "js"].includes(tab)
+            : state.mode === "react"
+              ? ["jsx", "css"].includes(tab)
+              : ["python"].includes(tab);
+
+        button.style.display = visible ? "inline-flex" : "none";
+        button.classList.toggle("active", tab === state.tab);
+      });
+
+      $("autoRunBtn").textContent =
+        state.autoRun ? "◉ Ao vivo" : "○ Manual";
+
+      $("autoRunBtn").classList.toggle("primary", state.autoRun);
+      $("liveIndicator").style.display =
+        state.autoRun ? "inline-flex" : "none";
+
+      $("editorPanel").classList.toggle(
+        "collapsed",
+        state.editorCollapsed
+      );
+
+      $("collapseEditorBtn").style.display =
+        state.editorCollapsed ? "none" : "inline-flex";
+
+      $("expandEditorBtn").style.display =
+        state.editorCollapsed ? "inline-flex" : "none";
+
+      const mobile = window.innerWidth <= 650;
+
+      if (mobile) {
+        $("editorPanel").classList.toggle(
+          "mobile-hidden",
+          state.mobileView !== "editor"
+        );
+
+        $("previewPanel").classList.toggle(
+          "mobile-hidden",
+          state.mobileView !== "preview"
+        );
+      } else {
+        $("editorPanel").classList.remove("mobile-hidden");
+        $("previewPanel").classList.remove("mobile-hidden");
+      }
+
+      updateEditor();
+      renderProjectList();
+    }
+
+    async function initSqlite() {
+      if (state.sqliteReady) {
+        return state.sqlDb;
+      }
+
+      if (!window.initSqlJs) {
+        throw new Error("A biblioteca sql.js não foi carregada.");
+      }
+
+      state.sql = await window.initSqlJs({
+        locateFile: (file) => {
+          return "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/" + file;
+        }
+      });
+
+      const savedDatabase = await readIndexedDatabase();
+
+      if (savedDatabase) {
+        state.sqlDb = new state.sql.Database(
+          new Uint8Array(savedDatabase)
+        );
+      } else {
+        state.sqlDb = new state.sql.Database();
+
+        state.sqlDb.run(`
+          CREATE TABLE IF NOT EXISTS snippets (
+            id TEXT PRIMARY KEY,
+            sequence_number INTEGER,
+            title TEXT NOT NULL,
+            html TEXT DEFAULT '',
+            css TEXT DEFAULT '',
+            js TEXT DEFAULT '',
+            jsx TEXT DEFAULT '',
+            python TEXT DEFAULT '',
+            mode TEXT DEFAULT 'html',
+            updated_at TEXT
+          )
+        `);
+
+        await persistSqlite();
+      }
+
+      state.sqliteReady = true;
+
+      return state.sqlDb;
+    }
+
+    function openIndexedDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("playground-modular-sqlite", 1);
+
+        request.onupgradeneeded = () => {
+          request.result.createObjectStore("storage");
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function persistSqlite() {
+      if (!state.sqlDb) return;
+
+      const binary = state.sqlDb.export();
+      const database = await openIndexedDatabase();
+
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction("storage", "readwrite");
+
+        transaction.objectStore("storage").put(binary, KEYS.sqlite);
+
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function readIndexedDatabase() {
+      const database = await openIndexedDatabase();
+
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction("storage", "readonly");
+        const request = transaction
+          .objectStore("storage")
+          .get(KEYS.sqlite);
+
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function sqliteSaveProject(project) {
+      const db = await initSqlite();
+
+      const statement = db.prepare(`
+        INSERT OR REPLACE INTO snippets
+        (id, sequence_number, title, html, css, js, jsx, python, mode, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      statement.run([
+        project.id,
+        project.sequence,
+        project.title,
+        project.html,
+        project.css,
+        project.js,
+        project.jsx,
+        project.python,
+        project.mode,
+        project.updated_at
+      ]);
+
+      statement.free();
+      await persistSqlite();
+    }
+
+    async function sqliteListProjects() {
+      const db = await initSqlite();
+
+      const result = db.exec(`
+        SELECT
+          id,
+          sequence_number,
+          title,
+          html,
+          css,
+          js,
+          jsx,
+          python,
+          mode,
+          updated_at
+        FROM snippets
+        ORDER BY sequence_number DESC
+      `);
+
+      if (!result.length) {
+        return [];
+      }
+
+      return result[0].values.map((row) => ({
+        id: row[0],
+        sequence: row[1],
+        title: row[2],
+        html: row[3],
+        css: row[4],
+        js: row[5],
+        jsx: row[6],
+        python: row[7],
+        mode: row[8],
+        updated_at: row[9],
+        source: "local"
+      }));
+    }
+
+    async function sqliteDeleteProject(id) {
+      const db = await initSqlite();
+
+      const statement = db.prepare(
+        "DELETE FROM snippets WHERE id = ?"
+      );
+
+      statement.run([id]);
+      statement.free();
+
+      await persistSqlite();
+    }
+
+    async function saveLocal() {
+      try {
+        const project = getLocalRecord();
+
+        await sqliteSaveProject(project);
+
+        state.currentLocalId = project.id;
+
+        state.localProjects = await sqliteListProjects();
+        saveEditorState();
+        renderProjectList();
+
+        notify("success", "Projeto salvo no SQLite local.");
+      } catch (error) {
+        notify("error", "Erro ao salvar localmente:\n" + error.message);
+      }
+    }
+
+    async function testSqlite() {
+      try {
+        const db = await initSqlite();
+
+        const result = db.exec(`
+          SELECT name
+          FROM sqlite_master
+          WHERE type = 'table'
+        `);
+
+        const tables = result.length
+          ? result[0].values.map((row) => row[0]).join(", ")
+          : "nenhuma";
+
+        configNotify(
+          "SQLite funcionando.\nTabelas: " + tables,
+          "success"
+        );
+
+        notify("success", "SQLite local testado com sucesso.");
+      } catch (error) {
+        configNotify("Erro no SQLite:\n" + error.message, "error");
+        notify("error", "Falha no SQLite local.");
+      }
+    }
+
+    function createSupabaseClient() {
+      const url = $("supabaseUrl").value.trim();
+      const key = $("supabaseKey").value.trim();
+
+      if (!url || !key) {
+        configNotify("Informe a URL e a chave pública anon.", "error");
+        return null;
+      }
+
+      if (!window.supabase) {
+        configNotify("A biblioteca do Supabase não foi carregada.", "error");
+        return null;
+      }
+
+      state.supabase = window.supabase.createClient(url, key);
+
+      localStorage.setItem(
+        KEYS.config,
+        JSON.stringify({ url, key })
+      );
+
+      return state.supabase;
+    }
+
+    async function testSupabase() {
+      const client = state.supabase || createSupabaseClient();
+
+      if (!client) return;
+
+      configNotify("Testando a tabela snippets...");
+
+      const { error } = await client
+        .from("snippets")
+        .select("id")
+        .limit(1);
+
+      if (error) {
+        configNotify(
+          "Erro na conexão:\n" + error.message,
+          "error"
+        );
+
+        notify(
+          "error",
+          "Supabase respondeu com erro:\n" + error.message
+        );
+
+        return;
+      }
+
+      configNotify(
+        "Supabase conectado.\nTabela snippets acessível.",
+        "success"
+      );
+
+      notify("success", "Conexão com o Supabase confirmada.");
+
+      await loadCloudProjects();
+    }
+
+    async function loadCloudProjects() {
+      const client = state.supabase || createSupabaseClient();
+
+      if (!client) return;
+
+      const { data, error } = await client
+        .from("snippets")
+        .select(
+          "id,title,html,css,js,jsx,python,mode,sequence_number,updated_at"
+        )
+        .order("sequence_number", { ascending: false });
+
+      if (error) {
+        notify(
+          "error",
+          "Erro ao carregar Supabase:\n" + error.message
+        );
+
+        return;
+      }
+
+      state.cloudProjects = (data || []).map((project, index) => ({
+        ...project,
+        sequence: project.sequence_number || index + 1,
+        source: "cloud"
+      }));
+
+      renderProjectList();
+      notify("success", "Projetos do Supabase carregados.");
+    }
+
+    async function saveCloud() {
+      const client = state.supabase || createSupabaseClient();
+
+      if (!client) {
+        notify("error", "Configure o Supabase antes de salvar.");
+        return;
+      }
+
+      const payload = getPayload();
+
+      let result;
+
+      if (state.currentCloudId) {
+        result = await client
+          .from("snippets")
+          .update({
+            title: payload.title,
+            html: payload.html,
+            css: payload.css,
+            js: payload.js,
+            jsx: payload.jsx,
+            python: payload.python,
+            mode: payload.mode,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", state.currentCloudId)
+          .select()
+          .single();
+      } else {
+        result = await client
+          .from("snippets")
+          .insert({
+            title: payload.title,
+            html: payload.html,
+            css: payload.css,
+            js: payload.js,
+            jsx: payload.jsx,
+            python: payload.python,
+            mode: payload.mode
+          })
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        notify(
+          "error",
+          "Erro ao salvar no Supabase:\n" + result.error.message
+        );
+
+        return;
+      }
+
+      state.currentCloudId = result.data.id;
+      saveEditorState();
+
+      await loadCloudProjects();
+
+      notify("success", "Projeto salvo no Supabase.");
+    }
+
+    function allProjects() {
+      return [
+        ...state.cloudProjects.map((project) => ({
+          ...project,
+          source: "cloud"
+        })),
+        ...state.localProjects.map((project) => ({
+          ...project,
+          source: "local"
+        }))
+      ];
+    }
+
+    function createProjectElement(project) {
+      const item = document.createElement("div");
+      item.className = "project-item";
+
+      const info = document.createElement("div");
+      info.className = "project-info";
+      info.title = "Abrir projeto";
+
+      const name = document.createElement("div");
+      name.className = "project-name";
+      name.textContent =
+        "#" +
+        (project.sequence || "?") +
+        " — " +
+        (project.title || "Sem título");
+
+      const meta = document.createElement("div");
+      meta.className = "project-meta";
+      meta.textContent =
+        (project.source === "cloud" ? "Supabase" : "SQLite local") +
+        " · " +
+        String(project.mode || "html").toUpperCase();
+
+      info.append(name, meta);
+      info.addEventListener("click", () => openProject(project));
+
+      const actions = document.createElement("div");
+      actions.className = "project-actions";
+
+      const renameButton = document.createElement("button");
+      renameButton.className = "small-btn";
+      renameButton.textContent = "✎";
+      renameButton.title = "Renomear";
+
+      renameButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        renameProject(project);
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "small-btn";
+      deleteButton.textContent = "×";
+      deleteButton.title = "Excluir";
+
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        deleteProject(project);
+      });
+
+      actions.append(renameButton, deleteButton);
+      item.append(info, actions);
+
+      return item;
+    }
+
+    function renderProjectList() {
+      const term = $("projectSearch").value.trim().toLowerCase();
+      const container = $("projectList");
+
+      container.innerHTML = "";
+
+      const projects = allProjects().filter((project) =>
+        String(project.title || "").toLowerCase().includes(term)
+      );
+
+      if (!projects.length) {
+        container.innerHTML =
+          '<div class="empty">Nenhum projeto encontrado.</div>';
+        return;
+      }
+
+      projects.forEach((project) => {
+        container.appendChild(createProjectElement(project));
+      });
+
+      renderOpenProjectList();
+    }
+
+    function openProject(project) {
+      state.title = project.title || "Sem título";
+      state.mode = project.mode || "html";
+
+      state.currentLocalId =
+        project.source === "local" ? project.id : null;
+
+      state.currentCloudId =
+        project.source === "cloud" ? project.id : null;
+
+      state.html = project.html || "";
+      state.css = project.css || "";
+      state.js = project.js || "";
+      state.jsx = project.jsx || "";
+      state.python = project.python || "";
+
+      if (state.mode === "react") {
+        state.tab = "jsx";
+      } else if (state.mode === "python") {
+        state.tab = "python";
+      } else {
+        state.tab = "html";
+      }
+
+      saveEditorState();
+      renderAll();
+      updatePreview();
+      closeOpenModal();
+
+      notify(
+        "success",
+        "Projeto aberto: " + state.title
+      );
+    }
+
+    async function deleteProject(project) {
+      if (!confirm("Excluir o projeto \"" + project.title + "\"?")) {
+        return;
+      }
+
+      try {
+        if (project.source === "cloud") {
+          const client = state.supabase || createSupabaseClient();
+
+          if (!client) {
+            notify("error", "Configure o Supabase para excluir esse projeto.");
+            return;
+          }
+
+          const { error } = await client
+            .from("snippets")
+            .delete()
+            .eq("id", project.id);
+
+          if (error) {
+            notify("error", "Erro ao excluir:\n" + error.message);
+            return;
+          }
+
+          await loadCloudProjects();
+          notify("success", "Projeto excluído do Supabase.");
+          return;
+        }
+
+        await sqliteDeleteProject(project.id);
+        state.localProjects = await sqliteListProjects();
+        renderProjectList();
+
+        notify("success", "Projeto excluído do SQLite local.");
+      } catch (error) {
+        notify("error", "Erro ao excluir:\n" + error.message);
+      }
+    }
+
+    async function renameProject(project) {
+      const newTitle = prompt(
+        "Novo nome do projeto:",
+        project.title || ""
+      );
+
+      if (!newTitle || !newTitle.trim()) return;
+
+      const title = newTitle.trim();
+
+      try {
+        if (project.source === "cloud") {
+          const client = state.supabase || createSupabaseClient();
+
+          if (!client) {
+            notify("error", "Configure o Supabase.");
+            return;
+          }
+
+          const { error } = await client
+            .from("snippets")
+            .update({
+              title,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", project.id);
+
+          if (error) {
+            notify("error", "Erro ao renomear:\n" + error.message);
+            return;
+          }
+
+          await loadCloudProjects();
+          notify("success", "Projeto renomeado.");
+          return;
+        }
+
+        const projects = await sqliteListProjects();
+        const localProject = projects.find(
+          (item) => item.id === project.id
+        );
+
+        if (localProject) {
+          localProject.title = title;
+          localProject.updated_at = new Date().toISOString();
+          await sqliteSaveProject(localProject);
+        }
+
+        state.localProjects = await sqliteListProjects();
+        renderProjectList();
+        notify("success", "Projeto renomeado.");
+      } catch (error) {
+        notify("error", "Erro ao renomear:\n" + error.message);
+      }
+    }
+
+    function openOpenModal() {
+      $("openModal").classList.add("open");
+      renderOpenProjectList();
+    }
+
+    function closeOpenModal() {
+      $("openModal").classList.remove("open");
+    }
+
+    function renderOpenProjectList() {
+      const term = $("openSearchInput").value.trim().toLowerCase();
+      const container = $("openProjectList");
+
+      container.innerHTML = "";
+
+      const projects = allProjects().filter((project) =>
+        String(project.title || "").toLowerCase().includes(term)
+      );
+
+      if (!projects.length) {
+        container.innerHTML =
+          '<div class="empty">Nenhum projeto encontrado.</div>';
+        return;
+      }
+
+      projects.forEach((project) => {
+        container.appendChild(createProjectElement(project));
+      });
+    }
+
+    function csvEscape(value) {
+      return '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    }
+
+    function csvRow(values) {
+      return values.map(csvEscape).join(",");
+    }
+
+    function exportCsv() {
+      const projects = allProjects();
+
+      if (!projects.length) {
+        notify("error", "Não existem projetos para exportar.");
+        return;
+      }
+
+      const headers = [
+        "numero",
+        "id",
+        "title",
+        "html",
+        "css",
+        "js",
+        "jsx",
+        "python",
+        "mode",
+        "source",
+        "updated_at"
+      ];
+
+      const lines = [csvRow(headers)];
+
+      projects.forEach((project, index) => {
+        lines.push(
+          csvRow([
+            project.sequence || index + 1,
+            project.id,
+            project.title,
+            project.html,
+            project.css,
+            project.js,
+            project.jsx,
+            project.python,
+            project.mode,
+            project.source,
+            project.updated_at || ""
+          ])
+        );
+      });
+
+      downloadFile(
+        "backup-playground.csv",
+        "\ufeff" + lines.join("\r\n"),
+        "text/csv;charset=utf-8"
+      );
+
+      notify("success", "Backup CSV baixado.");
+    }
+
+    function exportJson() {
+      const backup = {
+        application: "Playground Modular",
+        version: 3,
+        exported_at: new Date().toISOString(),
+        projects: allProjects()
+      };
+
+      downloadFile(
+        "backup-playground.json",
+        JSON.stringify(backup, null, 2),
+        "application/json;charset=utf-8"
+      );
+
+      notify("success", "Backup JSON baixado.");
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let quoted = false;
+
+      text = text.replace(/^\uFEFF/, "");
+
+      for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        const next = text[index + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          value += '"';
+          index++;
+          continue;
+        }
+
+        if (char === '"') {
+          quoted = !quoted;
+          continue;
+        }
+
+        if (char === "," && !quoted) {
+          row.push(value);
+          value = "";
+          continue;
+        }
+
+        if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") {
+            index++;
+          }
+
+          row.push(value);
+
+          if (row.some((item) => item.trim() !== "")) {
+            rows.push(row);
+          }
+
+          row = [];
+          value = "";
+          continue;
+        }
+
+        value += char;
+      }
+
+      if (value || row.length) {
+        row.push(value);
+        rows.push(row);
+      }
+
+      if (rows.length < 2) {
+        return [];
+      }
+
+      const headers = rows[0].map((header) =>
+        header.trim().toLowerCase()
+      );
+
+      return rows.slice(1).map((columns) => {
+        const result = {};
+
+        headers.forEach((header, index) => {
+          result[header] = columns[index] || "";
+        });
+
+        return result;
+      });
+    }
+
+    async function importBackup(file) {
+      const text = await file.text();
+      const extension = file.name.split(".").pop().toLowerCase();
+
+      let projects = [];
+
+      if (extension === "json") {
+        const parsed = parseJson(text, null);
+        projects = Array.isArray(parsed)
+          ? parsed
+          : parsed?.projects || [];
+      } else {
+        projects = parseCsv(text);
+      }
+
+      if (!projects.length) {
+        notify("error", "Backup vazio ou inválido.");
+        return;
+      }
+
+      let imported = 0;
+
+      for (const item of projects) {
+        const project = {
+          id: uuid(),
+          sequence: Date.now() + imported,
+          title: item.title || item.name || "Importado",
+          html: item.html || "",
+          css: item.css || "",
+          js: item.js || "",
+          jsx: item.jsx || "",
+          python: item.python || "",
+          mode: item.mode || "html",
+          source: "local",
+          updated_at: item.updated_at || new Date().toISOString()
+        };
+
+        await sqliteSaveProject(project);
+        imported++;
+      }
+
+      state.localProjects = await sqliteListProjects();
+      renderProjectList();
+
+      notify(
+        "success",
+        imported + " projeto(s) importado(s) para o SQLite local."
+      );
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function copyCurrent() {
+      try {
+        await navigator.clipboard.writeText(buildDocument());
+        notify("success", "Código completo copiado.");
+      } catch {
+        notify("error", "Não foi possível copiar o código.");
+      }
+    }
+
+    function downloadCurrent() {
+      let content;
+      let extension;
+
+      if (state.mode === "react") {
+        content = state.jsx;
+        extension = "jsx";
+      } else if (state.mode === "python") {
+        content = state.python;
+        extension = "py";
+      } else {
+        content = buildDocument();
+        extension = "html";
+      }
+
+      const safeName = (state.title || "playground")
+        .replace(/[^\wÀ-ÿ -]/g, "")
+        .replace(/\s+/g, "-")
+        .toLowerCase();
+
+      downloadFile(
+        (safeName || "playground") + "." + extension,
+        content,
+        "text/plain;charset=utf-8"
+      );
+
+      notify("success", "Arquivo baixado.");
+    }
+
+    function importFile(file) {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const content = String(reader.result || "");
+        const extension = file.name.split(".").pop().toLowerCase();
+
+        state.title =
+          file.name.replace(/\.[^.]+$/, "") || "Importado";
+
+        state.currentLocalId = null;
+        state.currentCloudId = null;
+
+        if (extension === "py") {
+          state.mode = "python";
+          state.tab = "python";
+          state.python = content;
+        } else if (["jsx", "tsx"].includes(extension)) {
+          state.mode = "react";
+          state.tab = "jsx";
+          state.jsx = content;
+        } else if (extension === "css") {
+          state.mode = "html";
+          state.tab = "css";
+          state.css = content;
+        } else if (extension === "js") {
+          state.mode = "html";
+          state.tab = "js";
+          state.js = content;
+        } else {
+          state.mode = "html";
+          state.tab = "html";
+
+          if (detectCompleteDocument(content)) {
+            state.html = extractCompleteDocument(content);
+            state.css = "";
+            state.js = "";
+          } else {
+            state.html = content;
+          }
+        }
+
+        saveEditorState();
+        renderAll();
+        updatePreview();
+
+        notify("success", "Arquivo importado: " + file.name);
+      };
+
+      reader.readAsText(file);
+    }
+
+    function resetCurrent() {
+      if (state.mode === "react") {
+        state.jsx = DEFAULT_JSX;
+      } else if (state.mode === "python") {
+        state.python = DEFAULT_PYTHON;
+      } else {
+        state.html = DEFAULT_HTML;
+        state.css = DEFAULT_CSS;
+        state.js = DEFAULT_JS;
+      }
+
+      state.title = "Sem título";
+      state.currentLocalId = null;
+      state.currentCloudId = null;
+
+      saveEditorState();
+      renderAll();
+      updatePreview();
+
+      notify("success", "Conteúdo restaurado.");
+    }
+
+    function clearCurrent() {
+      if (state.mode === "react") {
+        state.jsx = "";
+      } else if (state.mode === "python") {
+        state.python = "";
+      } else if (state.tab === "html") {
+        state.html = "";
+      } else if (state.tab === "css") {
+        state.css = "";
+      } else if (state.tab === "js") {
+        state.js = "";
+      }
+
+      saveEditorState();
+      renderAll();
+      updatePreview();
+
+      notify("info", "Editor limpo.");
+    }
+
+    function openFullscreen() {
+      const blob = new Blob([buildDocument()], {
+        type: "text/html;charset=utf-8"
+      });
+
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    function applyTheme() {
+      const theme = localStorage.getItem(KEYS.theme) || "dark";
+      document.documentElement.classList.toggle("light", theme === "light");
+      $("themeBtn").textContent = theme === "light" ? "☀" : "☾";
+    }
+
+    function toggleTheme() {
+      const light = document.documentElement.classList.toggle("light");
+
+      localStorage.setItem(
+        KEYS.theme,
+        light ? "light" : "dark"
+      );
+
+      $("themeBtn").textContent = light ? "☀" : "☾";
+    }
+
+    function findCodeMatches() {
+      const term = $("codeSearchInput").value;
+
+      if (!term) {
+        state.searchMatches = [];
+        $("searchResult").hidden = true;
+        return;
+      }
+
+      const code = getCurrentCode();
+      const lowerCode = code.toLowerCase();
+      const lowerTerm = term.toLowerCase();
+      const matches = [];
+      let start = 0;
+
+      while (true) {
+        const index = lowerCode.indexOf(lowerTerm, start);
+
+        if (index < 0) break;
+
+        matches.push(index);
+        start = index + Math.max(1, term.length);
+      }
+
+      state.searchMatches = matches;
+      state.searchIndex = 0;
+
+      if (!matches.length) {
+        $("searchResult").hidden = false;
+        $("searchResult").textContent = "Nenhum resultado encontrado.";
+        return;
+      }
+
+      selectCurrentMatch();
+    }
+
+    function selectCurrentMatch() {
+      const editor = $("codeEditor");
+      const result = $("searchResult");
+      const term = $("codeSearchInput").value;
+      const matches = state.searchMatches;
+
+      if (!matches.length || !term) {
+        result.hidden = true;
+        return;
+      }
+
+      const index = matches[state.searchIndex];
+
+      editor.focus();
+      editor.setSelectionRange(index, index + term.length);
+
+      const before = editor.value.slice(0, index);
+      const line = before.split("\n").length;
+
+      result.hidden = false;
+      result.textContent =
+        "Resultado " +
+        (state.searchIndex + 1) +
+        " de " +
+        matches.length +
+        " · aba " +
+        state.tab.toUpperCase() +
+        " · linha " +
+        line;
+    }
+
+    function nextMatch() {
+      if (!state.searchMatches.length) {
+        findCodeMatches();
+        return;
+      }
+
+      state.searchIndex =
+        (state.searchIndex + 1) % state.searchMatches.length;
+
+      selectCurrentMatch();
+    }
+
+    function previousMatch() {
+      if (!state.searchMatches.length) {
+        findCodeMatches();
+        return;
+      }
+
+      state.searchIndex =
+        (state.searchIndex - 1 + state.searchMatches.length) %
+        state.searchMatches.length;
+
+      selectCurrentMatch();
+    }
+
+    function replaceCode() {
+      const search = $("codeSearchInput").value;
+
+      if (!search) return;
+
+      const replacement = prompt(
+        "Substituir por:",
+        ""
+      );
+
+      if (replacement === null) return;
+
+      const code = getCurrentCode();
+      const updated = code.replaceAll(search, replacement);
+
+      setCurrentCode(updated);
+      findCodeMatches();
+      notify("success", "Substituição concluída.");
+    }
+
+    function bindEvents() {
+      document.querySelectorAll("[data-mode]").forEach((button) => {
+        button.addEventListener("click", () => {
+          setMode(button.dataset.mode);
+        });
+      });
+
+      document.querySelectorAll("[data-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          setTab(button.dataset.tab);
+        });
+      });
+
+      $("projectTitle").addEventListener("input", (event) => {
+        state.title = event.target.value;
+        saveEditorState();
+      });
+
+      $("codeEditor").addEventListener("input", (event) => {
+        setCurrentCode(event.target.value);
+      });
+
+      $("codeEditor").addEventListener("scroll", () => {
+        $("lineNumbers").scrollTop = $("codeEditor").scrollTop;
+      });
+
+      $("codeEditor").addEventListener("paste", (event) => {
+        if (state.tab !== "html") return;
+
+        const pasted = event.clipboardData.getData("text");
+
+        if (!detectCompleteDocument(pasted)) return;
+
+        event.preventDefault();
+
+        state.html = extractCompleteDocument(pasted);
+        state.css = "";
+        state.js = "";
+
+        saveEditorState();
+        renderAll();
+        updatePreview();
+
+        notify("info", "Documento HTML completo detectado.");
+      });
+
+      $("autoRunBtn").addEventListener("click", () => {
+        state.autoRun = !state.autoRun;
+        saveEditorState();
+        renderAll();
+
+        if (state.autoRun) {
+          updatePreview();
+        }
+      });
+
+      $("runBtn").addEventListener("click", updatePreview);
+      $("saveLocalBtn").addEventListener("click", saveLocal);
+      $("saveCloudBtn").addEventListener("click", saveCloud);
+      $("openBtn").addEventListener("click", openOpenModal);
+      $("closeOpenBtn").addEventListener("click", closeOpenModal);
+
+      $("configBtn").addEventListener("click", () => {
+        $("configModal").classList.add("open");
+      });
+
+      $("closeConfigBtn").addEventListener("click", () => {
+        $("configModal").classList.remove("open");
+      });
+
+      $("testSqliteBtn").addEventListener("click", testSqlite);
+      $("testSupabaseBtn").addEventListener("click", testSupabase);
+      $("loadSupabaseBtn").addEventListener("click", loadCloudProjects);
+
+      $("clearSupabaseBtn").addEventListener("click", () => {
+        state.supabase = null;
+        $("supabaseUrl").value = "";
+        $("supabaseKey").value = "";
+        localStorage.removeItem(KEYS.config);
+        configNotify("Configuração removida.");
+      });
+
+      $("copyBtn").addEventListener("click", copyCurrent);
+      $("downloadBtn").addEventListener("click", downloadCurrent);
+      $("fullscreenBtn").addEventListener("click", openFullscreen);
+      $("themeBtn").addEventListener("click", toggleTheme);
+      $("resetBtn").addEventListener("click", resetCurrent);
+      $("clearBtn").addEventListener("click", clearCurrent);
+
+      $("collapseEditorBtn").addEventListener("click", () => {
+        state.editorCollapsed = true;
+        saveEditorState();
+        renderAll();
+      });
+
+      $("expandEditorBtn").addEventListener("click", () => {
+        state.editorCollapsed = false;
+        saveEditorState();
+        renderAll();
+      });
+
+      $("importBtn").addEventListener("click", () => {
+        $("fileInput").click();
+      });
+
+      $("fileInput").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+          importFile(file);
+        }
+
+        event.target.value = "";
+      });
+
+      $("backupCsvBtn").addEventListener("click", exportCsv);
+      $("backupJsonBtn").addEventListener("click", exportJson);
+
+      $("importBackupBtn").addEventListener("click", () => {
+        $("backupInput").click();
+      });
+
+      $("backupInput").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+          await importBackup(file);
+        }
+
+        event.target.value = "";
+      });
+
+      $("projectSearch").addEventListener("input", renderProjectList);
+      $("openSearchInput").addEventListener("input", renderOpenProjectList);
+
+      $("mobileEditorBtn").addEventListener("click", () => {
+        state.mobileView = "editor";
+        renderAll();
+      });
+
+      $("mobilePreviewBtn").addEventListener("click", () => {
+        state.mobileView = "preview";
+        updatePreview();
+        renderAll();
+      });
+
+      $("searchCodeBtn").addEventListener("click", () => {
+        $("searchCodeBar").hidden = !$("searchCodeBar").hidden;
+
+        if (!$("searchCodeBar").hidden) {
+          $("codeSearchInput").focus();
+        }
+      });
+
+      $("closeCodeSearchBtn").addEventListener("click", () => {
+        $("searchCodeBar").hidden = true;
+        $("searchResult").hidden = true;
+        state.searchMatches = [];
+      });
+
+      $("codeSearchInput").addEventListener("input", findCodeMatches);
+      $("codeSearchInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.shiftKey ? previousMatch() : nextMatch();
+        }
+
+        if (event.key === "Escape") {
+          $("searchCodeBar").hidden = true;
+          $("searchResult").hidden = true;
+        }
+      });
+
+      $("nextMatchBtn").addEventListener("click", nextMatch);
+      $("previousMatchBtn").addEventListener("click", previousMatch);
+      $("replaceCodeBtn").addEventListener("click", replaceCode);
+
+      $("refreshBtn").addEventListener("click", async () => {
+        try {
+          state.localProjects = await sqliteListProjects();
+
+                 if (state.supabase) {
+          await loadCloudProjects();
+        }
+
+        renderProjectList();
+        notify("success", "Lista atualizada.");
+      });
+
+      window.addEventListener("resize", renderAll);
+
+      document.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+          event.preventDefault();
+
+          $("searchCodeBar").hidden = false;
+          $("codeSearchInput").focus();
+          $("codeSearchInput").select();
+        }
+
+        if (event.key === "Escape") {
+          if ($("configModal").classList.contains("open")) {
+            $("configModal").classList.remove("open");
+          }
+
+          if ($("openModal").classList.contains("open")) {
+            $("openModal").classList.remove("open");
+          }
+        }
+      });
+
+      $("configModal").addEventListener("click", (event) => {
+        if (event.target === $("configModal")) {
+          $("configModal").classList.remove("open");
+        }
+      });
+
+      $("openModal").addEventListener("click", (event) => {
+        if (event.target === $("openModal")) {
+          $("openModal").classList.remove("open");
+        }
+      });
+    }
+
+    async function startup() {
+      try {
+        applyTheme();
+        bindEvents();
+        loadEditorState();
+
+        state.localProjects = await sqliteListProjects();
+        renderAll();
+        updatePreview();
+
+        const config = parseJson(
+          localStorage.getItem(KEYS.config),
+          {}
+        );
+
+        if (config.url && config.key && window.supabase) {
+          state.supabase = window.supabase.createClient(
+            config.url,
+            config.key
+          );
+        }
+      } catch (error) {
+        console.error(error);
+        notify(
+          "error",
+          "Erro ao iniciar o aplicativo:\n" + error.message,
+          0
+        );
+      }
+    }
+
+    startup();
+  </script>
+</body>
+</html>
+
