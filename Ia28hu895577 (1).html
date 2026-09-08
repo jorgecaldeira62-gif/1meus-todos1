@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Analisador de Projeto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .secao {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .secao h2 {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .upload-area {
+            border: 2px dashed #334155;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .resultado {
+            margin-top: 20px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #1e293b;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #334155;
+        }
+
+        .item.ok {
+            border-left-color: #22c55e;
+        }
+
+        .item.falta {
+            border-left-color: #ef4444;
+        }
+
+        .item.aviso {
+            border-left-color: #f59e0b;
+        }
+
+        .icone {
+            font-size: 20px;
+            min-width: 30px;
+        }
+
+        .info {
+            flex: 1;
+        }
+
+        .info strong {
+            display: block;
+            color: #f1f5f9;
+            font-size: 13px;
+        }
+
+        .info small {
+            color: #cbd5e1;
+            font-size: 12px;
+        }
+
+        .gerar-btn {
+            background: #22c55e;
+            margin-top: 10px;
+        }
+
+        .gerar-btn:hover {
+            background: #16a34a;
+        }
+
+        .arvore {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #cbd5e1;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .arvore-item {
+            padding: 3px 0;
+            margin-left: 20px;
+        }
+
+        .resumo {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .resumo strong {
+            color: #3b82f6;
+        }
+
+        .progresso {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progresso-barra {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Analisador de Projeto APK</h1>
+
+        <div class="grid">
+            <!-- UPLOAD -->
+            <div class="secao">
+                <h2>📁 Importar Projeto</h2>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
+                    <p>Clique ou arraste seu arquivo aqui</p>
+                    <small>ZIP, pasta ou arquivo solto</small>
+                </div>
+                <input type="file" id="fileInput" onchange="analisarArquivo(event)">
+                <div class="botoes">
+                    <button onclick="document.getElementById('fileInput').click()">
+                        📁 Selecionar
+                    </button>
+                    <button onclick="limparAnalise()">
+                        🗑️ Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- RESUMO -->
+            <div class="secao">
+                <h2>📊 Resumo</h2>
+                <div class="resumo" id="resumo">
+                    <p>Nenhum projeto analisado ainda</p>
+                </div>
+                <div class="progresso">
+                    <div class="progresso-barra" id="progressoBarra" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANÁLISE -->
+        <div class="secao">
+            <h2>✅ Verificação de Arquivos</h2>
+            <div id="analise" class="resultado">
+                <p style="color: #cbd5e1; font-size: 12px;">Importe um projeto para começar a análise</p>
+            </div>
+        </div>
+
+        <!-- ÁRVORE DE ARQUIVOS -->
+        <div class="secao">
+            <h2>🌳 Estrutura de Arquivos</h2>
+            <div id="arvore" class="arvore">
+                <p style="color: #cbd5e1; font-size: 12px;">Árvore de arquivos aparecerá aqui</p>
+            </div>
+        </div>
+
+        <!-- GERAR ARQUIVOS FALTANTES -->
+        <div class="secao">
+            <h2>🔧 Gerar Arquivos Faltantes</h2>
+            <div id="gerador">
+                <p style="color: #cbd5e1; font-size: 12px;">Após análise, você poderá gerar arquivos faltantes</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        let arquivosAnalisados = {};
+
+        // ── DRAG AND DROP ──
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                analisarArquivo({ target: { files } });
+            }
+        });
+
+        // ── ANALISAR ARQUIVO ──
+        async function analisarArquivo(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const file = files[0];
+            console.log('Analisando:', file.name);
+
+            // Simular leitura de arquivos
+            arquivosAnalisados = {
+                manifest: Math.random() > 0.5,
+                icone: Math.random() > 0.3,
+                packageJson: Math.random() > 0.2,
+                mainJs: Math.random() > 0.1,
+                gradle: Math.random() > 0.6,
+                proguard: Math.random() > 0.7,
+                keystore: Math.random() > 0.8
+            };
+
+            exibirAnalise();
+            exibirArvore();
+            exibirGerador();
+        }
+
+        // ── EXIBIR ANÁLISE ──
+        function exibirAnalise() {
+            const analise = document.getElementById('analise');
+            const items = [
+                {
+                    nome: 'AndroidManifest.xml',
+                    descricao: 'Configuração principal do app',
+                    status: arquivosAnalisados.manifest
+                },
+                {
+                    nome: 'Ícone do App',
+                    descricao: 'Imagem do app (icon.png)',
+                    status: arquivosAnalisados.icone
+                },
+                {
+                    nome: 'package.json',
+                    descricao: 'Dependências do projeto',
+                    status: arquivosAnalisados.packageJson
+                },
+                {
+                    nome: 'main.js',
+                    descricao: 'Arquivo principal',
+                    status: arquivosAnalisados.mainJs
+                },
+                {
+                    nome: 'build.gradle',
+                    descricao: 'Configuração do Gradle',
+                    status: arquivosAnalisados.gradle
+                },
+                {
+                    nome: 'proguard-rules.pro',
+                    descricao: 'Regras de ofuscação',
+                    status: arquivosAnalisados.proguard
+                },
+                {
+                    nome: 'Keystore',
+                    descricao: 'Chave de assinatura',
+                    status: arquivosAnalisados.keystore
+                }
+            ];
+
+            let html = '';
+            let total = 0;
+            let presentes = 0;
+
+            items.forEach(item => {
+                total++;
+                if (item.status) presentes++;
+
+                const classe = item.status ? 'ok' : 'falta';
+                const icone = item.status ? '✅' : '❌';
+
+                html += `
+                    <div class="item ${classe}">
+                        <div class="icone">${icone}</div>
+                        <div class="info">
+                            <strong>${item.nome}</strong>
+                            <small>${item.descricao}</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            analise.innerHTML = html;
+
+            // Atualizar resumo
+            const percentual = Math.round((presentes / total) * 100);
+            document.getElementById('resumo').innerHTML = `
+                <strong>Status: ${percentual}% Completo</strong>
+                <p>${presentes} de ${total} arquivos encontrados</p>
+                <div class="progresso">
+                    <div class="progresso-barra" style="width: ${percentual}%"></div>
+                </div>
+            `;
+
+            document.getElementById('progressoBarra').style.width = percentual + '%';
+        }
+
+        // ── EXIBIR ÁRVORE ──
+        function exibirArvore() {
+            const arvore = document.getElementById('arvore');
+            const estrutura = `
+📦 projeto/
+├── 📄 AndroidManifest.xml
+├── 📁 src/
+│   ├── 📄 main.js
+│   ├── 📄 app.js
+│   └── 📄 config.js
+├── 📁 ui/
+│   ├── 📁 images/
+│   │   ├── 📄 icon.png
+│   │   └── 📄 logo.png
+│   ├── 📁 css/
+│   │   └── 📄 style.css
+│   └── 📁 fonts/
+│       └── 📄 font.ttf
+├── 📁 android/
+│   ├── 📄 build.gradle
+│   ├── 📄 proguard-rules.pro
+│   └── 📁 app/
+├── 📄 package.json
+├── 📄 index.html
+└── 📄 README.md
+            `;
+            arvore.innerHTML = `<pre>${estrutura}</pre>`;
+        }
+
+        // ── EXIBIR GERADOR ──
+        function exibirGerador() {
+            const gerador = document.getElementById('gerador');
+            const faltam = [];
+
+            if (!arquivosAnalisados.manifest) faltam.push('AndroidManifest.xml');
+            if (!arquivosAnalisados.icone) faltam.push('Ícone');
+            if (!arquivosAnalisados.gradle) faltam.push('build.gradle');
+            if (!arquivosAnalisados.keystore) faltam.push('Keystore');
+
+            if (faltam.length === 0) {
+                gerador.innerHTML = `
+                    <div class="item ok">
+                        <div class="icone">✅</div>
+                        <div class="info">
+                            <strong>Projeto Completo!</strong>
+                            <small>Todos os arquivos necessários estão presentes</small>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<p style="color: #cbd5e1; margin-bottom: 15px;">Arquivos faltantes:</p>';
+
+            faltam.forEach(arquivo => {
+                html += `
+                    <button class="gerar-btn" onclick="gerarArquivo('${arquivo}')">
+                        🔧 Gerar ${arquivo}
+                    </button>
+                `;
+            });
+
+            gerador.innerHTML = html;
+        }
+
+        // ── GERAR ARQUIVO ──
+        function gerarArquivo(tipo) {
+            alert(`🔧 Gerando ${tipo}...\n\nEm um projeto real, isso criaria o arquivo automaticamente.`);
+            arquivosAnalisados[tipo.toLowerCase()] = true;
+            exibirAnalise();
+            exibirGerador();
+        }
+
+        // ── LIMPAR ──
+        function limparAnalise() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('analise').innerHTML = 
+                '<p style="color: #cbd5e1; font-size: 12px;">Importe um projeto para começar a análise</p>';
+            document.getElementById('arvore').innerHTML = 
+                '<p style="color: #cbd5e1; font-size: 12px;">Árvore de arquivos aparecerá aqui</p>';
+            document.getElementById('gerador').innerHTML = 
+                '<p style="color: #cbd5e1; font-size: 12px;">Após análise, você poderá gerar arquivos faltantes</p>';
+            document.getElementById('resumo').innerHTML = 
+                '<p>Nenhum projeto analisado ainda</p>';
+            document.getElementById('progressoBarra').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
