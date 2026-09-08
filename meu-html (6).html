@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ VoiceStudio Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .studio-header {
+            text-align: center;
+            padding: 30px 20px 10px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .studio-header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .studio-header p { color: #aaa; margin-top: 5px; font-size: 0.9rem; }
+
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #c77dff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* VISUALIZER */
+        .visualizer-panel {
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(199,125,255,0.3);
+        }
+
+        /* CONTROLES DE GRAVAÇÃO */
+        .record-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .btn:active { transform: scale(0.96); }
+
+        .btn-record {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255,68,68,0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #555, #333);
+            color: #fff;
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #6bcb77, #2d9e3a);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(107,203,119,0.4);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #4d96ff, #1a5fc8);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(77,150,255,0.4);
+        }
+
+        .btn-effect {
+            background: linear-gradient(135deg, #c77dff, #7b2fff);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(199,125,255,0.4);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #ff9f43, #e67e22);
+            color: #fff;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* STATUS */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #555;
+            transition: all 0.3s;
+        }
+
+        .status-dot.recording {
+            background: #ff4444;
+            animation: pulse-red 1s infinite;
+        }
+
+        .status-dot.playing {
+            background: #6bcb77;
+            animation: pulse-green 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(255,68,68,0); }
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(107,203,119,0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(107,203,119,0); }
+        }
+
+        #statusText { font-size: 0.9rem; color: #ccc; }
+        #timerDisplay { margin-left: auto; font-family: monospace; font-size: 1.1rem; color: #ffd93d; }
+
+        /* SLIDERS */
+        .slider-group {
+            margin-bottom: 14px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        .slider-label span:last-child {
+            color: #c77dff;
+            font-weight: 700;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.15);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #c77dff, #7b2fff);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(199,125,255,0.5);
+        }
+
+        /* EFEITOS SONOROS */
+        .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .effect-btn {
+            padding: 10px 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.78rem;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .effect-btn:hover {
+            background: rgba(199,125,255,0.2);
+            border-color: #c77dff;
+            transform: scale(1.05);
+        }
+
+        .effect-btn.active {
+            background: rgba(199,125,255,0.3);
+            border-color: #c77dff;
+            box-shadow: 0 0 10px rgba(199,125,255,0.4);
+        }
+
+        .effect-btn span:first-child { font-size: 1.4rem; }
+
+        /* GRAVAÇÕES SALVAS */
+        .recordings-panel {
+            grid-column: 1 / -1;
+        }
+
+        .recordings-list {
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recordings-list::-webkit-scrollbar { width: 4px; }
+        .recordings-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+        .recordings-list::-webkit-scrollbar-thumb { background: #c77dff; border-radius: 2px; }
+
+        .recording-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .recording-item:hover {
+            border-color: rgba(199,125,255,0.4);
+            background: rgba(199,125,255,0.08);
+        }
+
+        .recording-info { flex: 1; }
+        .recording-name { font-weight: 600; font-size: 0.9rem; }
+        .recording-meta { font-size: 0.75rem; color: #888; margin-top: 2px; }
+
+        .recording-actions { display: flex; gap: 6px; }
+
+        .mini-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .mini-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+        .mini-play { background: rgba(107,203,119,0.2); color: #6bcb77; border: 1px solid rgba(107,203,119,0.3); }
+        .mini-download { background: rgba(77,150,255,0.2); color: #4d96ff; border: 1px solid rgba(77,150,255,0.3); }
+        .mini-delete { background: rgba(255,68,68,0.2); color: #ff6b6b; border: 1px solid rgba(255,68,68,0.3); }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* PRESET VOICES */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .preset-btn {
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            color: #ddd;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preset-btn:hover {
+            background: rgba(77,150,255,0.15);
+            border-color: #4d96ff;
+        }
+
+        .preset-btn.active {
+            background: rgba(77,150,255,0.25);
+            border-color: #4d96ff;
+        }
+
+        /* BEAT PADS */
+        .beat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .beat-pad {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .beat-pad span:last-child {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+        }
+
+        .beat-pad:active { transform: scale(0.9); filter: brightness(1.5); }
+
+        .beat-pad::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.3);
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+
+        .beat-pad.hit::after { opacity: 1; }
+
+        /* WAVEFORM MINI */
+        .waveform-mini {
+            height: 40px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            margin-top: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        /* NOME DA GRAVAÇÃO */
+        .name-input {
+            width: 100%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .name-input:focus { border-color: #c77dff; }
+
+        /* REVERB / DELAY VISUAL */
+        .fx-indicator {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .fx-tag {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(199,125,255,0.2);
+            border: 1px solid rgba(199,125,255,0.4);
+            color: #c77dff;
+        }
+
+        @media (max-width: 700px) {
+            .main-container { grid-template-columns: 1fr; }
+            .visualizer-panel, .status-bar, .recordings-panel { grid-column: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="studio-header">
+    <h1>🎙️ VoiceStudio Pro</h1>
+    <p>Grave • Transforme • Misture • Exporte</p>
+</div>
+
+<div class="main-container">
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Pronto para gravar</span>
+        <span id="timerDisplay">00:00</span>
+    </div>
+
+    <!-- VISUALIZER -->
+    <div class="panel visualizer-panel">
+        <div class="panel-title">📊 Visualizador</div>
+        <canvas id="visualizer"></canvas>
+    </div>
+
+    <!-- PAINEL DE GRAVAÇÃO -->
+    <div class="panel">
+        <div class="panel-title">🎙️ Gravação</div>
+        <input type="text" class="name-input" id="recordingName" placeholder="Nome da gravação...">
+        <div class="record-controls">
+            <button class="btn btn-record" id="btnRecord">⏺ Gravar</button>
+            <button class="btn btn-stop" id="btnStop" disabled>⏹ Parar</button>
+            <button class="btn btn-play" id="btnPlay" disabled>▶ Reproduzir</button>
+            <button class="btn btn-effect" id="btnApply" disabled>✨ Aplicar FX</button>
+            <button class="btn btn-save" id="btnSave" disabled>💾 Salvar</button>
+            <button class="btn btn-clear" id="btnClear" disabled>🗑 Limpar</button>
+        </div>
+        <div class="fx-indicator" id="fxIndicator"></div>
+    </div>
+
+    <!-- TRANSFORMAÇÃO DE VOZ -->
+    <div class="panel">
+        <div class="panel-title">🎛️ Transformador de Voz</div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>🎵 Tom (Pitch)</span><span id="pitchVal">0 st</span></div>
+            <input type="range" id="pitchShift" min="-12" max="12" value="0" step="0.5">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>⚡ Velocidade</span><span id="rateVal">1.0x</span></div>
+            <input type="range" id="playbackRate" min="0.3" max="3" value="1" step="0.05">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>🔊 Volume</span><span id="gainVal">100%</span></div>
+            <input type="range" id="gainControl" min="0" max="200" value="100">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>🌊 Reverb</span><span id="reverbVal">0%</span></div>
+            <input type="range" id="reverbControl" min="0" max="100" value="0">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>🔁 Delay</span><span id="delayVal">0%</span></div>
+            <input type="range" id="delayControl" min="0" max="100" value="0">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-label"><span>🎸 Distorção</span><span id="distortionVal">0%</span></div>
+            <input type="range" id="distortionControl" min="0" max="100" value="0">
+        </div>
+    </div>
+
+    <!-- PRESETS DE VOZ -->
+    <div class="panel">
+        <div class="panel-title">🎭 Presets de Voz</div>
+        <div class="preset-grid">
+            <button class="preset-btn" onclick="applyPreset('normal')">🧑 Normal</button>
+            <button class="preset-btn" onclick="applyPreset('robot')">🤖 Robô</button>
+            <button class="preset-btn" onclick="applyPreset('giant')">👹 Gigante</button>
+            <button class="preset-btn" onclick="applyPreset('chipmunk')">🐿️ Esquilo</button>
+            <button class="preset-btn" onclick="applyPreset('demon')">😈 Demônio</button>
+            <button class="preset-btn" onclick="applyPreset('alien')">👽 Alienígena</button>
+            <button class="preset-btn" onclick="applyPreset('radio')">📻 Rádio AM</button>
+            <button class="preset-btn" onclick="applyPreset('cave')">🏔️ Caverna</button>
+            <button class="preset-btn" onclick="applyPreset('underwater')">🌊 Subaquático</button>
+            <button class="preset-btn" onclick="applyPreset('telephone')">📞 Telefone</button>
+        </div>
+    </div>
+
+    <!-- EFEITOS ESPECIAIS -->
+    <div class="panel">
+        <div class="panel-title">🎚️ Efeitos Especiais</div>
+        <div class="effects-grid">
+            <div class="effect-btn" onclick="toggleEffect('chorus')" id="fx-chorus">
+                <span>🎵</span><span>Chorus</span>
+            </div>
+            <div class="effect-btn" onclick="toggleEffect('flanger')" id="fx-flanger">
+                <span>🌀</span><span>Flanger</span>
+            </div>
+            <div class="effect-btn" onclick="toggleEffect('tremolo')" id="fx-tremolo">
+                <span>〰️</span><span>Tremolo</span>
+            </div>
+            <div class="effect-btn" onclick="toggleEffect('bitcrush')" id="fx-bitcrush">
+                <span>💾</span><span>Bit Crush</span>
+            </div>
+            <div class="effect-btn" onclick="toggleEffect('lowpass')" id="fx-lowpass">
+                <span>🔉</span><span>Low Pass</span>
+            </div>
+            <div class="effect-btn" onclick="toggleEffect('highpass')" id="fx-highpass">
+                <span>🔊</span><span>High Pass</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BEAT PADS -->
+    <div class="panel">
+        <div class="panel-title">🥁 Beat Pads</div>
+        <div class="beat-grid" id="beatGrid"></div>
+    </div>
+
+    <!-- GRAVAÇÕES SALVAS -->
+    <div class="panel recordings-panel">
+        <div class="panel-title">📁 Gravações Salvas</div>
+        <div class="recordings-list" id="recordingsList">
+            <div class="empty-state">Nenhuma gravação ainda. Grave e salve!</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let audioCtx = null;
+let analyser = null;
+let mediaStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let processedBlob = null;
+let isRecording = false;
+let isPlaying = false;
+let timerInterval = null;
+let timerSeconds = 0;
+let recordings = JSON.parse(localStorage.getItem('voiceStudioRecordings') || '[]');
+let activeEffects = new Set();
+let currentSource = null;
+let animFrameId = null;
+
+// Parâmetros de FX
+const fxParams = {
+    pitch: 0,
+    rate: 1,
+    gain: 1,
+    reverb: 0,
+    delay: 0,
+    distortion: 0
+};
+
+// ============================================================
+// BEAT PADS DATA
+// ============================================================
+const beatPads = [
+    { emoji: '🥁', name: 'KICK', color: '#ff6b6b', freq: [60, 80], type: 'kick' },
+    { emoji: '🪘', name: 'SNARE', color: '#ffd93d', freq: [200, 300], type: 'snare' },
+    { emoji: '🎵', name: 'HI-HAT', color: '#6bcb77', freq: [8000, 12000], type: 'hihat' },
+    { emoji: '💥', name: 'CRASH', color: '#4d96ff', freq: [5000, 9000], type: 'crash' },
+    { emoji: '🔔', name: 'COWBELL', color: '#c77dff', freq: [562, 845], type: 'cowbell' },
+    { emoji: '🎸', name: 'BASS', color: '#ff9f43', freq: [80, 120], type: 'bass' },
+    { emoji: '🎹', name: 'SYNTH', color: '#48dbfb', freq: [440, 880], type: 'synth' },
+    { emoji: '🌟', name: 'STAR', color: '#ff6b9d', freq: [1000, 2000], type: 'star' },
+];
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+function initAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// ============================================================
+// BEAT PADS
+// ============================================================
+function buildBeatPads() {
+    const grid = document.getElementById('beatGrid');
+    beatPads.forEach((pad, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'beat-pad';
+        btn.style.background = `linear-gradient(135deg, ${pad.color}33, ${pad.color}11)`;
+        btn.style.border = `1px solid ${pad.color}55`;
+        btn.style.color = '#fff';
+        btn.innerHTML = `<span>${pad.emoji}</span><span>${pad.name}</span>`;
+        btn.addEventListener('click', () => playBeat(pad, btn));
+        grid.appendChild(btn);
+    });
+}
+
+function playBeat(pad, btn) {
+    initAudioContext();
+    btn.classList.add('hit');
+    setTimeout(() => btn.classList.remove('hit'), 120);
+
+    const now = audioCtx.currentTime;
+
+    if (pad.type === 'kick') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.5);
+        gain.gain.setValueAtTime(1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+
+    } else if (pad.type === 'snare') {
+        const bufferSize = audioCtx.sampleRate * 0.2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 3000;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.8, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        source.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        source.start(now); source.stop(now + 0.2);
+
+    } else if (pad.type === 'hihat') {
+        const bufferSize = audioCtx.sampleRate * 0.05;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 7000;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        source.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        source.start(now); source.stop(now + 0.05);
+
+    } else if (pad.type === 'crash') {
+        const bufferSize = audioCtx.sampleRate * 1.5;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 5000;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        source.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        source.start(now); source.stop(now + 1.5);
+
+    } else if (pad.type === 'cowbell') {
+        [562, 845].forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            osc.start(now); osc.stop(now + 0.8);
+        });
+
+    } else if (pad.type === 'bass') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 100;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 300;
+        osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        gain.gain.setValueAtTime(0.8, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+
+    } else if (pad.type === 'synth') {
+        const freqs = [440, 550, 660];
+        freqs.forEach(f => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            osc.start(now); osc.stop(now + 0.6);
+        });
+
+    } else if (pad.type === 'star') {
+        for (let i = 0; i < 5; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 1000 + Math.random() * 2000;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.1, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.3);
+            osc.start(now + i * 0.05); osc.stop(now + i * 0.05 + 0.3);
+        }
+    }
+}
+
+// ============================================================
+// GRAVAÇÃO
+// ============================================================
+async function startRecording() {
+    initAudioContext();
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioCtx.createMediaStreamSource(mediaStream);
+        source.connect(analyser);
+
+        mediaRecorder = new MediaRecorder(mediaStream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+            processedBlob = null;
+            document.getElementById('btnPlay').disabled = false;
+            document.getElementById('btnApply').disabled = false;
+            document.getElementById('btnSave').disabled = false;
+            document.getElementById('btnClear').disabled = false;
+            setStatus('Gravação concluída! ✅', 'idle');
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        startTimer();
+        setStatus('🔴 Gravando...', 'recording');
+        document.getElementById('btnRecord').disabled = true;
+        document.getElementById('btnStop').disabled = false;
+        document.getElementById('btnPlay').disabled = true;
+        document.getElementById('btnSave').disabled = true;
+        startVisualizer();
+    } catch (e) {
+        alert('❌ Permissão de microfone negada ou não disponível.\n' + e.message);
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        mediaStream.getTracks().forEach(t => t.stop());
+        isRecording = false;
+        stopTimer();
+        document.getElementById('btnRecord').disabled = false;
+        document.getElementById('btnStop').disabled = true;
+    }
+}
+
+// ============================================================
+// REPRODUÇÃO COM EFEITOS
+// ============================================================
+async function playWithEffects() {
+    if (!recordedBlob) return;
+    initAudioContext();
+
+    if (currentSource) { try { currentSource.stop(); } catch(e){} currentSource = null; }
+
+    const blobToUse = processedBlob || recordedBlob;
+    const arrayBuffer = await blobToUse.arrayBuffer();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.playbackRate.value = fxParams.rate;
+    currentSource = source;
+
+    // Chain de efeitos
+    let lastNode = source;
+
+    // Gain
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = fxParams.gain;
+    lastNode.connect(gainNode);
+    lastNode = gainNode;
+
+    // Distortion
+    if (fxParams.distortion > 0) {
+        const waveShaper = audioCtx.createWaveShaper();
+        waveShaper.curve = makeDistortionCurve(fxParams.distortion * 4);
+        waveShaper.oversample = '4x';
+        lastNode.connect(waveShaper);
+        lastNode = waveShaper;
+    }
+
+    // Low Pass
+    if (activeEffects.has('lowpass')) {
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 800;
+        lastNode.connect(filter);
+        lastNode = filter;
+    }
+
+    // High Pass
+    if (activeEffects.has('highpass')) {
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 2000;
+        lastNode.connect(filter);
+        lastNode = filter;
+    }
+
+    // Chorus
+    if (activeEffects.has('chorus')) {
+        const delay = audioCtx.createDelay();
+        delay.delayTime.value = 0.03;
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+        osc.frequency.value = 1.5;
+        oscGain.gain.value = 0.002;
+        osc.connect(oscGain);
+        oscGain.connect(delay.delayTime);
+        osc.start();
+        lastNode.connect(delay);
+        delay.connect(analyser);
+        lastNode.connect(analyser);
+        lastNode = null;
+    }
+
+    // Tremolo
+    if (activeEffects.has('tremolo') && lastNode) {
+        const tremoloGain = audioCtx.createGain();
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        lfo.frequency.value = 6;
+        lfoGain.gain.value = 0.5;
+        lfo.connect(lfoGain);
+        lfoGain.connect(tremoloGain.gain);
+        tremoloGain.gain.value = 0.5;
+        lfo.start();
+        lastNode.connect(tremoloGain);
+        lastNode = tremoloGain;
+    }
+
+    // Reverb
+    if (fxParams.reverb > 0 && lastNode) {
+        const convolver = audioCtx.createConvolver();
+        convolver.buffer = createReverbBuffer(fxParams.reverb / 100 * 3);
+        const dryGain = audioCtx.createGain();
+        const wetGain = audioCtx.createGain();
+        dryGain.gain.value = 1 - fxParams.reverb / 200;
+        wetGain.gain.value = fxParams.reverb / 100;
+        lastNode.connect(dryGain);
+        lastNode.connect(convolver);
+        convolver.connect(wetGain);
+        dryGain.connect(analyser);
+        wetGain.connect(analyser);
+        lastNode = null;
+    }
+
+    // Delay
+    if (fxParams.delay > 0 && lastNode) {
+        const delayNode = audioCtx.createDelay(2);
+        delayNode.delayTime.value = fxParams.delay / 100 * 0.5;
+        const feedbackGain = audioCtx.createGain();
+        feedbackGain.gain.value = 0.4;
+        lastNode.connect(delayNode);
+        delayNode.connect(feedbackGain);
+        feedbackGain.connect(delayNode);
+        delayNode.connect(analyser);
+        lastNode.connect(analyser);
+        lastNode = null;
+    }
+
+    if (lastNode) lastNode.connect(analyser);
+
+    source.start();
+    isPlaying = true;
+    setStatus('▶ Reproduzindo com efeitos...', 'playing');
+    startVisualizer();
+
+    source.onended = () => {
+        isPlaying = false;
+        setStatus('Reprodução concluída ✅', 'idle');
+    };
+}
+
+// ============================================================
+// APLICAR EFEITOS E SALVAR PROCESSADO
+// ============================================================
+async function applyEffectsAndProcess() {
+    if (!recordedBlob) return;
+    setStatus('⚙️ Processando efeitos...', 'idle');
+
+    // Para fins de exportação, vamos usar OfflineAudioContext
+    initAudioContext();
+    const arrayBuffer = await recordedBlob.arrayBuffer();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const offlineCtx = new OfflineAudioContext(
+        audioBuffer.numberOfChannels,
+        audioBuffer.length,
+        audioBuffer.sampleRate
+    );
+
+    const source = offlineCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.playbackRate.value = fxParams.rate;
+
+    let lastNode = source;
+
+    const gainNode = offlineCtx.createGain();
+    gainNode.gain.value = fxParams.gain;
+    lastNode.connect(gainNode);
+    lastNode = gainNode;
+
+    if (fxParams.distortion > 0) {
+        const ws = offlineCtx.createWaveShaper();
+        ws.curve = makeDistortionCurve(fxParams.distortion * 4);
+        ws.oversample = '4x';
+        lastNode.connect(ws);
+        lastNode = ws;
+    }
+
+    if (activeEffects.has('lowpass')) {
+        const f = offlineCtx.createBiquadFilter();
+        f.type = 'lowpass'; f.frequency.value = 800;
+        lastNode.connect(f); lastNode = f;
+    }
+
+    if (activeEffects.has('highpass')) {
+        const f = offlineCtx.createBiquadFilter();
+        f.type = 'highpass'; f.frequency.value = 2000;
+        lastNode.connect(f); lastNode = f;
+    }
+
+    if (fxParams.reverb > 0) {
+        const convolver = offlineCtx.createConvolver();
+        convolver.buffer = createReverbBufferFor(offlineCtx, fxParams.reverb / 100 * 3);
+        const dryGain = offlineCtx.createGain();
+        const wetGain = offlineCtx.createGain();
+        dryGain.gain.value = 1 - fxParams.reverb / 200;
+        wetGain.gain.value = fxParams.reverb / 100;
+        lastNode.connect(dryGain);
+        lastNode.connect(convolver);
+        convolver.connect(wetGain);
+        dryGain.connect(offlineCtx.destination);
+        wetGain.connect(offlineCtx.destination);
+        lastNode = null;
+    }
+
+    if (lastNode) lastNode.connect(offlineCtx.destination);
+
+    source.start();
+    const renderedBuffer = await offlineCtx.startRendering();
+    processedBlob = audioBufferToWav(renderedBuffer);
+    setStatus('✅ Efeitos aplicados! Pronto para salvar.', 'idle');
+    updateFxIndicator();
+}
+
+// ============================================================
+// SALVAR GRAVAÇÃO
+// ============================================================
+function saveRecording() {
+    const blob = processedBlob || recordedBlob;
+    if (!blob) return;
+
+    const name = document.getElementById('recordingName').value.trim() || `Gravação ${recordings.length + 1}`;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const rec = {
+            id: Date.now(),
+            name,
+            data: e.target.result,
+            date: new Date().toLocaleString('pt-BR'),
+            duration: timerSeconds,
+            effects: [...activeEffects],
+            params: { ...fxParams }
+        };
+        recordings.unshift(rec);
+        localStorage.setItem('voiceStudioRecordings', JSON.stringify(recordings));
+        renderRecordings();
+        setStatus(`💾 "${name}" salvo!`, 'idle');
+        document.getElementById('recordingName').value = '';
+    };
+    reader.readAsDataURL(blob);
+}
+
+// ============================================================
+// RENDERIZAR LISTA DE GRAVAÇÕES
+// ============================================================
+function renderRecordings() {
+    const list = document.getElementById('recordingsList');
+    if (recordings.length === 0) {
+        list.innerHTML = '<div class="empty-state">Nenhuma gravação ainda. Grave e salve!</div>';
+        return;
+    }
+    list.innerHTML = recordings.map(rec => `
+        <div class="recording-item" id="rec-${rec.id}">
+            <div style="font-size:1.5rem">🎙️</div>
+            <div class="recording-info">
+                <div class="recording-name">${rec.name}</div>
+                <div class="recording-meta">${rec.date} • ${formatTime(rec.duration || 0)}</div>
+            </div>
+            <div class="recording-actions">
+                <button class="mini-btn mini-play" onclick="playRecording('${rec.id}')">▶ Play</button>
+                <button class="mini-btn mini-download" onclick="downloadRecording('${rec.id}')">⬇ Baixar</button>
+                <button class="mini-btn mini-delete" onclick="deleteRecording('${rec.id}')">🗑</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function playRecording(id) {
+    initAudioContext();
+    const rec = recordings.find(r => r.id == id);
+    if (!rec) return;
+    const audio = new Audio(rec.data);
+    audio.play();
+    setStatus(`▶ Reproduzindo: ${rec.name}`, 'playing');
+    audio.onended = () => setStatus('Pronto para gravar', 'idle');
+}
+
+function downloadRecording(id) {
+    const rec = recordings.find(r => r.id == id);
+    if (!rec) return;
+    const a = document.createElement('a');
+    a.href = rec.data;
+    a.download = `${rec.name}.wav`;
+    a.click();
+}
+
+function deleteRecording(id) {
+    if (!confirm('Deletar esta gravação?')) return;
+    recordings = recordings.filter(r => r.id != id);
+    localStorage.setItem('voiceStudioRecordings', JSON.stringify(recordings));
+    renderRecordings();
+}
+
+// ============================================================
+// PRESETS
+// ============================================================
+const presets = {
+    normal:     { pitch: 0,   rate: 1.0,  gain: 1.0, reverb: 0,  delay: 0,  distortion: 0 },
+    robot:      { pitch: 0,   rate: 1.0,  gain: 1.2, reverb: 20, delay: 30, distortion: 60 },
+    giant:      { pitch: -8,  rate: 0.7,  gain: 1.3, reverb: 40, delay: 0,  distortion: 0 },
+    chipmunk:   { pitch: 10,  rate: 1.5,  gain: 1.0, reverb: 0,  delay: 0,  distortion: 0 },
+    demon:      { pitch: -12, rate: 0.6,  gain: 1.5, reverb: 60, delay: 20, distortion: 40 },
+    alien:      { pitch: 6,   rate: 1.2,  gain: 1.0, reverb: 30, delay: 50, distortion: 20 },
+    radio:      { pitch: 0,   rate: 1.0,  gain: 1.0, reverb: 0,  delay: 0,  distortion: 30 },
+    cave:       { pitch: -3,  rate: 0.95, gain: 1.0, reverb: 90, delay: 40, distortion: 0 },
+    underwater: { pitch: -4,  rate: 0.85, gain: 0.8, reverb: 70, delay: 30, distortion: 0 },
+    telephone:  { pitch: 2,   rate: 1.0,  gain: 1.2, reverb: 0,  delay: 0,  distortion: 20 },
+};
+
+function applyPreset(name) {
+    const p = presets[name];
+    if (!p) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.preset-btn').classList.add('active');
+
+    fxParams.pitch = p.pitch;
+    fxParams.rate = p.rate;
+    fxParams.gain = p.gain;
+    fxParams.reverb = p.reverb;
+    fxParams.delay = p.delay;
+    fxParams.distortion = p.distortion;
+
+    document.getElementById('pitchShift').value = p.pitch;
+    document.getElementById('playbackRate').value = p.rate;
+    document.getElementById('gainControl').value = p.gain * 100;
+    document.getElementById('reverbControl').value = p.reverb;
+    document.getElementById('delayControl').value = p.delay;
+    document.getElementById('distortionControl').value = p.distortion;
+
+    updateAllLabels();
+    updateFxIndicator();
+
+    // Efeitos especiais por preset
+    if (name === 'robot') { activeEffects.add('bitcrush'); }
+    if (name === 'telephone') { activeEffects.add('highpass'); activeEffects.add('lowpass'); }
+    if (name === 'underwater') { activeEffects.add('lowpass'); }
+    updateEffectButtons();
+}
+
+// ============================================================
+// EFEITOS TOGGLE
+// ============================================================
+function toggleEffect(name) {
+    if (activeEffects.has(name)) activeEffects.delete(name);
+    else activeEffects.add(name);
+    updateEffectButtons();
+    updateFxIndicator();
+}
+
+function updateEffectButtons() {
+    document.querySelectorAll('.effect-btn').forEach(btn => {
+        const id = btn.id.replace('fx-', '');
+        btn.classList.toggle('active', activeEffects.has(id));
+    });
+}
+
+// ============================================================
+// VISUALIZER
+// ============================================================
+function startVisualizer() {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const W = canvas.offsetWidth;
+    const H = canvas.offsetHeight;
+
+    if (!analyser) return;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    function draw() {
+        animFrameId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillRect(0, 0, W, H);
+
+        const barWidth = (W / bufferLength) * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * H;
+            const hue = (i / bufferLength) * 280 + 200;
+            ctx.fillStyle = `hsl(${hue}, 80%, 60%)`;
+            ctx.fillRect(x, H - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+    }
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    draw();
+}
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+function makeDistortionCurve(amount) {
+    const n = 256;
+    const curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+        const x = (i * 2) / n - 1;
+        curve[i] = (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
+    }
+    return curve;
+}
+
+function createReverbBuffer(duration) {
+    return createReverbBufferFor(audioCtx, duration);
+}
+
+function createReverbBufferFor(ctx, duration) {
+    const sampleRate = ctx.sampleRate;
+    const length = sampleRate * duration;
+    const buffer = ctx.createBuffer(2, length, sampleRate);
+    for (let c = 0; c < 2; c++) {
+        const data = buffer.getChannelData(c);
+        for (let i = 0; i < length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        }
+    }
+    return buffer;
+}
+
+function audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1;
+    const bitDepth = 16;
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = buffer.length * blockAlign;
+    const wavBuffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(wavBuffer);
+
+    const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
+    writeStr(0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeStr(8, 'WAVE');
+    writeStr(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeStr(36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    let offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+        for (let c = 0; c < numChannels; c++) {
+            const sample = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+            offset += 2;
+        }
+    }
+    return new Blob([wavBuffer], { type: 'audio/wav' });
+}
+
+function setStatus(text, state) {
+    document.getElementById('statusText').textContent = text;
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot';
+    if (state === 'recording') dot.classList.add('recording');
+    if (state === 'playing') dot.classList.add('playing');
+}
+
+function startTimer() {
+    timerSeconds = 0;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => { timerSeconds++; updateTimerDisplay(); }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
+
+function updateTimerDisplay() {
+    document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+}
+
+function formatTime(s) {
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function updateAllLabels() {
+    document.getElementById('pitchVal').textContent = `${fxParams.pitch > 0 ? '+' : ''}${fxParams.pitch} st`;
+    document.getElementById('rateVal').textContent = `${fxParams.rate.toFixed(2)}x`;
+    document.getElementById('gainVal').textContent = `${Math.round(fxParams.gain * 100)}%`;
+    document.getElementById('reverbVal').textContent = `${fxParams.reverb}%`;
+    document.getElementById('delayVal').textContent = `${fxParams.delay}%`;
+    document.getElementById('distortionVal').textContent = `${fxParams.distortion}%`;
+}
+
+function updateFxIndicator() {
+    const container = document.getElementById('fxIndicator');
+    const tags = [];
+    if (fxParams.pitch !== 0) tags.push(`Pitch: ${fxParams.pitch > 0 ? '+' : ''}${fxParams.pitch}st`);
+    if (fxParams.rate !== 1) tags.push(`Rate: ${fxParams.rate.toFixed(1)}x`);
+    if (fxParams.reverb > 0) tags.push(`Reverb: ${fxParams.reverb}%`);
+    if (fxParams.delay > 0) tags.push(`Delay: ${fxParams.delay}%`);
+    if (fxParams.distortion > 0) tags.push(`Dist: ${fxParams.distortion}%`);
+    activeEffects.forEach(e => tags.push(e.charAt(0).toUpperCase() + e.slice(1)));
+    container.innerHTML = tags.map(t => `<span class="fx-tag">${t}</span>`).join('');
+}
+
+function clearAll() {
+    recordedBlob = null;
+    processedBlob = null;
+    recordedChunks = [];
+    timerSeconds = 0;
+    updateTimerDisplay();
+    setStatus('Pronto para gravar', 'idle');
+    document.getElementById('btnPlay').disabled = true;
+    document.getElementById('btnApply').disabled = true;
+    document.getElementById('btnSave').disabled = true;
+    document.getElementById('btnClear').disabled = true;
+    document.getElementById('fxIndicator').innerHTML = '';
+}
+
+// ============================================================
+// EVENT LISTENERS — SLIDERS
+// ============================================================
+document.getElementById('pitchShift').addEventListener('input', function() {
+    fxParams.pitch = parseFloat(this.value);
+    document.getElementById('pitchVal').textContent = `${fxParams.pitch > 0 ? '+' : ''}${fxParams.pitch} st`;
+    updateFxIndicator();
+});
+
+document.getElementById('playbackRate').addEventListener('input', function() {
+    fxParams.rate = parseFloat(this.value);
+    document.getElementById('rateVal').textContent = `${fxParams.rate.toFixed(2)}x`;
+    updateFxIndicator();
+});
+
+document.getElementById('gainControl').addEventListener('input', function() {
+    fxParams.gain = parseInt(this.value) / 100;
+    document.getElementById('gainVal').textContent = `${this.value}%`;
+    updateFxIndicator();
+});
+
+document.getElementById('reverbControl').addEventListener('input', function() {
+    fxParams.reverb = parseInt(this.value);
+    document.getElementById('reverbVal').textContent = `${this.value}%`;
+    updateFxIndicator();
+});
+
+document.getElementById('delayControl').addEventListener('input', function() {
+    fxParams.delay = parseInt(this.value);
+    document.getElementById('delayVal').textContent = `${this.value}%`;
+    updateFxIndicator();
+});
+
+document.getElementById('distortionControl').addEventListener('input', function() {
+    fxParams.distortion = parseInt(this.value);
+    document.getElementById('distortionVal').textContent = `${this.value}%`;
+    updateFxIndicator();
+});
+
+// ============================================================
+// EVENT LISTENERS — BOTÕES
+// ============================================================
+document.getElementById('btnRecord').addEventListener('click', startRecording);
+document.getElementById('btnStop').addEventListener('click', stopRecording);
+document.getElementById('btnPlay').addEventListener('click', playWithEffects);
+document.getElementById('btnApply').addEventListener('click', applyEffectsAndProcess);
+document.getElementById('btnSave').addEventListener('click', saveRecording);
+document.getElementById('btnClear').addEventListener('click', clearAll);
+
+// ============================================================
+// INIT
+// ============================================================
+buildBeatPads();
+renderRecordings();
+
+// Iniciar visualizador idle
+window.addEventListener('load', () => {
+    initAudioContext();
+    startVisualizer();
+});
+</script>
+</body>
+</html>
