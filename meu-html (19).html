@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🔍 Analisador de Logs ZIP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:12px}
+h1{color:#58a6ff;font-size:15px;margin-bottom:10px;text-align:center}
+.drop-area{border:2px dashed #30363d;border-radius:10px;padding:30px;text-align:center;cursor:pointer;margin-bottom:10px;transition:all 0.2s}
+.drop-area:hover,.drop-area.over{border-color:#58a6ff;background:#0d1f3a}
+.drop-area .icon{font-size:36px;margin-bottom:8px}
+.drop-area p{color:#8b949e;font-size:12px}
+.drop-area strong{color:#58a6ff}
+input[type=file]{display:none}
+button{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.b-blue{background:#1f6feb;color:#fff}
+.b-gray{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.b-green{background:#238636;color:#fff}
+.b-red{background:#da3633;color:#fff}
+
+/* Lista de ZIPs */
+.zip-list{margin-bottom:10px}
+.zip-item{display:flex;align-items:center;gap:8px;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:8px 10px;margin-bottom:5px;font-size:11px}
+.zip-item .zi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9d1d9}
+.zip-item .zi-status{font-size:10px;padding:2px 7px;border-radius:8px;color:#fff;flex-shrink:0}
+.s-ok{background:#238636}
+.s-err{background:#da3633}
+.s-warn{background:#9a6700}
+.s-load{background:#1f6feb}
+.zi-remove{background:none;border:none;color:#8b949e;cursor:pointer;font-size:14px;padding:0 2px}
+.zi-remove:hover{color:#f85149}
+
+/* Resultados */
+.sec{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:10px}
+.sec h2{font-size:13px;color:#58a6ff;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #21262d}
+.sec h3{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:#21262d;border-radius:6px;padding:8px;text-align:center}
+.stat .n{font-size:22px;font-weight:700;color:#58a6ff}
+.stat .l{font-size:9px;color:#8b949e;margin-top:2px}
+
+/* Padrão */
+.padrao-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#21262d;border-radius:6px;margin-bottom:5px;font-size:11px}
+.padrao-item .pi-count{background:#1f6feb;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.padrao-item .pi-count.alto{background:#da3633}
+.padrao-item .pi-count.medio{background:#9a6700}
+.padrao-item .pi-info{flex:1}
+.padrao-item .pi-titulo{font-weight:700;color:#c9d1d9}
+.padrao-item .pi-desc{color:#8b949e;font-size:10px;margin-top:2px}
+.padrao-item .pi-fix{color:#3fb950;font-size:10px;margin-top:2px}
+
+/* Por ZIP */
+.zip-result{border:1px solid #30363d;border-radius:6px;margin-bottom:6px;overflow:hidden}
+.zip-result-header{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#21262d;cursor:pointer;font-size:11px}
+.zip-result-header:hover{background:#30363d}
+.zip-result-body{padding:10px;display:none;border-top:1px solid #30363d}
+.zip-result-body.open{display:block}
+
+/* Erro card */
+.ecard{border-radius:5px;padding:7px 10px;margin-bottom:5px;font-size:11px}
+.ecard.err{background:#2d0f0f;border-left:3px solid #f85149}
+.ecard.warn{background:#2d1f00;border-left:3px solid #e3b341}
+.ecard .et{font-weight:700;margin-bottom:2px}
+.ecard .eo{font-family:monospace;font-size:9px;color:#8b949e;background:#0d1117;padding:3px 5px;border-radius:3px;margin:3px 0;word-break:break-all}
+.ecard .ef{color:#3fb950;font-size:10px}
+.ecard .ef::before{content:'✅ '}
+
+/* Conclusão */
+.conclusao{background:#0d2818;border:1px solid #238636;border-radius:8px;padding:12px;margin-bottom:10px}
+.conclusao h2{color:#3fb950;font-size:13px;margin-bottom:8px}
+.passo{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:12px}
+.passo .num{background:#238636;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+
+.dica{background:#0d1f3a;border:1px solid #1f6feb;border-radius:6px;padding:8px 10px;font-size:11px;color:#79c0ff;margin-bottom:8px}
+
+.progress{height:4px;background:#21262d;border-radius:2px;margin:8px 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#1f6feb,#58a6ff);border-radius:2px;transition:width 0.3s}
+
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;color:#fff}
+.bg-err{background:#da3633}
+.bg-warn{background:#9a6700}
+.bg-ok{background:#238636}
+.bg-info{background:#1f6feb}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+</style>
+</head>
+<body>
+
+<h1>🔍 Analisador de Múltiplos Logs ZIP</h1>
+<p style="text-align:center;color:#8b949e;font-size:11px;margin-bottom:12px">Importe vários ZIPs de log do GitHub Actions — encontra o padrão de erros</p>
+
+<!-- DROP AREA -->
+<div class="drop-area" id="dropArea" onclick="document.getElementById('fi').click()">
+  <div class="icon">📦</div>
+  <strong>Clique ou arraste os ZIPs aqui</strong>
+  <p>Aceita vários ZIPs ao mesmo tempo · logs do GitHub Actions</p>
+</div>
+<input type="file" id="fi" accept=".zip" multiple onchange="addZips(this)"/>
+
+<!-- LISTA DE ZIPS -->
+<div class="zip-list" id="zipList"></div>
+
+<!-- BOTÕES -->
+<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="btnArea" style="display:none">
+  <button class="b-blue" onclick="analisarTodos()" id="btnAn">🔍 Analisar Todos</button>
+  <button class="b-gray" onclick="limparTudo()">🗑️ Limpar</button>
+</div>
+
+<!-- RESULTADOS -->
+<div id="resultados"></div>
+
+<script>
+// ══════════════════════════════════
+// ESTADO
+// ══════════════════════════════════
+let ZIPS = []; // {name, file, status, erros, arquivos}
+
+// ══════════════════════════════════
+// BASE DE ERROS
+// ══════════════════════════════════
+const BASE = [
+  {p:/cannot find module ['"]([^'"]+)['"]/i,tipo:'err',titulo:'Módulo não encontrado',
+   trad:m=>`Pacote/arquivo "${m[1]}" não instalado`,fix:'npm install ou verificar o import'},
+  {p:/enomem|not enough memory|heap out of memory|javascript heap/i,tipo:'err',titulo:'Memória insuficiente',
+   trad:()=>'Ficou sem RAM durante o build',fix:'Adicionar NODE_OPTIONS=--max-old-space-size=4096 no workflow'},
+  {p:/error ts(\d+)/i,tipo:'err',titulo:'Erro TypeScript',
+   trad:m=>`Erro de tipo TS${m[1]}`,fix:'Verificar arquivo e linha indicados'},
+  {p:/tsconfig.*not found|cannot read.*tsconfig|extends.*not found/i,tipo:'err',titulo:'tsconfig.json inválido',
+   trad:()=>'tsconfig aponta para arquivo inexistente (problema de monorepo)',fix:'Gerar novo tsconfig.json standalone'},
+  {p:/@workspace\//i,tipo:'err',titulo:'Import @workspace encontrado',
+   trad:()=>'Imports de monorepo que não funcionam standalone',fix:'Remover referências @workspace/ dos imports'},
+  {p:/failure: build failed|build failed with an exception/i,tipo:'err',titulo:'Build Android falhou',
+   trad:()=>'Gradle encontrou erro no build Android',fix:'Ver linhas anteriores para o erro real'},
+  {p:/sdk location not found/i,tipo:'err',titulo:'Android SDK não encontrado',
+   trad:()=>'SDK do Android não está instalado no servidor',fix:'Adicionar: uses: android-actions/setup-android@v3'},
+  {p:/gradlew.*permission denied/i,tipo:'err',titulo:'gradlew sem permissão',
+   trad:()=>'Arquivo gradlew não pode ser executado',fix:'Adicionar: chmod +x android/gradlew'},
+  {p:/could not resolve com\./i,tipo:'err',titulo:'Dependência Android não encontrada',
+   trad:()=>'Gradle não conseguiu baixar dependência',fix:'Verificar repositórios no build.gradle'},
+  {p:/webdir.*not found|web dir.*does not exist/i,tipo:'err',titulo:'dist/ não existe para Capacitor',
+   trad:()=>'Build não gerou a pasta dist/ antes do Capacitor',fix:'Garantir que npm run build rode ANTES do cap sync'},
+  {p:/failed to resolve import ['"]([^'"]+)['"]/i,tipo:'err',titulo:'Import não resolvido',
+   trad:m=>`Arquivo "${m[1]}" não encontrado`,fix:'Verificar caminho do import'},
+  {p:/electron.*failed to load|app threw an error/i,tipo:'err',titulo:'Electron não carregou',
+   trad:()=>'Electron iniciou mas não encontrou o app',fix:'Verificar caminho no main.js: win.loadFile("dist/index.html")'},
+  {p:/electron-builder.*error/i,tipo:'err',titulo:'Erro no electron-builder',
+   trad:()=>'electron-builder falhou ao empacotar',fix:'Verificar electron-builder.yml e se dist/ existe'},
+  {p:/process completed with exit code ([1-9]\d*)/i,tipo:'err',titulo:'Processo terminou com erro',
+   trad:m=>`Código de saída ${m[1]} — indica falha`,fix:'Ver passos anteriores no log'},
+  {p:/no such file or directory/i,tipo:'err',titulo:'Arquivo não existe',
+   trad:()=>'Comando tentou acessar arquivo inexistente',fix:'Verificar se o build gerou os arquivos esperados'},
+  {p:/command not found/i,tipo:'err',titulo:'Comando não instalado',
+   trad:()=>'Ferramenta não está disponível no servidor',fix:'Adicionar passo de instalação no workflow'},
+  {p:/resource not accessible by integration/i,tipo:'err',titulo:'Token sem permissão',
+   trad:()=>'GITHUB_TOKEN sem permissão suficiente',fix:'Adicionar permissions: contents: write no workflow'},
+  {p:/enospc|no space left/i,tipo:'err',titulo:'Sem espaço em disco',
+   trad:()=>'Servidor ficou sem espaço',fix:'Limpar cache no workflow'},
+  {p:/replit\.dev|repl\.co|REPL_ID/i,tipo:'warn',titulo:'Referência ao Replit',
+   trad:()=>'Código tem URLs/variáveis do Replit que não funcionam fora dele',fix:'Limpar referências ao Replit (use o ConstruAPK)'},
+  {p:/duplicate class|duplicate resources/i,tipo:'err',titulo:'Classe duplicada',
+   trad:()=>'Dois pacotes têm arquivos com mesmo nome',fix:'Adicionar resolutionStrategy no build.gradle'},
+  {p:/minimum sdk version/i,tipo:'warn',titulo:'Versão Android incompatível',
+   trad:()=>'minSdkVersion muito baixo',fix:'Ajustar minSdkVersion para 21+ no build.gradle'},
+  {p:/npm warn deprecated/i,tipo:'warn',titulo:'Pacote desatualizado',
+   trad:()=>'Pacote obsoleto — não bloqueia mas pode causar problemas',fix:'Pode ignorar por enquanto'},
+  {p:/network error|econnrefused|etimedout/i,tipo:'warn',titulo:'Erro de rede',
+   trad:()=>'Falha de conexão durante download',fix:'Rodar o workflow novamente'},
+];
+
+// ══════════════════════════════════
+// IMPORTAR ZIPS
+// ══════════════════════════════════
+function addZips(inp){
+  const files=Array.from(inp.files);
+  files.forEach(f=>{
+    if(!ZIPS.find(z=>z.name===f.name)){
+      ZIPS.push({name:f.name,file:f,status:'pendente',erros:[],arquivos:[]});
+    }
+  });
+  inp.value='';
+  renderZipList();
+  document.getElementById('btnArea').style.display='flex';
+}
+
+function renderZipList(){
+  const el=document.getElementById('zipList');
+  if(!ZIPS.length){el.innerHTML='';return;}
+  el.innerHTML=ZIPS.map((z,i)=>`
+    <div class="zip-item">
+      <span>📦</span>
+      <span class="zi-name">${z.name}</span>
+      <span class="zi-status ${z.status==='ok'?'s-ok':z.status==='erro'?'s-err':z.status==='analisando'?'s-load':'s-warn'}">
+        ${z.status==='pendente'?'Aguardando':z.status==='analisando'?'⏳ Lendo...':z.status==='ok'?`✅ ${z.erros.length} erros`:`❌ Falhou`}
+      </span>
+      <button class="zi-remove" onclick="removeZip(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeZip(i){ZIPS.splice(i,1);renderZipList();if(!ZIPS.length)document.getElementById('btnArea').style.display='none';}
+function limparTudo(){ZIPS=[];renderZipList();document.getElementById('resultados').innerHTML='';document.getElementById('btnArea').style.display='none';}
+
+// ══════════════════════════════════
+// ANALISAR TODOS
+// ══════════════════════════════════
+async function analisarTodos(){
+  if(!ZIPS.length) return;
+  document.getElementById('btnAn').disabled=true;
+  document.getElementById('btnAn').textContent='⏳ Analisando...';
+
+  const JSZ=await loadJSZ();
+
+  for(let i=0;i<ZIPS.length;i++){
+    ZIPS[i].status='analisando';
+    renderZipList();
+    try{
+      const buf=await ZIPS[i].file.arrayBuffer();
+      const zip=await JSZ.loadAsync(buf);
+      const arquivos=[];
+      for(const[path,entry]of Object.entries(zip.files)){
+        if(entry.dir) continue;
+        const txt=await entry.async('text').catch(()=>'');
+        arquivos.push({path,content:txt});
+      }
+      ZIPS[i].arquivos=arquivos;
+      ZIPS[i].erros=extrairErros(arquivos);
+      ZIPS[i].status='ok';
+    }catch(e){
+      ZIPS[i].status='erro';
+      ZIPS[i].erros=[];
+    }
+    renderZipList();
+  }
+
+  document.getElementById('btnAn').disabled=false;
+  document.getElementById('btnAn').textContent='🔍 Analisar Todos';
+  renderResultados();
+}
+
+function extrairErros(arquivos){
+  const erros=[];
+  const vistos=new Set();
+  for(const arq of arquivos){
+    const linhas=arq.content.split('\n');
+    for(const linha of linhas){
+      for(const e of BASE){
+        const m=linha.match(e.p);
+        if(m){
+          const chave=e.titulo+(m[1]||'');
+          if(!vistos.has(chave)){
+            vistos.add(chave);
+            erros.push({...e,match:m,linha:linha.trim(),arquivo:arq.path});
+          }
+        }
+      }
+    }
+  }
+  return erros;
+}
+
+// ══════════════════════════════════
+// RENDERIZAR RESULTADOS
+// ══════════════════════════════════
+function renderResultados(){
+  const el=document.getElementById('resultados');
+  const zipsOk=ZIPS.filter(z=>z.status==='ok');
+  if(!zipsOk.length){el.innerHTML='<div class="dica">Nenhum ZIP foi analisado com sucesso.</div>';return;}
+
+  // Contagem de padrões
+  const contagem={};
+  for(const z of zipsOk){
+    for(const e of z.erros){
+      if(!contagem[e.titulo]) contagem[e.titulo]={count:0,tipo:e.tipo,fix:e.fix,trad:e.trad,match:e.match,zips:[]};
+      contagem[e.titulo].count++;
+      contagem[e.titulo].zips.push(z.name);
+    }
+  }
+  const padroes=Object.entries(contagem).sort((a,b)=>b[1].count-a[1].count);
+  const totalErros=zipsOk.reduce((s,z)=>s+z.erros.filter(e=>e.tipo==='err').length,0);
+  const totalWarns=zipsOk.reduce((s,z)=>s+z.erros.filter(e=>e.tipo==='warn').length,0);
+
+  let h=`
+    <div class="stats">
+      <div class="stat"><div class="n">${zipsOk.length}</div><div class="l">ZIPs analisados</div></div>
+      <div class="stat"><div class="n" style="color:${totalErros?'#f85149':'#3fb950'}">${totalErros}</div><div class="l">Erros totais</div></div>
+      <div class="stat"><div class="n" style="color:${totalWarns?'#e3b341':'#3fb950'}">${totalWarns}</div><div class="l">Avisos</div></div>
+      <div class="stat"><div class="n">${padroes.length}</div><div class="l">Padrões</div></div>
+    </div>`;
+
+  // PADRÕES (erros que aparecem em múltiplos ZIPs)
+  const padroesRepetidos=padroes.filter(([,v])=>v.count>1);
+  const padroesUnicos=padroes.filter(([,v])=>v.count===1);
+
+  if(padroesRepetidos.length){
+    h+=`<div class="sec">
+      <h2>🎯 Padrão — Erros que se repetem em vários ZIPs</h2>
+      <div class="dica">💡 Esses são os erros mais importantes — aparecem em múltiplos logs, então são a causa raiz!</div>`;
+    for(const[titulo,info]of padroesRepetidos){
+      const pct=Math.round(info.count/zipsOk.length*100);
+      h+=`<div class="padrao-item">
+        <div class="pi-count ${info.count>=zipsOk.length?'alto':info.count>1?'medio':''}">${info.count}x</div>
+        <div class="pi-info">
+          <div class="pi-titulo">${info.tipo==='err'?'❌':'⚠️'} ${titulo} <span class="badge ${info.tipo==='err'?'bg-err':'bg-warn'}">${pct}% dos logs</span></div>
+          <div class="pi-desc">${typeof info.trad==='function'?info.trad(info.match):info.trad}</div>
+          <div class="pi-fix">✅ ${info.fix}</div>
+          <div style="font-size:9px;color:#8b949e;margin-top:2px">Aparece em: ${info.zips.map(n=>n.replace('.zip','')).join(', ')}</div>
+        </div>
+      </div>`;
+    }
+    h+=`</div>`;
+  }
+
+  // CONCLUSÃO
+  if(padroesRepetidos.length){
+    h+=`<div class="conclusao">
+      <h2>📋 Conclusão — Por onde começar</h2>`;
+    let passo=1;
+    for(const[titulo,info]of padroesRepetidos.filter(([,v])=>v.tipo==='err')){
+      h+=`<div class="passo"><div class="num">${passo++}</div><div><b>${titulo}</b><br><span style="color:#8b949e;font-size:11px">${info.fix}</span></div></div>`;
+    }
+    if(passo===1) h+=`<div class="passo"><div class="num">1</div><div>Nenhum erro crítico repetido — os erros são diferentes em cada build</div></div>`;
+    h+=`</div>`;
+  }
+
+  // POR ZIP (detalhado)
+  h+=`<div class="sec"><h2>📦 Detalhes por ZIP</h2>`;
+  for(const z of zipsOk){
+    const errs=z.erros.filter(e=>e.tipo==='err').length;
+    const warns=z.erros.filter(e=>e.tipo==='warn').length;
+    h+=`<div class="zip-result">
+      <div class="zip-result-header" onclick="toggleZR(this)">
+        <span>📦</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${z.name}</span>
+        ${errs?`<span class="badge bg-err">${errs} erros</span>`:''}
+        ${warns?`<span class="badge bg-warn">${warns} avisos</span>`:''}
+        ${!errs&&!warns?`<span class="badge bg-ok">✅ Limpo</span>`:''}
+        <span style="color:#8b949e;font-size:12px;margin-left:4px">▼</span>
+      </div>
+      <div class="zip-result-body">
+        ${z.erros.length===0
+          ?'<div style="color:#3fb950;font-size:11px">✅ Nenhum erro reconhecido neste log</div>'
+          :z.erros.map(e=>`
+            <div class="ecard ${e.tipo}">
+              <div class="et">${e.tipo==='err'?'❌':'⚠️'} ${e.titulo}</div>
+              <div class="eo">${escHtml(e.linha.substring(0,180))}</div>
+              <div style="color:#8b949e;font-size:9px;margin-bottom:2px">📄 ${e.arquivo}</div>
+              <div class="ef">${e.fix}</div>
+            </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  h+=`</div>`;
+
+  // Únicos
+  if(padroesUnicos.length){
+    h+=`<div class="sec"><h2>⚠️ Erros que aparecem em apenas 1 ZIP</h2>
+      <div class="dica">Esses podem ser erros secundários causados pelo erro principal acima.</div>
+      ${padroesUnicos.map(([titulo,info])=>`
+        <div class="padrao-item">
+          <div class="pi-count">1x</div>
+          <div class="pi-info">
+            <div class="pi-titulo">${info.tipo==='err'?'❌':'⚠️'} ${titulo}</div>
+            <div class="pi-desc">${typeof info.trad==='function'?info.trad(info.match):info.trad}</div>
+            <div class="pi-fix">✅ ${info.fix}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  el.innerHTML=h;
+  el.scrollIntoView({behavior:'smooth'});
+}
+
+function toggleZR(header){
+  const body=header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ══════════════════════════════════
+// DRAG & DROP
+// ══════════════════════════════════
+const da=document.getElementById('dropArea');
+da.addEventListener('dragover',e=>{e.preventDefault();da.classList.add('over');});
+da.addEventListener('dragleave',()=>da.classList.remove('over'));
+da.addEventListener('drop',e=>{
+  e.preventDefault();da.classList.remove('over');
+  const files=Array.from(e.dataTransfer.files).filter(f=>f.name.endsWith('.zip'));
+  if(!files.length) return;
+  const inp=document.getElementById('fi');
+  const dt=new DataTransfer();
+  files.forEach(f=>dt.items.add(f));
+  inp.files=dt.files;
+  addZips(inp);
+});
+
+// ══════════════════════════════════
+// JSZIP
+// ══════════════════════════════════
+function loadJSZ(){
+  return new Promise((res,rej)=>{
+    if(window.JSZip){res(window.JSZip);return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=()=>res(window.JSZip);
+    s.onerror=()=>rej(new Error('JSZip não carregou'));
+    document.head.appendChild(s);
+  });
+}
+</script>
+</body>
+</html>
