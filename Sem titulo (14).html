@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐍 Python Explicado Visualmente</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 2px solid #00d4ff;
+    }
+
+    h1 {
+      font-size: 48px;
+      color: #00d4ff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #aaa;
+      font-size: 18px;
+    }
+
+    /* MENU */
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .menu-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .menu-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      border-color: #00d4ff;
+    }
+
+    .menu-btn.active {
+      background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+      border-color: #fff;
+    }
+
+    /* CONTEÚDO */
+    .content {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid #00d4ff;
+      border-radius: 10px;
+      padding: 30px;
+      margin-bottom: 30px;
+      display: none;
+    }
+
+    .content.active {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h2 {
+      color: #00d4ff;
+      margin-bottom: 20px;
+      font-size: 32px;
+      border-bottom: 2px solid #00d4ff;
+      padding-bottom: 10px;
+    }
+
+    h3 {
+      color: #64b5f6;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #ccc;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    /* CAIXAS DE CÓDIGO */
+    .code-box {
+      background: #0f3460;
+      border-left: 4px solid #00d4ff;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+    }
+
+    .code-box.python {
+      border-left-color: #ffd700;
+    }
+
+    .code-box.resultado {
+      border-left-color: #00ff00;
+      background: #0a2a1a;
+    }
+
+    .code-label {
+      color: #00d4ff;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .code-label.resultado {
+      color: #00ff00;
+    }
+
+    code {
+      color: #64b5f6;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* VISUALIZADOR */
+    .visualizador {
+      background: #0f3460;
+      border: 2px solid #00d4ff;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .var-item {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .var-name {
+      color: #ffd700;
+      font-weight: bold;
+      font-family: monospace;
+    }
+
+    .var-value {
+      color: #00ff00;
+      font-family: monospace;
+    }
+
+    .var-type {
+      color: #64b5f6;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    /* BOTÕES INTERATIVOS */
+    .btn-executar {
+      background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s;
+      margin: 10px 5px 10px 0;
+    }
+
+    .btn-executar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+    }
+
+    .btn-limpar {
+      background: linear-gradient(135deg, #ff6b6b 0%, #cc0000 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s;
+      margin: 10px 5px 10px 0;
+    }
+
+    .btn-limpar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    }
+
+    /* LISTA */
+    .lista-visual {
+      background: rgba(0, 212, 255, 0.1);
+      border: 2px solid #00d4ff;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .lista-item {
+      background: #0f3460;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border-left: 4px solid #ffd700;
+      color: #00ff00;
+      font-family: monospace;
+    }
+
+    /* TABELA */
+    .tabela-visual {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: #0f3460;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .tabela-visual th {
+      background: #00d4ff;
+      color: #000;
+      padding: 12px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    .tabela-visual td {
+      border-bottom: 1px solid #00d4ff;
+      padding: 12px;
+      color: #ccc;
+    }
+
+    .tabela-visual tr:hover {
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    /* EXPLICAÇÃO */
+    .explicacao {
+      background: rgba(100, 181, 246, 0.1);
+      border-left: 4px solid #64b5f6;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      color: #b3e5fc;
+    }
+
+    .passo {
+      background: rgba(255, 215, 0, 0.1);
+      border-left: 4px solid #ffd700;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      color: #ffd700;
+    }
+
+    .sucesso {
+      background: rgba(0, 255, 0, 0.1);
+      border-left: 4px solid #00ff00;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      color: #00ff00;
+    }
+
+    .erro {
+      background: rgba(255, 0, 0, 0.1);
+      border-left: 4px solid #ff0000;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      color: #ff6b6b;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      border-top: 1px solid #00d4ff;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🐍 Python Explicado Visualmente</h1>
+      <p class="subtitle">Aprenda Python vendo tudo funcionando!</p>
+    </header>
+
+    <!-- MENU -->
+    <div class="menu">
+      <button class="menu-btn active" onclick="mostrarConteudo('variaveis')">1️⃣ Variáveis</button>
+      <button class="menu-btn" onclick="mostrarConteudo('listas')">2️⃣ Listas</button>
+      <button class="menu-btn" onclick="mostrarConteudo('dicionarios')">3️⃣ Dicionários</button>
+      <button class="menu-btn" onclick="mostrarConteudo('loops')">4️⃣ Loops</button>
+      <button class="menu-btn" onclick="mostrarConteudo('condicoes')">5️⃣ Condições</button>
+      <button class="menu-btn" onclick="mostrarConteudo('funcoes')">6️⃣ Funções</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 1. VARIÁVEIS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="variaveis" class="content active">
+      <h2>1️⃣ Variáveis - Guardando Informações</h2>
+
+      <p>Uma variável é como uma <strong>caixa que guarda informação</strong>. Você dá um nome para a caixa e coloca algo dentro.</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Uma variável é como uma gaveta na sua casa. Você coloca algo dentro (um valor) e coloca uma etiqueta (um nome) para saber o que tem lá.
+      </div>
+
+      <h3>📝 Criando Variáveis:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+nome = "João"<br>
+idade = 25<br>
+altura = 1.75<br>
+ativo = True
+        </code>
+      </div>
+
+      <h3>👀 Vendo as Variáveis:</h3>
+
+      <div class="visualizador">
+        <div class="var-item">
+          <span class="var-name">nome</span>
+          <span class="var-value">"João"</span>
+          <span class="var-type">(texto)</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">idade</span>
+          <span class="var-value">25</span>
+          <span class="var-type">(número inteiro)</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">altura</span>
+          <span class="var-value">1.75</span>
+          <span class="var-type">(número decimal)</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">ativo</span>
+          <span class="var-value">True</span>
+          <span class="var-type">(verdadeiro/falso)</span>
+        </div>
+      </div>
+
+      <h3>🔄 Mudando Variáveis:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+idade = 25<br>
+print(idade)  # Mostra: 25<br>
+<br>
+idade = 26  # Mudou!<br>
+print(idade)  # Mostra: 26
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+25<br>
+26
+        </code>
+      </div>
+
+      <h3>✨ Tipos de Dados:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Tipo</th>
+          <th>Exemplo</th>
+          <th>Explicação</th>
+        </tr>
+        <tr>
+          <td><strong>str</strong> (texto)</td>
+          <td>"João"</td>
+          <td>Texto entre aspas</td>
+        </tr>
+        <tr>
+          <td><strong>int</strong> (inteiro)</td>
+          <td>25</td>
+          <td>Número sem decimal</td>
+        </tr>
+        <tr>
+          <td><strong>float</strong> (decimal)</td>
+          <td>1.75</td>
+          <td>Número com decimal</td>
+        </tr>
+        <tr>
+          <td><strong>bool</strong> (booleano)</td>
+          <td>True / False</td>
+          <td>Verdadeiro ou Falso</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Variáveis guardam informações. Você cria uma com <code>=</code> e pode mudar o valor a qualquer momento!
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 2. LISTAS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="listas" class="content">
+      <h2>2️⃣ Listas - Guardando Vários Itens</h2>
+
+      <p>Uma lista é como uma <strong>caixa com vários compartimentos</strong>. Você coloca vários itens dentro e acessa cada um por sua posição.</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Uma lista é como uma fila de pessoas. Cada pessoa tem uma posição (0, 1, 2, 3...). A primeira pessoa está na posição 0!
+      </div>
+
+      <h3>📝 Criando uma Lista:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+frutas = ["maçã", "banana", "laranja", "morango"]
+        </code>
+      </div>
+
+      <h3>👀 Vendo a Lista:</h3>
+
+      <div class="lista-visual">
+        <div style="color: #64b5f6; margin-bottom: 10px;">📋 Lista de Frutas:</div>
+        <div class="lista-item">🍎 [0] maçã</div>
+        <div class="lista-item">🍌 [1] banana</div>
+        <div class="lista-item">🍊 [2] laranja</div>
+        <div class="lista-item">🍓 [3] morango</div>
+      </div>
+
+      <h3>🔍 Acessando Itens:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+frutas = ["maçã", "banana", "laranja", "morango"]<br>
+<br>
+print(frutas[0])   # Primeira fruta<br>
+print(frutas[1])   # Segunda fruta<br>
+print(frutas[-1])  # Última fruta
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+maçã<br>
+banana<br>
+morango
+        </code>
+      </div>
+
+      <h3>➕ Adicionando Itens:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+frutas = ["maçã", "banana"]<br>
+frutas.append("laranja")  # Adiciona no final<br>
+print(frutas)
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+["maçã", "banana", "laranja"]
+        </code>
+      </div>
+
+      <h3>📊 Operações com Listas:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Operação</th>
+          <th>Código</th>
+          <th>Resultado</th>
+        </tr>
+        <tr>
+          <td>Contar itens</td>
+          <td>len(frutas)</td>
+          <td>4</td>
+        </tr>
+        <tr>
+          <td>Primeiro item</td>
+          <td>frutas[0]</td>
+          <td>"maçã"</td>
+        </tr>
+        <tr>
+          <td>Último item</td>
+          <td>frutas[-1]</td>
+          <td>"morango"</td>
+        </tr>
+        <tr>
+          <td>Adicionar</td>
+          <td>frutas.append("uva")</td>
+          <td>Adiciona no final</td>
+        </tr>
+        <tr>
+          <td>Remover</td>
+          <td>frutas.remove("maçã")</td>
+          <td>Remove o item</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Listas guardam vários itens. Cada item tem uma posição (começando em 0). Use <code>append()</code> para adicionar!
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 3. DICIONÁRIOS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="dicionarios" class="content">
+      <h2>3️⃣ Dicionários - Guardando com Nomes</h2>
+
+      <p>Um dicionário é como um <strong>catálogo com chaves e valores</strong>. Em vez de usar posição (0, 1, 2), você usa nomes!</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Um dicionário é como um telefone. Você não memoriza que João está na posição 5. Você memoriza o nome "João" e liga para ele!
+      </div>
+
+      <h3>📝 Criando um Dicionário:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+pessoa = {<br>
+&nbsp;&nbsp;"nome": "Maria",<br>
+&nbsp;&nbsp;"idade": 30,<br>
+&nbsp;&nbsp;"cidade": "São Paulo",<br>
+&nbsp;&nbsp;"profissão": "Programadora"<br>
+}
+        </code>
+      </div>
+
+      <h3>👀 Vendo o Dicionário:</h3>
+
+      <div class="visualizador">
+        <div class="var-item">
+          <span class="var-name">"nome"</span>
+          <span class="var-value">"Maria"</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">"idade"</span>
+          <span class="var-value">30</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">"cidade"</span>
+          <span class="var-value">"São Paulo"</span>
+        </div>
+        <div class="var-item">
+          <span class="var-name">"profissão"</span>
+          <span class="var-value">"Programadora"</span>
+        </div>
+      </div>
+
+      <h3>🔍 Acessando Valores:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+pessoa = {"nome": "Maria", "idade": 30}<br>
+<br>
+print(pessoa["nome"])   # Maria<br>
+print(pessoa["idade"])  # 30
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Maria<br>
+30
+        </code>
+      </div>
+
+      <h3>➕ Adicionando Chaves:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+pessoa = {"nome": "Maria"}<br>
+pessoa["idade"] = 30  # Adiciona nova chave<br>
+print(pessoa)
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+{"nome": "Maria", "idade": 30}
+        </code>
+      </div>
+
+      <h3>📊 Diferença: Lista vs Dicionário:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Lista</th>
+          <th>Dicionário</th>
+        </tr>
+        <tr>
+          <td>frutas[0]</td>
+          <td>pessoa["nome"]</td>
+        </tr>
+        <tr>
+          <td>Usa posição (0, 1, 2...)</td>
+          <td>Usa nome (chave)</td>
+        </tr>
+        <tr>
+          <td>["maçã", "banana"]</td>
+          <td>{"nome": "Maria"}</td>
+        </tr>
+        <tr>
+          <td>Ordem importa</td>
+          <td>Ordem não importa</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Dicionários usam nomes (chaves) em vez de posições. Mais fácil de entender e usar!
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 4. LOOPS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="loops" class="content">
+      <h2>4️⃣ Loops - Repetir Coisas</h2>
+
+      <p>Um loop é uma forma de <strong>repetir um código várias vezes</strong> sem ter que escrever a mesma coisa várias vezes.</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Um loop é como um disco tocando. Você coloca a música para tocar e ela toca de novo e de novo até você parar!
+      </div>
+
+      <h3>📝 Loop com FOR:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+for i in range(1, 4):<br>
+&nbsp;&nbsp;print(f"Número: {i}")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Número: 1<br>
+Número: 2<br>
+Número: 3
+        </code>
+      </div>
+
+      <h3>👀 Vendo o Loop Passo a Passo:</h3>
+
+      <div class="passo">
+        <strong>Passo 1:</strong> i = 1 → print("Número: 1")
+      </div>
+      <div class="passo">
+        <strong>Passo 2:</strong> i = 2 → print("Número: 2")
+      </div>
+      <div class="passo">
+        <strong>Passo 3:</strong> i = 3 → print("Número: 3")
+      </div>
+
+      <h3>📝 Loop em uma Lista:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+frutas = ["maçã", "banana", "laranja"]<br>
+<br>
+for fruta in frutas:<br>
+&nbsp;&nbsp;print(f"Fruta: {fruta}")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Fruta: maçã<br>
+Fruta: banana<br>
+Fruta: laranja
+        </code>
+      </div>
+
+      <h3>🔄 Loop WHILE (enquanto):</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+numero = 1<br>
+while numero <= 3:<br>
+&nbsp;&nbsp;print(f"Número: {numero}")<br>
+&nbsp;&nbsp;numero = numero + 1
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Número: 1<br>
+Número: 2<br>
+Número: 3
+        </code>
+      </div>
+
+      <h3>📊 Tipos de Loop:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Tipo</th>
+          <th>Quando Usar</th>
+          <th>Exemplo</th>
+        </tr>
+        <tr>
+          <td><strong>FOR</strong></td>
+          <td>Quando sabe quantas vezes</td>
+          <td>for i in range(5)</td>
+        </tr>
+        <tr>
+          <td><strong>FOR</strong></td>
+          <td>Para cada item de uma lista</td>
+          <td>for item in lista</td>
+        </tr>
+        <tr>
+          <td><strong>WHILE</strong></td>
+          <td>Enquanto uma condição é verdadeira</td>
+          <td>while x < 10</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Loops repetem código. FOR é para listas e números. WHILE é para condições!
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 5. CONDIÇÕES -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="condicoes" class="content">
+      <h2>5️⃣ Condições - Tomar Decisões</h2>
+
+      <p>Uma condição é uma forma de <strong>tomar decisões no código</strong>. "Se isso, faça aquilo. Senão, faça outra coisa."</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Uma condição é como um semáforo. Se está vermelho, você para. Se está verde, você vai!
+      </div>
+
+      <h3>📝 IF (Se):</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+idade = 25<br>
+<br>
+if idade >= 18:<br>
+&nbsp;&nbsp;print("Você é maior de idade")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Você é maior de idade
+        </code>
+      </div>
+
+      <h3>📝 IF / ELSE (Se / Senão):</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+idade = 15<br>
+<br>
+if idade >= 18:<br>
+&nbsp;&nbsp;print("Maior de idade")<br>
+else:<br>
+&nbsp;&nbsp;print("Menor de idade")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Menor de idade
+        </code>
+      </div>
+
+      <h3>📝 IF / ELIF / ELSE (Se / Senão Se / Senão):</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+nota = 7<br>
+<br>
+if nota >= 9:<br>
+&nbsp;&nbsp;print("Excelente")<br>
+elif nota >= 7:<br>
+&nbsp;&nbsp;print("Bom")<br>
+elif nota >= 5:<br>
+&nbsp;&nbsp;print("Passou")<br>
+else:<br>
+&nbsp;&nbsp;print("Reprovou")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Bom
+        </code>
+      </div>
+
+      <h3>🔍 Operadores de Comparação:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Operador</th>
+          <th>Significado</th>
+          <th>Exemplo</th>
+        </tr>
+        <tr>
+          <td>==</td>
+          <td>Igual</td>
+          <td>if x == 5</td>
+        </tr>
+        <tr>
+          <td>!=</td>
+          <td>Diferente</td>
+          <td>if x != 5</td>
+        </tr>
+        <tr>
+          <td>&gt;</td>
+          <td>Maior que</td>
+          <td>if x > 5</td>
+        </tr>
+        <tr>
+          <td>&lt;</td>
+          <td>Menor que</td>
+          <td>if x < 5</td>
+        </tr>
+        <tr>
+          <td>&gt;=</td>
+          <td>Maior ou igual</td>
+          <td>if x >= 5</td>
+        </tr>
+        <tr>
+          <td>&lt;=</td>
+          <td>Menor ou igual</td>
+          <td>if x <= 5</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Condições tomam decisões. IF para uma opção, ELSE para outra, ELIF para mais opções!
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 6. FUNÇÕES -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div id="funcoes" class="content">
+      <h2>6️⃣ Funções - Reutilizar Código</h2>
+
+      <p>Uma função é um <strong>pedaço de código que você reutiliza</strong>. Você escreve uma vez e usa várias vezes!</p>
+
+      <div class="explicacao">
+        💡 <strong>Pense assim:</strong> Uma função é como uma receita de bolo. Você escreve a receita uma vez e pode fazer o bolo quantas vezes quiser!
+      </div>
+
+      <h3>📝 Criando uma Função Simples:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+def saudar():<br>
+&nbsp;&nbsp;print("Olá!")<br>
+<br>
+saudar()  # Chamando a função<br>
+saudar()  # Chamando novamente
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Olá!<br>
+Olá!
+        </code>
+      </div>
+
+      <h3>📝 Função com Parâmetros:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+def saudar(nome):<br>
+&nbsp;&nbsp;print(f"Olá, {nome}!")<br>
+<br>
+saudar("João")<br>
+saudar("Maria")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Olá, João!<br>
+Olá, Maria!
+        </code>
+      </div>
+
+      <h3>📝 Função com Retorno:</h3>
+
+      <div class="code-box python">
+        <div class="code-label">Código Python:</div>
+        <code>
+def somar(a, b):<br>
+&nbsp;&nbsp;resultado = a + b<br>
+&nbsp;&nbsp;return resultado<br>
+<br>
+total = somar(10, 20)<br>
+print(f"Total: {total}")
+        </code>
+      </div>
+
+      <div class="code-box resultado">
+        <div class="code-label resultado">Resultado:</div>
+        <code>
+Total: 30
+        </code>
+      </div>
+
+      <h3>👀 Partes de uma Função:</h3>
+
+      <div class="passo">
+        <strong>def</strong> - Palavra-chave para criar função<br>
+        <strong>somar</strong> - Nome da função<br>
+        <strong>(a, b)</strong> - Parâmetros (entradas)<br>
+        <strong>return</strong> - O que a função devolve (saída)
+      </div>
+
+      <h3>📊 Exemplos de Funções:</h3>
+
+      <table class="tabela-visual">
+        <tr>
+          <th>Função</th>
+          <th>O que faz</th>
+          <th>Exemplo</th>
+        </tr>
+        <tr>
+          <td>len()</td>
+          <td>Conta itens</td>
+          <td>len([1,2,3]) = 3</td>
+        </tr>
+        <tr>
+          <td>sum()</td>
+          <td>Soma números</td>
+          <td>sum([1,2,3]) = 6</td>
+        </tr>
+        <tr>
+          <td>max()</td>
+          <td>Maior valor</td>
+          <td>max([1,5,3]) = 5</td>
+        </tr>
+        <tr>
+          <td>min()</td>
+          <td>Menor valor</td>
+          <td>min([1,5,3]) = 1</td>
+        </tr>
+        <tr>
+          <td>print()</td>
+          <td>Mostra na tela</td>
+          <td>print("Olá")</td>
+        </tr>
+      </table>
+
+      <div class="sucesso">
+        ✅ <strong>Resumo:</strong> Funções reutilizam código. Defina com <code>def</code>, use parâmetros, retorne resultados!
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>🐍 Python Explicado Visualmente | Aprenda vendo tudo funcionar!</p>
+    </footer>
+  </div>
+
+  <script>
+    function mostrarConteudo(id) {
+      // Esconde todos os conteúdos
+      const conteudos = document.querySelectorAll('.content');
+      conteudos.forEach(c => c.classList.remove('active'));
+
+      // Remove active de todos os botões
+      const botoes = document.querySelectorAll('.menu-btn');
+      botoes.forEach(b => b.classList.remove('active'));
+
+      // Mostra o conteúdo selecionado
+      document.getElementById(id).classList.add('active');
+
+      // Adiciona active ao botão clicado
+      event.target.classList.add('active');
+
+      // Scroll suave para o topo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
