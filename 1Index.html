@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Iara Suite v2</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAV COM 3 ABAS PRINCIPAIS -->
+<nav id="nav">
+  <div class="nav-logo">⚡ <span>Iara</span> Suite</div>
+  <div class="nav-sep"></div>
+  
+  <button class="tab-btn active" data-tab="editor" onclick="switchMainTab('editor')">💻 Editor</button>
+  <button class="tab-btn" data-tab="chat" onclick="switchMainTab('chat')">💬 Chat</button>
+  <button class="tab-btn" data-tab="playground" onclick="switchMainTab('playground')">▶️ Playground</button>
+  
+  <div class="nav-sep"></div>
+  <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="openKeysModal()">🔑 Chaves API</button>
+</nav>
+
+<!-- PANELS -->
+<div id="panels">
+
+  <!-- EDITOR (principal) -->
+  <div id="editor-panel" class="panel active">
+    <div id="ed-sidebar">
+      <div id="ed-sidebar-top">
+        <span>ARQUIVOS</span>
+        <button class="sib" title="Novo arquivo" onclick="treeNewFile()">📄+</button>
+        <button class="sib" title="Nova pasta" onclick="treeNewFolder()">📁+</button>
+        <button class="sib" title="Importar ZIP" onclick="qs('#zip-in').click()">📦</button>
+        <button class="sib" title="Fechar sidebar" onclick="toggleSidebar()">✕</button>
+        <input type="file" id="zip-in" accept=".zip" style="display:none" onchange="handleZipImport(event)">
+      </div>
+      <div id="file-tree"></div>
+    </div>
+
+    <div id="ed-main">
+      <div id="ed-toolbar">
+        <button class="pmb" id="btn-sidebar" onclick="toggleSidebar()" title="Arquivos">☰</button>
+        <input id="ed-fname" type="text" value="sem arquivo" onblur="renameCurrentFile()" onkeydown="if(event.key==='Enter')this.blur()">
+        <span class="lbadge" id="lbadge"></span>
+        <span class="lang-badge" id="lang-badge">Sem linguagem</span>
+        <div style="flex:1;min-width:4px"></div>
+        <button class="pmb" id="pm-off" onclick="setPM('off')" title="Fechar preview">📝</button>
+        <button class="pmb" id="pm-split" onclick="setPM('split')" title="Preview">⚡</button>
+        <button class="pmb" id="pm-full" onclick="setPM('full')" title="Preview grande">🔲</button>
+        <button class="pmb" onclick="openPrevTab()" title="Abrir em aba">↗</button>
+        <button class="pmb" onclick="saveFile()" title="Salvar Ctrl+S">💾</button>
+        <button class="pmb" onclick="exportZip()" title="Exportar ZIP">📤</button>
+        <button class="pmb" onclick="toggleAI()" title="IA">🤖 IA</button>
+      </div>
+
+      <div id="ed-work">
+        <div id="code-col" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
+          <div id="code-wrap">
+            <div id="line-nums"></div>
+            <pre id="code-pre"><code id="code-highlight" class="language-plaintext"></code></pre>
+            <textarea id="code-ta" placeholder="Selecione ou crie um arquivo…" oninput="onCodeInput()" onscroll="syncScroll()" onkeydown="codeKD(event)" spellcheck="false"></textarea>
+          </div>
+
+          <div id="preview-section">
+            <div id="preview-bar" onmousedown="startVDrag(event)">
+              <button class="prev-btn" onclick="togglePreviewMin()">⬆ Preview</button>
+              <span id="prev-lbl"></span>
+              <button class="prev-btn" onclick="setPM('off')">✕</button>
+            </div>
+            <iframe id="preview-frame"></iframe>
+          </div>
+        </div>
+
+        <div id="ed-divider-v" onmousedown="startDrag(event)"></div>
+
+        <div id="ai-panel" class="hidden">
+          <div id="ai-head">
+            <div id="ai-head-top">
+              <span style="font-size:12px;font-weight:700">🤖 Jasmim</span>
+              <button class="sib" onclick="toggleAI()">✕</button>
+            </div>
+            <div id="ai-prov">Nenhuma chave ativa</div>
+          </div>
+          <div id="ai-msgs"></div>
+          <div id="ai-foot">
+            <textarea id="ai-ta" placeholder="Pergunte algo… (Ctrl+Enter envia)" onkeydown="aiKD(event)" rows="3"></textarea>
+            <div id="ai-btns">
+              <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="sendAI()">Enviar</button>
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="sendWithCode()">+ Código</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="insertCode()">⬇ Inserir</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="clearAI()">🗑</button>
+            </div>
+            <div id="ai-st">pronto</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT (iframe) -->
+  <div id="chat-panel" class="panel iframe-panel">
+    <iframe src="chat.html" allowfullscreen></iframe>
+  </div>
+
+  <!-- PLAYGROUND (iframe) -->
+  <div id="playground-panel" class="panel iframe-panel">
+    <iframe src="playground.html" allowfullscreen></iframe>
+  </div>
+
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxNewFile()">📄 Novo arquivo aqui</div>
+  <div class="ctx-item" onclick="ctxNewFolder()">📁 Nova pasta aqui</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxRename()">✏️ Renomear</div>
+  <div class="ctx-item" onclick="ctxDuplicate()">⧉ Duplicar</div>
+  <div class="ctx-item" onclick="ctxDownload()">⬇ Baixar</div>
+  <div class="ctx-item" onclick="ctxAnalyzeAI()">🤖 Analisar com IA</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item ctx-danger" onclick="ctxDelete()">🗑 Excluir</div>
+</div>
+
+<!-- MODAL CHAVES -->
+<div id="keys-modal">
+  <div id="keys-box">
+    <div class="flex-between" style="margin-bottom:14px">
+      <span style="font-size:14px;font-weight:700">🔑 Chaves de API</span>
+      <button class="btn btn-ghost" onclick="closeKeysModal()">✕</button>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:12px;font-size:11px">
+      <strong>sk-ant-</strong> Anthropic · <strong>AIza</strong> Google · <strong>gsk_</strong> Groq · <strong>sk-or-</strong> OpenRouter · <strong>xai-</strong> xAI · <strong>sk-</strong> OpenAI
+    </div>
+    <div id="slots-wrap"></div>
+    <div class="flex-between" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeKeysModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveKeys()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RENOMEAR -->
+<div id="rename-modal">
+  <div id="rename-box">
+    <div class="flex-between" style="margin-bottom:12px">
+      <span id="rename-title" style="font-size:13px;font-weight:700">✏️ Renomear</span>
+      <button class="btn btn-ghost" onclick="closeRenameModal()">✕</button>
+    </div>
+    <input type="text" id="rename-input" placeholder="Novo nome…" onkeydown="if(event.key==='Enter')confirmRename();if(event.key==='Escape')closeRenameModal()">
+    <div class="flex-between" style="margin-top:12px">
+      <button class="btn btn-ghost" onclick="closeRenameModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmRename()">✅ Renomear</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
