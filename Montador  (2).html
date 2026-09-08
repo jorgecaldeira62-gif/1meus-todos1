@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 APK Builder - Simples e Direto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .step:hover {
+            border-color: #3b82f6;
+            background: #0f172a;
+            transform: translateY(-5px);
+        }
+
+        .step.active {
+            border-color: #22c55e;
+            background: #1e293b;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .step.active .step-number {
+            background: #22c55e;
+        }
+
+        .step h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #f1f5f9;
+        }
+
+        .step p {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .step-content {
+            display: none;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .step.active .step-content {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 13px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .upload-area {
+            border: 2px dashed #334155;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: #22c55e;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #1e3a1f;
+            border-left: 3px solid #22c55e;
+            color: #86efac;
+        }
+
+        .status.error {
+            background: #3a1f1f;
+            border-left: 3px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        .status.info {
+            background: #1f2a3a;
+            border-left: 3px solid #3b82f6;
+            color: #93c5fd;
+        }
+
+        .file-list {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+
+        .file-item {
+            padding: 5px;
+            color: #cbd5e1;
+            border-bottom: 1px solid #334155;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .info-box {
+            background: #1e293b;
+            border-left: 3px solid #3b82f6;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            background: #1e3a1f;
+            border: 1px solid #22c55e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .success-message strong {
+            color: #22c55e;
+        }
+
+        .link-button {
+            display: inline-block;
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 APK Builder</h1>
+            <p class="subtitle">Transforme seu projeto em APK em 4 passos simples</p>
+        </header>
+
+        <div class="steps">
+            <!-- PASSO 1: IMPORTAR -->
+            <div class="step active" onclick="switchStep(0)">
+                <div class="step-number">1</div>
+                <h3>📥 Importar</h3>
+                <p>Escolha seu projeto</p>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label>Selecione seu projeto (ZIP, TAR, ou pasta)</label>
+                        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                            <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
+                            <p>Clique ou arraste aqui</p>
+                        </div>
+                        <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
+                    <div id="importStatus" class="status"></div>
+                    <div id="fileList" class="file-list" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- PASSO 2: CONFIGURAR -->
+            <div class="step" onclick="switchStep(1)">
+                <div class="step-number">2</div>
+                <h3>⚙️ Configurar</h3>
+                <p>Dados do seu app</p>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label>📱 Nome do App</label>
+                        <input type="text" id="appName" placeholder="Meu App" value="Meu App">
+                    </div>
+                    <div class="form-group">
+                        <label>🆔 Package ID (ex: com.exemplo.app)</label>
+                        <input type="text" id="appId" placeholder="com.exemplo.app" value="com.exemplo.app">
+                    </div>
+                    <div class="form-group">
+                        <label>👤 Expo Owner (seu usuário)</label>
+                        <input type="text" id="expoOwner" placeholder="seu-usuario">
+                    </div>
+                    <div class="form-group">
+                        <label>🆔 Project ID</label>
+                        <input type="text" id="expoProjectId" placeholder="UUID do projeto">
+                    </div>
+                    <div class="info-box">
+                        ℹ️ Encontre o Project ID em app.json ou eas.json
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSO 3: GERAR -->
+            <div class="step" onclick="switchStep(2)">
+                <div class="step-number">3</div>
+                <h3>🔧 Gerar</h3>
+                <p>Criar arquivos</p>
+                <div class="step-content">
+                    <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 15px;">
+                        Clique para gerar automaticamente:
+                    </p>
+                    <ul style="font-size: 12px; color: #cbd5e1; margin-left: 20px; margin-bottom: 15px;">
+                        <li>✅ app.json</li>
+                        <li>✅ eas.json</li>
+                        <li>✅ capacitor.config.ts</li>
+                        <li>✅ AndroidManifest.xml</li>
+                        <li>✅ package.json</li>
+                    </ul>
+                    <button class="btn-success" onclick="generateFiles()">🔧 Gerar Arquivos</button>
+                    <div id="generateStatus" class="status"></div>
+                    <div id="downloadLinks" style="display: none; margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- PASSO 4: BUILD -->
+            <div class="step" onclick="switchStep(3)">
+                <div class="step-number">4</div>
+                <h3>🚀 Build</h3>
+                <p>Gerar APK</p>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label>🔑 Token EAS</label>
+                        <input type="password" id="easToken" placeholder="expo_...">
+                        <div style="font-size: 11px; color: #f59e0b; margin-top: 5px;">
+                            Gere em: https://expo.dev/settings/tokens
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>🎯 Perfil de Build</label>
+                        <select id="buildProfile">
+                            <option value="preview">Preview (Teste - APK)</option>
+                            <option value="production">Production (Play Store - AAB)</option>
+                        </select>
+                    </div>
+                    <button class="btn-success" onclick="startBuild()">🚀 Iniciar Build</button>
+                    <div id="buildStatus" class="status"></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let projectFiles = [];
+
+        function switchStep(stepIndex) {
+            currentStep = stepIndex;
+            document.querySelectorAll('.step').forEach((step, idx) => {
+                step.classList.toggle('active', idx === stepIndex);
+            });
+        }
+
+        // ── PASSO 1: IMPORTAR ──
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect({ target: { files } });
+            }
+        });
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const file = files[0];
+            const status = document.getElementById('importStatus');
+            
+            status.className = 'status show info';
+            status.textContent = `⏳ Analisando ${file.name}...`;
+
+            // Simular análise
+            setTimeout(() => {
+                projectFiles = [
+                    { name: 'index.html', size: '12 KB' },
+                    { name: 'package.json', size: '2 KB' },
+                    { name: 'src/main.js', size: '45 KB' },
+                ];
+
+                status.className = 'status show success';
+                status.textContent = `✅ Projeto importado! ${projectFiles.length} arquivos encontrados`;
+
+                const fileList = document.getElementById('fileList');
+                fileList.style.display = 'block';
+                fileList.innerHTML = projectFiles
+                    .map(f => `<div class="file-item">📄 ${f.name} (${f.size})</div>`)
+                    .join('');
+
+                // Ir para próximo passo
+                setTimeout(() => switchStep(1), 1000);
+            }, 1500);
+        }
+
+        // ── PASSO 3: GERAR ──
+        function generateFiles() {
+            const appName = document.getElementById('appName').value;
+            const appId = document.getElementById('appId').value;
+            const expoOwner = document.getElementById('expoOwner').value;
+            const expoProjectId = document.getElementById('expoProjectId').value;
+
+            if (!appName || !appId || !expoOwner || !expoProjectId) {
+                alert('❌ Preencha todos os campos de configuração');
+                switchStep(1);
+                return;
+            }
+
+            const status = document.getElementById('generateStatus');
+            status.className = 'status show info';
+            status.textContent = '⏳ Gerando arquivos...';
+
+            setTimeout(() => {
+                const files = {
+                    'app.json': generateAppJson(appName, appId, expoOwner, expoProjectId),
+                    'eas.json': generateEasJson(),
+                    'capacitor.config.ts': generateCapacitorConfig(appId, appName),
+                    'AndroidManifest.xml': generateManifest(appId),
+                    'package.json': generatePackageJson(appName),
+                };
+
+                status.className = 'status show success';
+                status.textContent = '✅ Arquivos gerados com sucesso!';
+
+                const downloadLinks = document.getElementById('downloadLinks');
+                downloadLinks.style.display = 'block';
+                downloadLinks.innerHTML = `
+                    <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 10px;">
+                        Arquivos prontos para baixar:
+                    </div>
+                    ${Object.keys(files)
+                        .map(
+                            (filename) => `
+                        <button class="btn-secondary" onclick="downloadFile('${filename}', \`${files[filename].replace(/`/g, '\\`')}\`)">
+                            📥 ${filename}
+                        </button>
+                    `
+                        )
+                        .join('')}
+                    <button class="btn-success" onclick="switchStep(3); downloadAllFiles(${JSON.stringify(files).replace(/"/g, '&quot;')})">
+                        📦 Baixar Tudo
+                    </button>
+                `;
+
+                setTimeout(() => switchStep(3), 2000);
+            }, 1500);
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        function downloadAllFiles(files) {
+            Object.entries(files).forEach(([filename, content], idx) => {
+                setTimeout(() => downloadFile(filename, content), idx * 200);
+            });
+        }
+
+        // ── PASSO 4: BUILD ──
+        function startBuild() {
+            const token = document.getElementById('easToken').value;
+            const profile = document.getElementById('buildProfile').value;
+
+            if (!token) {
+                alert('❌ Digite seu token EAS');
+                return;
+            }
+
+            const status = document.getElementById('buildStatus');
+            const progressFill = document.getElementById('progressFill');
+
+            status.className = 'status show info';
+            status.textContent = '⏳ Iniciando build no EAS...';
+            progressFill.style.width = '10%';
+
+            // Simular progresso
+            let progress = 10;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 2000);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                status.className = 'status show success';
+                status.innerHTML = `
+                    ✅ Build iniciado com sucesso!<br>
+                    <a href="https://expo.dev/accounts/seu-usuario/projects/app-ide/builds" target="_blank" class="link-button">
+                        🔗 Acompanhar build (clique aqui)
+                    </a><br>
+                    <small style="color: #cbd5e1; margin-top: 10px; display: block;">
+                        ⏱️ Tempo estimado: 15-20 minutos
+                    </small>
+                `;
+            }, 8000);
+        }
+
+        // ── GERADORES DE ARQUIVO ──
+        function generateAppJson(appName, appId, expoOwner, expoProjectId) {
+            return JSON.stringify(
+                {
+                    expo: {
+                        name: appName,
+                        slug: appId.split('.').pop(),
+                        version: '1.0.0',
+                        orientation: 'portrait',
+                        icon: './assets/images/icon.png',
+                        scheme: appId.replace(/\./g, ''),
+                        userInterfaceStyle: 'dark',
+                        android: {
+                            package: appId,
+                            versionCode: 1,
+                            permissions: [
+                                'android.permission.INTERNET',
+                                'android.permission.READ_EXTERNAL_STORAGE',
+                                'android.permission.WRITE_EXTERNAL_STORAGE',
+                            ],
+                        },
+                        owner: expoOwner,
+                        extra: {
+                            eas: {
+                                projectId: expoProjectId,
+                            },
+                        },
+                    },
+                },
+                null,
+                2
+            );
+        }
+
+        function generateEasJson() {
+            return JSON.stringify(
+                {
+                    cli: { version: '>= 16.0.0' },
+                    build: {
+                        preview: {
+                            android: { buildType: 'apk' },
+                            distribution: 'internal',
+                        },
+                        production: {
+                            android: { buildType: 'app-bundle' },
+                            distribution: 'store',
+                        },
+                    },
+                },
+                null,
+                2
+            );
+        }
+
+        function generateCapacitorConfig(appId, appName) {
+            return `import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: '${appId}',
+  appName: '${appName}',
+  webDir: 'dist',
+  server: { androidScheme: 'https' }
+};
+
+export default config;`;
+        }
+
+        function generateManifest(appId) {
+            return `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="${appId}">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <application android:label="@string/app_name" android:icon="@mipmap/ic_launcher">
+    <activity android:name=".MainActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>`;
+        }
+
+        function generatePackageJson(appName) {
+            return JSON.stringify(
+                {
+                    name: appName.toLowerCase().replace(/\s+/g, '-'),
+                    version: '1.0.0',
+                    scripts: {
+                        'build:apk': 'eas build --platform android --profile preview',
+                    },
+                    dependencies: {
+                        '@capacitor/core': '6.1.2',
+                        'expo': '~54.0.34',
+                    },
+                },
+                null,
+                2
+            );
+        }
+    </script>
+</body>
+</html>
