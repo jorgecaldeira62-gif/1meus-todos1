@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor Jurídico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;
+  --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+  --primary:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#nav{height:44px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:6px;flex-shrink:0;overflow-x:auto}
+.nav-logo{font-size:14px;font-weight:700;color:var(--primary);white-space:nowrap;margin-right:4px}
+.nav-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 2px}
+.nav-spacer{flex:1}
+.nbtn{background:transparent;border:none;color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:.15s}
+.nbtn:hover{background:var(--bg3);color:var(--text)}
+.nbtn.active{background:var(--bg3);border:1px solid var(--primary);color:var(--primary)}
+#wrap{flex:1;display:flex;overflow:hidden}
+#sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s;flex-shrink:0}
+#sidebar.hide{width:0;border:none}
+#sb-top{display:flex;align-items:center;gap:3px;padding:7px 6px;border-bottom:1px solid var(--border);flex-shrink:0;min-height:38px}
+#sb-top span{font-size:10px;font-weight:700;color:var(--muted);flex:1;text-transform:uppercase}
+.sbbtn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:12px;transition:.15s}
+.sbbtn:hover{background:var(--bg3);color:var(--text)}
+#tree{flex:1;overflow-y:auto;padding:4px 0}
+.trow{display:flex;align-items:center;gap:4px;padding:4px 6px;cursor:pointer;border-radius:5px;margin:1px 4px;position:relative;min-height:26px;transition:.12s}
+.trow:hover{background:var(--bg3)}
+.trow.sel{background:var(--primary);color:#000}
+.trow:hover .tacts,.trow.sel .tacts{opacity:1}
+.tico{font-size:12px;flex-shrink:0;width:14px;text-align:center}
+.tarr{font-size:10px;flex-shrink:0;width:10px;transition:transform .15s}
+.tarr.op{transform:rotate(90deg)}
+.tname{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tacts{opacity:0;display:flex;gap:1px;position:absolute;right:4px;background:var(--bg3);border-radius:4px;padding:2px;transition:opacity .12s}
+.trow.sel .tacts{background:rgba(0,0,0,.25)}
+.tabtn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:10px;transition:.1s;line-height:1}
+.tabtn:hover{background:rgba(255,255,255,.15);color:var(--text)}
+.kids{padding-left:14px}
+.kids.hide{display:none}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#toolbar{display:flex;align-items:center;gap:5px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;min-height:38px}
+#fname{background:transparent;border:1px solid transparent;color:var(--text);font-size:12px;font-weight:600;padding:3px 7px;border-radius:5px;font-family:'Courier New',monospace;max-width:200px;min-width:60px;transition:.15s}
+#fname:focus{border-color:var(--primary);background:var(--bg3);outline:none}
+.lbadge{background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.tbtn{background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:5px;font-size:12px;transition:.15s;white-space:nowrap}
+.tbtn:hover{background:var(--bg3)}
+.tbtn.active{background:var(--bg3);border-color:var(--primary);color:var(--primary)}
+#work{flex:1;display:flex;overflow:hidden}
+/* PAINEL EDITOR */
+#editor-panel{display:flex;flex-direction:column;overflow:hidden;flex:1;min-width:0}
+#codewrap{flex:1;display:flex;overflow:hidden;background:var(--bg);min-height:0}
+#lnum{background:var(--bg2);border-right:1px solid var(--border);padding:10px 0;min-width:42px;text-align:right;overflow:hidden;flex-shrink:0;user-select:none}
+.ln{display:block;padding:0 10px;font-size:12px;line-height:1.6;color:var(--muted);font-family:'Courier New',monospace}
+#cta{flex:1;background:transparent;border:none;color:var(--text);font-family:'Courier New',monospace;font-size:13px;line-height:1.6;padding:10px 12px;resize:none;outline:none;tab-size:2;overflow-y:auto}
+/* PAINEL PREVIEW */
+#prev-panel{display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border);flex-shrink:0;width:0;transition:width .2s}
+#prev-panel.show{width:45%}
+#prev-panel.show-full{width:100%}
+#prevbar{display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;min-height:34px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+#prevlbl{font-size:11px;color:var(--muted);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pbtn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:3px 8px;border-radius:4px;transition:.15s;white-space:nowrap}
+.pbtn:hover{background:var(--bg3);color:var(--text)}
+.pbtn.active{background:var(--bg3);color:var(--primary)}
+#pframe{flex:1;border:none;background:#fff;min-height:0;width:100%}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:900;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.mbox{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(380px,92vw)}
+.mtitle{font-size:14px;font-weight:700;margin-bottom:12px}
+.minput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;margin-bottom:12px;transition:.15s}
+.minput:focus{border-color:var(--primary)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end}
+.btn{border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;padding:7px 16px;transition:.15s;font-family:inherit}
+.btn-ok{background:var(--primary);color:#000}
+.btn-ok:hover{background:#7ab8ff}
+.btn-cancel{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-cancel:hover{border-color:var(--primary)}
+#ctx{display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:4px;z-index:1000;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+.citem{width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:7px 12px;border-radius:4px;cursor:pointer;font-size:12px;display:block;transition:.15s}
+.citem:hover{background:var(--bg3)}
+.citem.danger{color:var(--red)}
+.csep{height:1px;background:var(--border);margin:3px 0}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:7px;font-size:12px;font-weight:600;z-index:2000;animation:tin .3s;max-width:300px;pointer-events:none}
+.tok{background:var(--green);color:#fff}
+.terr{background:var(--red);color:#fff}
+.twarn{background:var(--yellow);color:#000}
+@keyframes tin{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="nav-logo">⚖️ Editor Jurídico</div>
+  <div class="nav-sep"></div>
+  <button class="nbtn" onclick="toggleSB()">☰ Arquivos</button>
+  <button class="nbtn" onclick="openModal('mf','')">📄 Novo</button>
+  <button class="nbtn" onclick="openModal('md','')">📁 Pasta</button>
+  <button class="nbtn" onclick="id('imp').click()">📦 Importar ZIP</button>
+  <button class="nbtn" onclick="exportZip()">📥 Exportar ZIP</button>
+  <div class="nav-spacer"></div>
+  <button class="nbtn tbtn" id="bpm0" onclick="setPM(0)" title="Só editor">📝 Editor</button>
+  <button class="nbtn tbtn" id="bpm1" onclick="setPM(1)" title="Editor + Preview lado a lado">⚡ Dividido</button>
+  <button class="nbtn tbtn" id="bpm2" onclick="setPM(2)" title="Só preview">📺 Preview</button>
+  <div class="nav-sep"></div>
+  <button class="nbtn" onclick="forceRefresh()" title="Atualizar preview">🔄</button>
+  <button class="nbtn" onclick="saveFile()">💾 Salvar</button>
+  <input type="file" id="imp" accept=".zip" style="display:none" onchange="doImport(event)">
+</nav>
+
+<div id="wrap">
+  <div id="sidebar">
+    <div id="sb-top">
+      <span>Arquivos</span>
+      <button class="sbbtn" onclick="openModal('mf','')" title="Novo arquivo">📄</button>
+      <button class="sbbtn" onclick="openModal('md','')" title="Nova pasta">📁</button>
+      <button class="sbbtn" onclick="id('imp').click()" title="Importar ZIP">📦</button>
+      <button class="sbbtn" onclick="toggleSB()" title="Fechar">✕</button>
+    </div>
+    <div id="tree"></div>
+  </div>
+
+  <div id="main">
+    <div id="toolbar">
+      <input id="fname" type="text" value="sem arquivo" onblur="renameBar()" onkeydown="if(event.key==='Enter')this.blur()">
+      <span class="lbadge" id="lbadge">—</span>
+      <div style="flex:1"></div>
+      <button class="tbtn" onclick="dlFile(null)" title="Baixar arquivo atual">⬇ Baixar</button>
+      <button class="tbtn" onclick="saveFile()">💾 Salvar</button>
+    </div>
+
+    <div id="work">
+      <div id="editor-panel">
+        <div id="codewrap">
+          <div id="lnum"></div>
+          <textarea id="cta"
+            placeholder="Selecione ou crie um arquivo…"
+            oninput="onInput()"
+            onscroll="syncScroll()"
+            onkeydown="onKD(event)"
+            spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div id="prev-panel">
+        <div id="prevbar">
+          <span id="prevlbl">🌐 Preview do Projeto</span>
+          <button class="pbtn" id="btn-live" onclick="toggleLive()" title="Preview ao vivo">⚡ Ao vivo</button>
+          <button class="pbtn" onclick="forceRefresh()" title="Atualizar agora">🔄</button>
+        </div>
+        <iframe id="pframe" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO ARQUIVO -->
+<div id="modal-mf" class="modal">
+  <div class="mbox">
+    <div class="mtitle">📄 Novo Arquivo</div>
+    <input id="inp-mf" class="minput" type="text" placeholder="index.html"
+      onkeydown="if(event.key==='Enter')doCreate('f')">
+    <div class="mbtns">
+      <button class="btn btn-cancel" onclick="closeModal('mf')">Cancelar</button>
+      <button class="btn btn-ok" onclick="doCreate('f')">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA PASTA -->
+<div id="modal-md" class="modal">
+  <div class="mbox">
+    <div class="mtitle">📁 Nova Pasta</div>
+    <input id="inp-md" class="minput" type="text" placeholder="minha-pasta"
+      onkeydown="if(event.key==='Enter')doCreate('d')">
+    <div class="mbtns">
+      <button class="btn btn-cancel" onclick="closeModal('md')">Cancelar</button>
+      <button class="btn btn-ok" onclick="doCreate('d')">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RENOMEAR -->
+<div id="modal-rn" class="modal">
+  <div class="mbox">
+    <div class="mtitle">✏️ Renomear</div>
+    <input id="inp-rn" class="minput" type="text"
+      onkeydown="if(event.key==='Enter')doRename()">
+    <div class="mbtns">
+      <button class="btn btn-cancel" onclick="closeModal('rn')">Cancelar</button>
+      <button class="btn btn-ok" onclick="doRename()">Renomear</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <button class="citem" onclick="ctxAct('rename')">✏️ Renomear</button>
+  <button class="citem" id="ctx-dup" onclick="ctxAct('dup')">⧉ Duplicar</button>
+  <button class="citem" id="ctx-dl" onclick="ctxAct('dl')">⬇ Baixar</button>
+  <div class="csep"></div>
+  <button class="citem danger" onclick="ctxAct('del')">🗑️ Excluir</button>
+</div>
+
+<script>
+// ── UTILITÁRIOS ──────────────────────────────────────────
+const id  = s => document.getElementById(s);
+const qs  = s => document.querySelector(s);
+const qsa = s => [...document.querySelectorAll(s)];
+const ext = p => (p.split('.').pop()||'').toLowerCase();
+const lsGet = k => { try{ return localStorage.getItem(k) }catch{ return null } };
+const lsSet = (k,v) => { try{ localStorage.setItem(k,v) }catch{} };
+const esc   = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = 'toast t'+type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2800);
+}
+
+function dlBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 6000);
+}
+
+const ICON = n => ({
+  html:'🌐',htm:'🌐',css:'🎨',scss:'🎨',sass:'🎨',
+  js:'📜',mjs:'📜',jsx:'⚛',ts:'📘',tsx:'⚛',
+  json:'📋',yaml:'📋',yml:'📋',
+  md:'📝',txt:'📄',sh:'⚙',bat:'⚙',
+  py:'🐍',java:'☕',php:'🐘',rb:'💎',go:'🐹',rs:'🦀',
+  sql:'🗄',svg:'🖼',png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',
+  pdf:'📕',zip:'📦',env:'🔒'
+})[ext(n)] || '📄';
+
+// ── ESTADO ───────────────────────────────────────────────
+let files      = {};
+let curFile    = null;
+let folderOpen = {};
+let pmMode     = 1;       // 0=editor, 1=dividido, 2=preview
+let liveMode   = true;    // preview ao vivo
+let prevTimer  = null;
+let ctxPath    = null, ctxType = null;
+let modalCtx   = '';
+
+// ── INIT ─────────────────────────────────────────────────
+function init(){
+  const saved = lsGet('ej-files');
+  if(saved) try{ files = JSON.parse(saved) }catch{}
+  if(!Object.keys(files).length){
+    files['index.html'] =
+`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Meu Projeto</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Olá, Mundo!</h1>
+  <p>Edite os arquivos e veja o resultado ao vivo →</p>
+  <script src="app.js"><\/script>
+</body>
+</html>`;
+    files['style.css'] =
+`body {
+  font-family: sans-serif;
+  background: #f0f4f8;
+  padding: 40px;
+  color: #333;
+}
+h1 { color: #2563eb; }
+p  { color: #555; }`;
+    files['app.js'] =
+`// JavaScript do projeto
+console.log("Projeto iniciado!");
+document.querySelector('h1').addEventListener('click', function(){
+  alert('Clicou no título!');
+});`;
+  }
+  renderTree();
+  const first = Object.keys(files).find(f=>ext(f)==='html') || Object.keys(files)[0];
+  if(first) openFile(first);
+  setPM(1);
+  updateLiveBtn();
+}
+
+// ── ÁRVORE ───────────────────────────────────────────────
+function buildTree(fm){
+  const root = {t:'dir', name:'', kids:{}};
+  for(const path of Object.keys(fm)){
+    const parts = path.replace(/^\//,'').split('/');
+    let node = root;
+    for(let i=0; i<parts.length; i++){
+      const p = parts[i];
+      if(i === parts.length-1){
+        node.kids[p] = {t:'file', name:p, path};
+      } else {
+        if(!node.kids[p]) node.kids[p] = {t:'dir', name:p, kids:{}};
+        node = node.kids[p];
+      }
+    }
+  }
+  return root;
+}
+
+function renderTree(){
+  const root = buildTree(files);
+  id('tree').innerHTML = renderKids(root.kids, '');
+}
+
+function renderKids(kids, parent){
+  const entries = Object.entries(kids).sort(([an,av],[bn,bv])=>{
+    if(av.t==='dir' && bv.t==='file') return -1;
+    if(av.t==='file' && bv.t==='dir') return 1;
+    return an.localeCompare(bn);
+  });
+  return entries.map(([name, node])=>{
+    const full = parent ? parent+'/'+name : name;
+    if(node.t === 'dir'){
+      const open  = folderOpen[full] !== false;
+      const safId = 'fc_'+full.replace(/[^a-zA-Z0-9]/g,'_');
+      return `<div>
+        <div class="trow" onclick="toggleDir('${full}',event)"
+             oncontextmenu="openCtx(event,'dir','${full}')">
+          <span class="tarr ${open?'op':''}">▶</span>
+          <span class="tico">📁</span>
+          <span class="tname">${esc(name)}</span>
+          <div class="tacts">
+            <button class="tabtn" onclick="event.stopPropagation();openModal('mf','${full}')" title="Novo arquivo">📄</button>
+            <button class="tabtn" onclick="event.stopPropagation();openModal('md','${full}')" title="Nova pasta">📁</button>
+            <button class="tabtn" onclick="event.stopPropagation();openRename('dir','${full}')">✏️</button>
+            <button class="tabtn" onclick="event.stopPropagation();delItem('${full}','dir')">🗑️</button>
+          </div>
+        </div>
+        <div class="kids ${open?'':'hide'}" id="${safId}">
+          ${renderKids(node.kids, full)}
+        </div>
+      </div>`;
+    } else {
+      const sel = node.path === curFile ? 'sel' : '';
+      return `<div class="trow ${sel}"
+        onclick="openFile('${node.path}')"
+        oncontextmenu="openCtx(event,'file','${node.path}')">
+        <span class="tico">${ICON(name)}</span>
+        <span class="tname">${esc(name)}</span>
+        <div class="tacts">
+          <button class="tabtn" onclick="event.stopPropagation();openRename('file','${node.path}')">✏️</button>
+          <button class="tabtn" onclick="event.stopPropagation();dupFile('${node.path}')">⧉</button>
+          <button class="tabtn" onclick="event.stopPropagation();dlFile('${node.path}')">⬇</button>
+          <button class="tabtn" onclick="event.stopPropagation();delItem('${node.path}','file')">🗑️</button>
+        </div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function toggleDir(path, e){
+  if(e) e.stopPropagation();
+  folderOpen[path] = folderOpen[path] === false ? true : false;
+  renderTree();
+}
+
+// ── ABRIR / SALVAR ───────────────────────────────────────
+function openFile(path){
+  if(curFile && files[curFile] !== undefined){
+    files[curFile] = id('cta').value;
+  }
+  curFile = path;
+  id('cta').value   = files[path] || '';
+  id('fname').value = path.split('/').pop();
+  id('lbadge').textContent = ext(path) || 'txt';
+  renderTree();
+  updateLN();
+  refreshPreview();
+}
+
+function saveFile(){
+  if(!curFile) return;
+  files[curFile] = id('cta').value;
+  saveAll();
+  toast('💾 Salvo!');
+}
+
+function saveAll(){
+  lsSet('ej-files', JSON.stringify(files));
+}
+
+// ── CRIAR ────────────────────────────────────────────────
+function openModal(type, folder){
+  modalCtx = folder || '';
+  id('inp-'+type).value = '';
+  id('modal-'+type).classList.add('open');
+  setTimeout(()=>id('inp-'+type).focus(), 80);
+}
+function closeModal(type){
+  id('modal-'+type).classList.remove('open');
+}
+
+function doCreate(type){
+  const isDir = (type === 'd');
+  const inp   = isDir ? id('inp-md') : id('inp-mf');
+  const name  = (inp.value || '').trim();
+  if(!name){ toast('Nome inválido','err'); return; }
+  const base  = modalCtx ? modalCtx+'/'+name : name;
+  if(isDir){
+    const keeper = base+'/.gitkeep';
+    if(!files[keeper]) files[keeper] = '';
+    folderOpen[base] = true;
+    saveAll(); renderTree();
+    closeModal('md');
+    toast('📁 Pasta criada!');
+  } else {
+    if(files[base] !== undefined){ toast('Arquivo já existe','err'); return; }
+    files[base] = '';
+    saveAll(); renderTree();
+    openFile(base);
+    closeModal('mf');
+    toast('📄 Arquivo criado!');
+  }
+}
+
+// ── RENOMEAR ─────────────────────────────────────────────
+function openRename(type, path){
+  ctxType = type; ctxPath = path;
+  id('inp-rn').value = path.split('/').pop();
+  id('modal-rn').classList.add('open');
+  setTimeout(()=>{ id('inp-rn').focus(); id('inp-rn').select(); }, 80);
+}
+
+function doRename(){
+  const newName = (id('inp-rn').value || '').trim();
+  if(!newName){ toast('Nome inválido','err'); return; }
+  const dir     = ctxPath.includes('/') ? ctxPath.slice(0, ctxPath.lastIndexOf('/')+1) : '';
+  const newPath = dir + newName;
+  if(ctxType === 'file'){
+    if(files[newPath] !== undefined && newPath !== ctxPath){ toast('Nome já existe','err'); return; }
+    files[newPath] = files[ctxPath];
+    delete files[ctxPath];
+    if(curFile === ctxPath) curFile = newPath;
+  } else {
+    const pre = ctxPath+'/', nPre = newPath+'/';
+    for(const k of Object.keys(files)){
+      if(k.startsWith(pre)){
+        files[nPre+k.slice(pre.length)] = files[k];
+        delete files[k];
+        if(curFile === k) curFile = nPre+k.slice(pre.length);
+      }
+    }
+    const nFO = {};
+    for(const [k,v] of Object.entries(folderOpen)){
+      if(k === ctxPath)              nFO[newPath] = v;
+      else if(k.startsWith(ctxPath+'/')) nFO[newPath+k.slice(ctxPath.length)] = v;
+      else                           nFO[k] = v;
+    }
+    folderOpen = nFO;
+  }
+  saveAll(); renderTree();
+  if(curFile){
+    id('fname').value = curFile.split('/').pop();
+    id('lbadge').textContent = ext(curFile) || 'txt';
+  }
+  closeModal('rn');
+  toast('✅ Renomeado!');
+}
+
+function renameBar(){
+  if(!curFile) return;
+  const newName = (id('fname').value || '').trim();
+  if(!newName){ id('fname').value = curFile.split('/').pop(); return; }
+  const dir     = curFile.includes('/') ? curFile.slice(0, curFile.lastIndexOf('/')+1) : '';
+  const newPath = dir + newName;
+  if(newPath === curFile) return;
+  if(files[newPath] !== undefined){
+    toast('Nome já existe','err');
+    id('fname').value = curFile.split('/').pop();
+    return;
+  }
+  files[newPath] = files[curFile];
+  delete files[curFile];
+  curFile = newPath;
+  id('lbadge').textContent = ext(newPath) || 'txt';
+  saveAll(); renderTree();
+  toast('✅ Renomeado!');
+}
+
+// ── DUPLICAR / BAIXAR / EXCLUIR ──────────────────────────
+function dupFile(path){
+  const dir  = path.includes('/') ? path.slice(0, path.lastIndexOf('/')+1) : '';
+  const base = path.split('/').pop().replace(/(\.[^.]+)$/,'');
+  const e2   = path.includes('.') ? '.'+ext(path) : '';
+  let np = dir+base+'_copia'+e2; let i = 2;
+  while(files[np] !== undefined) np = dir+base+'_copia'+(i++)+e2;
+  files[np] = files[path];
+  saveAll(); renderTree(); openFile(np);
+  toast('⧉ Duplicado!');
+}
+
+function dlFile(path){
+  const p = path || curFile;
+  if(!p){ toast('Nenhum arquivo selecionado','err'); return; }
+  dlBlob(new Blob([files[p]||''], {type:'text/plain'}), p.split('/').pop());
+}
+
+function delItem(path, type){
+  if(!confirm('Excluir "'+path+'"?')) return;
+  if(type === 'file'){
+    delete files[path];
+    if(curFile === path){
+      curFile = null;
+      id('cta').value   = '';
+      id('fname').value = 'sem arquivo';
+      id('lbadge').textContent = '';
+    }
+  } else {
+    for(const k of Object.keys(files))
+      if(k.startsWith(path+'/')) delete files[k];
+    if(curFile && curFile.startsWith(path+'/')){
+      curFile = null;
+      id('cta').value   = '';
+      id('fname').value = 'sem arquivo';
+      id('lbadge').textContent = '';
+    }
+  }
+  saveAll(); renderTree();
+  toast('🗑️ Excluído!');
+}
+
+// ── CONTEXT MENU ─────────────────────────────────────────
+function openCtx(e, type, path){
+  e.preventDefault(); e.stopPropagation();
+  ctxPath = path; ctxType = type;
+  id('ctx-dup').style.display = type==='file' ? 'block' : 'none';
+  id('ctx-dl').style.display  = type==='file' ? 'block' : 'none';
+  const m = id('ctx');
+  m.style.left    = Math.min(e.clientX, window.innerWidth-180)+'px';
+  m.style.top     = Math.min(e.clientY, window.innerHeight-160)+'px';
+  m.style.display = 'block';
+}
+function ctxAct(act){
+  id('ctx').style.display = 'none';
+  if(act==='rename') openRename(ctxType, ctxPath);
+  else if(act==='dup') dupFile(ctxPath);
+  else if(act==='dl')  dlFile(ctxPath);
+  else if(act==='del') delItem(ctxPath, ctxType);
+}
+document.addEventListener('click', ()=> id('ctx').style.display='none');
+
+// ── EDITOR ───────────────────────────────────────────────
+function onInput(){
+  if(curFile) files[curFile] = id('cta').value;
+  updateLN();
+  if(liveMode){
+    clearTimeout(prevTimer);
+    prevTimer = setTimeout(refreshPreview, 700);
+  }
+}
+
+function updateLN(){
+  const ta = id('cta'), ln = id('lnum');
+  const n  = ta.value.split('\n').length;
+  ln.innerHTML = Array.from({length:n}, (_,i)=>`<span class="ln">${i+1}</span>`).join('');
+}
+
+function syncScroll(){
+  id('lnum').scrollTop = id('cta').scrollTop;
+}
+
+function onKD(e){
+  const ta = e.target;
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    const s = ta.selectionStart, en = ta.selectionEnd;
+    ta.value = ta.value.slice(0,s) + '  ' + ta.value.slice(en);
+    ta.selectionStart = ta.selectionEnd = s+2;
+    onInput();
+  }
+  if(e.key==='s' && (e.ctrlKey||e.metaKey)){
+    e.preventDefault();
+    saveFile();
+    refreshPreview();
+  }
+}
+
+// ── PREVIEW ──────────────────────────────────────────────
+// Modos: 0=só editor, 1=dividido, 2=só preview
+function setPM(mode){
+  pmMode = mode;
+  qsa('.tbtn[id^="bpm"]').forEach(b => b.classList.remove('active'));
+  id('bpm'+mode)?.classList.add('active');
+
+  const ep = id('editor-panel');
+  const pp = id('prev-panel');
+
+  if(mode === 0){
+    ep.style.display = 'flex';
+    ep.style.flex    = '1';
+    pp.className     = 'prev-panel'; // sem show
+    pp.style.width   = '0';
+  } else if(mode === 1){
+    ep.style.display = 'flex';
+    ep.style.flex    = '1';
+    pp.className     = 'prev-panel show';
+  } else {
+    ep.style.display = 'none';
+    pp.className     = 'prev-panel show-full';
+    pp.style.width   = '100%';
+  }
+
+  if(mode > 0) refreshPreview();
+}
+
+function toggleLive(){
+  liveMode = !liveMode;
+  updateLiveBtn();
+  if(liveMode) refreshPreview();
+}
+function updateLiveBtn(){
+  const b = id('btn-live');
+  if(!b) return;
+  b.classList.toggle('active', liveMode);
+  b.title = liveMode ? 'Preview ao vivo: LIGADO' : 'Preview ao vivo: DESLIGADO';
+}
+
+function forceRefresh(){
+  if(curFile) files[curFile] = id('cta').value;
+  refreshPreview();
+  toast('🔄 Preview atualizado!');
+}
+
+// ════════════════════════════════════════════════════════
+// PREVIEW INTELIGENTE — monta o projeto completo
+// Resolve <link href="..."> e <script src="..."> inline
+// ════════════════════════════════════════════════════════
+function refreshPreview(){
+  if(pmMode === 0) return;
+
+  const fr = id('pframe');
+  const lb = id('prevlbl');
+
+  // Encontra o HTML principal do projeto
+  const htmlFile = findMainHtml();
+
+  if(!htmlFile){
+    // Sem HTML: mostra arquivo atual como texto/css
+    showRawPreview(fr, lb);
+    return;
+  }
+
+  lb.textContent = '🌐 ' + htmlFile;
+  let html = files[htmlFile] || '';
+
+  // ── Resolve <link rel="stylesheet" href="..."> ──
+  html = html.replace(
+    /<link([^>]*?)href=["']([^"']+\.css)["']([^>]*?)>/gi,
+    (match, pre, href, post) => {
+      const content = resolveFile(href, htmlFile);
+      if(content === null) return match; // mantém se não achar
+      return `<style>/* ${href} */\n${content}</style>`;
+    }
+  );
+
+  // ── Resolve <script src="..."> ──
+  html = html.replace(
+    /<script([^>]*?)src=["']([^"']+)["']([^>]*?)><\/script>/gi,
+    (match, pre, src, post) => {
+      if(src.startsWith('http')||src.startsWith('//')||src.startsWith('data:'))
+        return match; // CDN: mantém
+      const content = resolveFile(src, htmlFile);
+      if(content === null) return match;
+      return `<script${pre}${post}>\n/* ${src} */\n${content}\n<\/script>`;
+    }
+  );
+
+  // ── Resolve <img src="..."> para data URL (se SVG) ──
+  html = html.replace(
+    /<img([^>]*?)src=["']([^"']+\.svg)["']([^>]*?)>/gi,
+    (match, pre, src, post) => {
+      const content = resolveFile(src, htmlFile);
+      if(content === null) return match;
+      const b64 = btoa(unescape(encodeURIComponent(content)));
+      return `<img${pre}src="data:image/svg+xml;base64,${b64}"${post}>`;
+    }
+  );
+
+  fr.srcdoc = html;
+}
+
+// Encontra o HTML principal: preferência index.html, depois qualquer .html
+function findMainHtml(){
+  const htmlFiles = Object.keys(files).filter(f => ext(f)==='html' || ext(f)==='htm');
+  if(!htmlFiles.length) return null;
+  // Prefere index.html na raiz
+  const idx = htmlFiles.find(f => f==='index.html' || f==='index.htm');
+  if(idx) return idx;
+  // Prefere HTML que o arquivo atual é
+  if(curFile && (ext(curFile)==='html'||ext(curFile)==='htm')) return curFile;
+  return htmlFiles[0];
+}
+
+// Resolve caminho relativo de um arquivo referenciado
+function resolveFile(href, fromFile){
+  // Remove query/hash
+  const clean = href.split('?')[0].split('#')[0];
+  // Tenta caminho direto
+  if(files[clean] !== undefined) return files[clean];
+  // Tenta relativo à pasta do HTML
+  const dir = fromFile.includes('/') ? fromFile.slice(0, fromFile.lastIndexOf('/')+1) : '';
+  const rel  = dir + clean;
+  if(files[rel] !== undefined) return files[rel];
+  // Tenta só o nome do arquivo (sem pasta)
+  const basename = clean.split('/').pop();
+  const found = Object.keys(files).find(f => f.split('/').pop() === basename);
+  if(found) return files[found];
+  return null;
+}
+
+// Preview para arquivos não-HTML
+function showRawPreview(fr, lb){
+  if(!curFile){ fr.srcdoc=''; return; }
+  const e2 = ext(curFile);
+  if(e2==='css'){
+    lb.textContent = '🎨 CSS — '+curFile;
+    fr.srcdoc = `<html><head><style>
+      body{font-family:sans-serif;background:#1e293b;color:#e2e8f0;padding:20px}
+      .box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;margin-top:12px}
+    </style>${files[curFile]||''}</head><body>
+      <h2 style="color:#58a6ff">Preview CSS</h2>
+      <div class="box"><p>Estilos carregados.</p><a href="#">Link de exemplo</a></div>
+    </body></html>`;
+  } else if(e2==='md'){
+    lb.textContent = '📝 Markdown — '+curFile;
+    fr.srcdoc = `<html><head><style>body{font-family:sans-serif;padding:20px;background:#0f172a;color:#e2e8f0;line-height:1.7;max-width:700px}</style></head>
+    <body><pre style="white-space:pre-wrap;font-family:inherit">${esc(files[curFile]||'')}</pre></body></html>`;
+  } else {
+    lb.textContent = '📄 '+curFile;
+    fr.srcdoc = `<html><head><style>body{background:#1e293b;color:#94a3b8;font-family:monospace;padding:20px;font-size:13px;line-height:1.6;white-space:pre-wrap}</style></head>
+    <body>${esc(files[curFile]||'')}</body></html>`;
+  }
+}
+
+// ── IMPORTAR / EXPORTAR ──────────────────────────────────
+async function doImport(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  if(!window.JSZip){ toast('JSZip não carregou','err'); return; }
+  try{
+    const z  = await JSZip.loadAsync(f);
+    const nf = {};
+    for(const [p,obj] of Object.entries(z.files)){
+      if(obj.dir) continue;
+      try{ nf[p] = await obj.async('string') }catch{}
+    }
+    files = nf; folderOpen = {};
+    renderTree();
+    const first = Object.keys(files).find(f2=>ext(f2)==='html') || Object.keys(files)[0];
+    if(first) openFile(first);
+    saveAll();
+    toast('📦 '+Object.keys(files).length+' arquivos importados!');
+  } catch(err){
+    toast('Erro ao importar: '+err.message,'err');
+  }
+  e.target.value = '';
+}
+
+async function exportZip(){
+  if(!window.JSZip){ toast('JSZip não carregou','err'); return; }
+  if(curFile) files[curFile] = id('cta').value;
+  saveAll();
+  const z = new JSZip();
+  for(const [n,c] of Object.entries(files)) z.file(n, c||'');
+  dlBlob(
+    await z.generateAsync({type:'blob', compression:'DEFLATE'}),
+    'projeto-'+Date.now()+'.zip'
+  );
+  toast('📥 ZIP exportado!');
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────
+function toggleSB(){
+  id('sidebar').classList.toggle('hide');
+}
+
+// ── ESC fecha modais ─────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    ['mf','md','rn'].forEach(t=>closeModal(t));
+    id('ctx').style.display='none';
+  }
+});
+
+// ── START ────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
