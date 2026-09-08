@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat IA Profissional - Monica & Modelos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --accent: #f59e0b;
+            --bg-dark: #0f172a;
+            --bg-light: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .container-main {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--bg-light);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .btn-novo-chat {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .btn-novo-chat:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .historico-chats {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .chat-item:hover {
+            background: var(--border);
+            border-left-color: var(--primary);
+        }
+
+        .chat-item.ativo {
+            background: var(--primary);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar-footer {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sidebar {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-sidebar:hover {
+            background: var(--border);
+            border-color: var(--primary);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+        }
+
+        /* HEADER CONFIGURAÇÃO */
+        .config-header {
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border);
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            overflow-x: auto;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .config-item label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .config-item select,
+        .config-item input {
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .config-item input[type="range"] {
+            padding: 0;
+            height: 6px;
+            cursor: pointer;
+        }
+
+        /* CHAT AREA */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .mensagens {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mensagem {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mensagem.usuario {
+            justify-content: flex-end;
+        }
+
+        .mensagem-conteudo {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+
+        .mensagem.usuario .mensagem-conteudo {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .mensagem.ia .mensagem-conteudo {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .mensagem-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .mensagem:hover .mensagem-toolbar {
+            opacity: 1;
+        }
+
+        .btn-msg {
+            padding: 6px 10px;
+            background: var(--border);
+            border: none;
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .btn-msg:hover {
+            background: var(--primary);
+        }
+
+        /* INPUT AREA */
+        .input-area {
+            padding: 20px;
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-control {
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-control:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-control.ativo {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        #inputChat {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            max-height: 100px;
+            min-height: 44px;
+        }
+
+        #inputChat:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-enviar {
+            padding: 12px 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+
+        .btn-enviar:hover:not(:disabled) {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-enviar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* MODALS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.ativo {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .btn-fechar {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-salvar {
+            padding: 12px 24px;
+            background: var(--success);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-salvar:hover {
+            background: #059669;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.ativo {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.ativo {
+            display: block;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .container-main {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+                z-index: 999;
+            }
+
+            .sidebar.ativo {
+                display: flex;
+            }
+
+            .config-header {
+                grid-template-columns: 1fr;
+            }
+
+            .mensagem-conteudo {
+                max-width: 85%;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .config-header {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .config-item select,
+            .config-item input {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .mensagem-conteudo {
+                max-width: 95%;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .input-area {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .btn-enviar {
+                min-width: 80px;
+                padding: 10px 16px;
+            }
+
+            .sidebar-header h1 {
+                font-size: 14px;
+            }
+        }
+
+        /* SCROLLBAR CUSTOMIZADO */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* CÓDIGO HIGHLIGHT */
+        .codigo-bloco {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .codigo-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-codigo {
+            padding: 6px 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .btn-codigo:hover {
+            background: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span>🧠</span>
+                <h1>Chat IA</h1>
+            </div>
+
+            <button class="btn-novo-chat" onclick="novoChat()">+ Novo Chat</button>
+
+            <div class="historico-chats" id="historico"></div>
+
+            <div class="sidebar-footer">
+                <button class="btn-sidebar" onclick="abrirConfiguracoes()">⚙️ Config</button>
+                <button class="btn-sidebar" onclick="abrirMemoria()">💾 Memória</button>
+                <button class="btn-sidebar" onclick="fazerBackup()">📦 Backup</button>
+                <button class="btn-sidebar" onclick="importarBackup()">📥 Importar</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER CONFIGURAÇÃO -->
+            <div class="config-header">
+                <div class="config-item">
+                    <label>Modelo IA</label>
+                    <select id="selectModelo" onchange="atualizarModelo()">
+                        <option value="monica">Monica API</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="claude">Claude</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="local">IA Local</option>
+                    </select>
+                </div>
+
+                <div class="config-item">
+                    <label>Temperatura</label>
+                    <input type="range" id="temperatura" min="0" max="2" step="0.1" value="0.7" onchange="atualizarConfig()">
+                    <span style="font-size: 11px; color: var(--text-secondary);" id="tempValor">0.7</span>
+                </div>
+
+                <div class="config-item">
+                    <label>Max Tokens</label>
+                    <input type="range" id="maxTokens" min="100" max="4000" step="100" value="2000" onchange="atualizarConfig()">
+                    <span style="font-size: 11px; color: var(--text-secondary);" id="tokenValor">2000</span>
+                </div>
+
+                <div class="config-item">
+                    <label>Contexto</label>
+                    <select id="contexto" onchange="atualizarConfig()">
+                        <option value="curto">Curto (5 msg)</option>
+                        <option value="medio" selected>Médio (10 msg)</option>
+                        <option value="longo">Longo (20 msg)</option>
+                    </select>
+                </div>
+
+                <div class="config-item">
+                    <label>Busca Internet</label>
+                    <select id="buscaInternet" onchange="atualizarConfig()">
+                        <option value="desativada">Desativada</option>
+                        <option value="ativada">Ativada</option>
+                    </select>
+                </div>
+
+                <div class="config-item">
+                    <label>Tamanho Resposta</label>
+                    <select id="tamanhoResposta" onchange="atualizarConfig()">
+                        <option value="curta">Curta</option>
+                        <option value="media" selected>Média</option>
+                        <option value="longa">Longa</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CHAT CONTAINER -->
+            <div class="chat-container">
+                <div class="mensagens" id="mensagens"></div>
+
+                <!-- INPUT AREA -->
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <div class="input-controls">
+                            <button class="btn-control" id="btnVoz" onclick="iniciarVoz()" title="Reconhecimento de voz">🎤</button>
+                            <button class="btn-control" id="btnTTS" onclick="toggleTTS()" title="Ativar TTS">🔊</button>
+                            <button class="btn-control" onclick="abrirPlayground()" title="Playground">▶️</button>
+                            <button class="btn-control" onclick="anexarArquivo()" title="Anexar arquivo">📎</button>
+                        </div>
+                        <textarea id="inputChat" placeholder="Digite sua mensagem..." rows="1"></textarea>
+                    </div>
+                    <button class="btn-enviar" id="btnEnviar" onclick="enviarMensagem()">Enviar</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal" id="modalConfig">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Configurações</h2>
+                <button class="btn-fechar" onclick="fecharModal('modalConfig')">✕</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab ativo" onclick="mudarTab('chaves')">Chaves API</button>
+                <button class="tab" onclick="mudarTab('prompts')">Prompts</button>
+                <button class="tab" onclick="mudarTab('perfil')">Perfil Usuário</button>
+                <button class="tab" onclick="mudarTab('local')">IA Local</button>
+            </div>
+
+            <!-- TAB: CHAVES -->
+            <div class="tab-content ativo" id="tab-chaves">
+                <div class="form-group">
+                    <label>Chave OpenAI</label>
+                    <input type="password" id="chaveOpenAI" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label>Chave Google Gemini</label>
+                    <input type="password" id="chaveGemini" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label>Chave Monica</label>
+                    <input type="password" id="chaveMonica" placeholder="Sua chave Monica">
+                </div>
+                <div class="form-group">
+                    <label>Chave Busca Internet</label>
+                    <input type="password" id="chaveBusca" placeholder="Chave de busca">
+                </div>
+                <button class="btn-salvar" onclick="salvarChaves()">Salvar Chaves</button>
+            </div>
+
+            <!-- TAB: PROMPTS -->
+            <div class="tab-content" id="tab-prompts">
+                <div class="form-group">
+                    <label>Prompt Sistema</label>
+                    <textarea id="promptSistema" placeholder="Defina o comportamento da IA..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Instruções Adicionais</label>
+                    <textarea id="instrucoesAdicionais" placeholder="Instruções específicas..."></textarea>
+                </div>
+                <button class="btn-salvar" onclick="salvarPrompts()">Salvar Prompts</button>
+            </div>
+
+            <!-- TAB: PERFIL -->
+            <div class="tab-content" id="tab-perfil">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="nomeUsuario" placeholder="Seu nome">
+                </div>
+                <div class="form-group">
+                    <label>Profissão/Área</label>
+                    <input type="text" id="profissao" placeholder="Ex: Advogado, Desenvolvedor...">
+                </div>
+                <div class="form-group">
+                    <label>Interesses</label>
+                    <textarea id="interesses" placeholder="Seus interesses e preferências..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Personalidade Desejada da IA</label>
+                    <textarea id="personalidadeIA" placeholder="Como você quer que a IA se comporte..."></textarea>
+                </div>
+                <button class="btn-salvar" onclick="salvarPerfil()">Salvar Perfil</button>
+            </div>
+
+            <!-- TAB: IA LOCAL -->
+            <div class="tab-content" id="tab-local">
+                <div class="form-group">
+                    <label>Endereço Local (localhost:porta)</label>
+                    <input type="text" id="enderecoLocal" placeholder="http://localhost:8000">
+                </div>
+                <div class="form-group">
+                    <label>Modelo Local</label>
+                    <input type="text" id="modeloLocal" placeholder="Ex: llama2, mistral">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <button class="btn-control" onclick="testarConexaoLocal()">🔗 Testar Conexão</button>
+                    <span id="statusLocal" style="margin-top: 10px; font-size: 12px;"></span>
+                </div>
+                <button class="btn-salvar" onclick="salvarConfigLocal()">Salvar Config Local</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MEMÓRIA -->
+    <div class="modal" id="modalMemoria">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💾 Gerenciador de Memória</h2>
+                <button class="btn-fechar" onclick="fecharModal('modalMemoria')">✕</button>
+            </div>
+            <div id="listaMemoria" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn-salvar" onclick="limparMemoria()" style="margin-top: 15px; background: var(--warning);">Limpar Memória</button>
+        </div>
+    </div>
+
+    <!-- MODAL PLAYGROUND -->
+    <div class="modal" id="modalPlayground">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>▶️ Playground</h2>
+                <button class="btn-fechar" onclick="fecharModal('modalPlayground')">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 500px;">
+                <div>
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">Código</label>
+                    <textarea id="playgroundCodigo" style="width: 100%; height: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-family: 'Courier New'; font-size: 12px;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">Preview</label>
+                    <iframe id="playgroundPreview" style="width: 100%; height: 100%; border: 1px solid var(--border); border-radius: 6px; background: white;"></iframe>
+                </div>
+            </div>
+            <button class="btn-salvar" onclick="executarPlayground()" style="margin-top: 15px;">▶️ Executar</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
