@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Studio + Playground</title>
+    <style>
+:root {
+    --bg:      #0d1117;
+    --bg2:     #161b22;
+    --bg3:     #21262d;
+    --border:  #30363d;
+    --text:    #c9d1d9;
+    --text2:   #8b949e;
+    --accent:  #58a6ff;
+    --green:   #3fb950;
+    --red:     #f85149;
+    --yellow:  #d29922;
+    --purple:  #bc8cff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; width: 100%; overflow: hidden; }
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-height: 44px;
+    flex-shrink: 0;
+}
+
+.header h1 {
+    font-size: 15px;
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.header-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.btn {
+    padding: 5px 11px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.btn:hover { background: var(--border); }
+.btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+.btn.primary:hover { opacity: 0.85; }
+.btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+.btn.success { background: var(--green); color: #000; border-color: var(--green); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+select, input[type="text"], input[type="password"], input[type="number"], input[type="file"] {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+}
+
+select:focus, input:focus { border-color: var(--accent); }
+
+.main-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 0 12px;
+    height: 36px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.main-tab {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.main-tab:hover { color: var(--text); }
+.main-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab-content.active { display: flex; flex-direction: column; }
+
+.chat-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 210px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.2s;
+}
+
+.sidebar.collapsed { width: 0; overflow: hidden; }
+
+.sidebar-header {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conversations {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.conv-item {
+    padding: 7px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 3px;
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+}
+
+.conv-item:hover { background: var(--bg3); }
+.conv-item.active { background: var(--bg3); border-color: var(--accent); }
+
+.conv-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-meta { font-size: 10px; color: var(--text2); }
+.conv-delete { color: var(--red); cursor: pointer; font-size: 13px; opacity: 0; flex-shrink: 0; }
+.conv-item:hover .conv-delete { opacity: 1; }
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-toolbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.conv-title-edit {
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.conv-title-edit:hover { border-color: var(--border); }
+.conv-title-edit:focus { border-color: var(--accent); outline: none; background: var(--bg3); }
+
+.context-info {
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.context-bar {
+    width: 80px;
+    height: 5px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.context-fill {
+    height: 100%;
+    background: var(--green);
+    transition: width 0.3s, background 0.3s;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    display: flex;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.message.user { flex-direction: row-reverse; }
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.message.user .avatar { background: var(--accent); color: #000; }
+.message.ai .avatar { background: var(--purple); color: #000; }
+
+.bubble {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 13px;
+    max-width: 82%;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.message.user .bubble { background: var(--bg3); border-color: var(--accent); }
+
+.bubble pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    overflow-x: auto;
+    margin: 7px 0;
+    position: relative;
+}
+
+.bubble code { font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; }
+
+.copy-code-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 2px 7px;
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.copy-code-btn:hover { background: var(--accent); color: #000; }
+
+.msg-time {
+    font-size: 10px;
+    color: var(--text2);
+    margin-top: 4px;
+    text-align: right;
+}
+
+.input-area {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+}
+
+.input-options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 7px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.input-options label {
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.input-row {
+    display: flex;
+    gap: 7px;
+    align-items: flex-end;
+}
+
+.input-box {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 180px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.input-box:focus { border-color: var(--accent); }
+
+.playground-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 12px;
+    overflow: hidden;
+    height: 100%;
+}
+
+@media (max-width: 1200px) {
+    .playground-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+}
+
+.editor-section, .preview-section {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg2);
+    min-height: 0;
+}
+
+.section-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.section-header select, .section-header button {
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+.code-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    overflow-x: auto;
+    min-height: 30px;
+}
+
+.code-tab {
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text2);
+    background: transparent;
+    border: none;
+}
+
+.code-tab:hover { background: var(--bg3); color: var(--text); }
+.code-tab.active { background: var(--bg2); color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+.code-tab-close {
+    opacity: 0;
+    color: var(--red);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.code-tab:hover .code-tab-close { opacity: 1; }
+
+.editor-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.code-editor {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    resize: none;
+    outline: none;
+    line-height: 1.6;
+    tab-size: 2;
+    min-height: 0;
+}
+
+.editor-actions {
+    padding: 7px 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.preview-content {
+    flex: 1;
+    overflow: auto;
+    background: #fff;
+    position: relative;
+    min-height: 0;
+}
+
+.preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.preview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text2);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal h2 {
+    font-size: 16px;
+    margin-bottom: 18px;
+    color: var(--accent);
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 7px 10px;
+}
+
+.form-group textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.section-title {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 14px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 15px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+.hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🚀 AI Code Studio + Playground</h1>
+    <div class="header-controls">
+        <select id="aiProvider" onchange="APP.Provider.onChange()">
+            <option value="openai">OpenAI (GPT)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="gemini">Google (Gemini)</option>
+            <option value="groq">Groq (Llama)</option>
+            <option value="huggingface">HuggingFace (Gratuita)</option>
+            <option value="cohere">Cohere (Gratuita)</option>
+            <option value="together">Together AI (Gratuita)</option>
+            <option value="ollama">Ollama (Local)</option>
+        </select>
+        <select id="modelSelect" style="min-width:150px"></select>
+        <button class="btn" onclick="APP.Settings.open()">⚙️ Config</button>
+        <button class="btn primary" onclick="APP.Chat.newChat()">＋ Chat</button>
+        <button class="btn" onclick="APP.Storage.exportAll()">💾 Backup</button>
+    </div>
+</div>
+
+<div class="main-tabs">
+    <button class="main-tab active" onclick="APP.switchTab('chat')">💬 Chat</button>
+    <button class="main-tab" onclick="APP.switchTab('playground')">▶️ Playground</button>
+</div>
+
+<div class="main">
+
+    <div class="tab-content active" id="chatTab">
+        <div class="chat-layout">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    Conversas
+                    <button class="btn" style="padding:1px 7px;font-size:11px" onclick="APP.Chat.newChat()">+</button>
+                </div>
+                <div class="conversations" id="convList"></div>
+            </div>
+
+            <div class="chat-area">
+                <div class="chat-toolbar">
+                    <input class="conv-title-edit" id="convTitleEdit" value="Nova Conversa"
+                        onblur="APP.Chat.renameConv(this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    <div class="context-info">
+                        <span id="tokenCount">0</span>tk
+                        <div class="context-bar">
+                            <div class="context-fill" id="contextFill" style="width:0%"></div>
+                        </div>
+                        <button class="btn" style="padding:2px 7px;font-size:11px" onclick="APP.Context.clear()">✂️</button>
+                    </div>
+                </div>
+
+                <div class="messages" id="messages"></div>
+
+                <div class="input-area">
+                    <div class="input-options">
+                        <label>
+                            <input type="checkbox" id="codeMode" checked>
+                            💻 Código
+                        </label>
+                        <label>
+                            🌡️
+                            <input type="range" min="0" max="2" step="0.1" value="0.7" id="tempSlider" style="width:70px">
+                            <span id="tempVal">0.7</span>
+                        </label>
+                        <label>
+                            📏
+                            <input type="number" id="maxTokens" value="2048" min="256" max="32000" style="width:75px">
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <textarea class="input-box" id="userInput" placeholder="Mensagem... (Ctrl+Enter envia)"
+                            onkeydown="APP.UI.handleKey(event)" oninput="APP.UI.autoResize(this)"></textarea>
+                        <button class="btn primary" onclick="APP.Chat.send()" id="sendBtn">Enviar ▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="playgroundTab">
+        <div class="playground-layout">
+            <div class="editor-section">
+                <div class="section-header">
+                    💻 Editor
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="btn" onclick="APP.Playground.newTab()">+ Tab</button>
+                        <button class="btn" onclick="document.getElementById('fileImportCode').click()">📂 Importar</button>
+                        <select id="codeLang" style="font-size:11px">
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="javascript">JS</option>
+                            <option value="python">Python</option>
+                            <option value="text">Texto</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="code-tabs" id="codeTabs"></div>
+                <div class="editor-content">
+                    <textarea class="code-editor" id="codeEditor" spellcheck="false"
+                        placeholder="// Cole ou escreva código aqui..."></textarea>
+                </div>
+                <div class="editor-actions">
+                    <button class="btn success" onclick="APP.Playground.copyClean()">📋 Copiar</button>
+                    <button class="btn" onclick="APP.Playground.paste()">📌 Colar</button>
+                    <button class="btn" onclick="APP.Playground.sendToChat()">💬 Chat</button>
+                    <button class="btn" onclick="APP.Playground.download()">⬇️ Download</button>
+                    <button class="btn danger" onclick="APP.Playground.clear()">🗑️</button>
+                    <button class="btn" onclick="APP.Playground.updatePreview()" style="margin-left:auto">▶ Executar</button>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <div class="section-header">
+                    👁️ Preview
+                    <button class="btn" onclick="APP.Playground.updatePreview()">🔄 Atualizar</button>
+                </div>
+                <div class="preview-content" id="previewContent">
+                    <div class="preview-placeholder">Selecione HTML para ver preview</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+        <h2>⚙️ Configurações</h2>
+
+        <div class="section-title">🔑 API Keys (Gratuitas)</div>
+        
+        <div class="form-group">
+            <label>OpenAI / Groq Key</label>
+            <input type="password" id="apiKeyInput" placeholder="sk-... ou gsk_...">
+            <small style="color:var(--text2)">Obtenha em: openai.com ou groq.com</small>
+        </div>
+
+        <div class="form-group">
+            <label>Anthropic (Claude) Key</label>
+            <input type="password" id="anthropicKeyInput" placeholder="sk-ant-...">
+            <small style="color:var(--text2)">Obtenha em: console.anthropic.com</small>
+        </div>
+
+        <div class="form-group">
+            <label>Google Gemini Key</label>
+            <input type="password" id="geminiKeyInput" placeholder="AIza...">
+            <small style="color:var(--text2)">Obtenha em: makersuite.google.com</small>
+        </div>
+
+        <div class="form-group">
+            <label>HuggingFace Token (Gratuito)</label>
+            <input type="password" id="huggingfaceKeyInput" placeholder="hf_...">
+            <small style="color:var(--text2)">Obtenha em: huggingface.co/settings/tokens</small>
+        </div>
+
+        <div class="form-group">
+            <label>Cohere API Key (Gratuito)</label>
+            <input type="password" id="cohereKeyInput" placeholder="...">
+            <small style="color:var(--text2)">Obtenha em: cohere.com</small>
+        </div>
+
+        <div class="form-group">
+            <label>Together AI Key (Gratuito)</label>
+            <input type="password" id="togetherKeyInput" placeholder="...">
+            <small style="color:var(--text2)">Obtenha em: together.ai</small>
+        </div>
+
+        <div class="section-title">🏠 Local / Ollama</div>
+        <div class="form-group">
+            <label>Ollama URL</label>
+            <input type="text" id="ollamaUrl" value="http://localhost:11434">
+        </div>
+
+        <div class="section-title">📏 Contexto</div>
+        <div class="form-group">
+            <label>Limite de tokens</label>
+            <input type="number" id="contextLimit" value="8000" min="1000" max="200000">
+        </div>
+
+        <div class="section-title">🤖 Comportamento</div>
+        <div class="form-group">
+            <label>System Prompt</label>
+            <textarea id="systemPrompt">Você é um assistente especialista em programação. Gere código limpo, sem caracteres estranhos, comentado em português.</textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="APP.Settings.close()">Cancelar</button>
+            <button class="btn primary" onclick="APP.Settings.save()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="fileImportCode" style="display:none" accept=".js,.py,.html,.css,.ts,.txt,.json,.md,.jsx,.tsx">
+
+<script>
+'use strict';
+
+const STATE = {
+    conversations: {},
+    activeConvId: null,
+    codeTabs: [],
+    activeCodeTab: 0,
+    settings: {
+        apiKey: '',
+        anthropicKey: '',
+        geminiKey: '',
+        huggingfaceKey: '',
+        cohereKey: '',
+        togetherKey: '',
+        ollamaUrl: 'http://localhost:11434',
+        contextLimit: 8000,
+        systemPrompt: '',
+        provider: 'openai',
+        model: '',
+        temperature: 0.7,
+        maxTokens: 2048
+    },
+    isLoading: false
+};
+
+const APP = {
+    switchTab(name) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(name + 'Tab').classList.add('active');
+        event.target.classList.add('active');
+    },
+
+    Provider: {
+        MODELS: {
+            openai:       ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+            anthropic:    ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+            gemini:       ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'],
+            groq:         ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
+            huggingface:  ['mistralai/Mistral-7B-Instruct-v0.1', 'meta-llama/Llama-2-7b-chat', 'gpt2'],
+            cohere:       ['command-light', 'command', 'command-nightly'],
+            together:     ['meta-llama/Llama-2-70b-chat-hf', 'mistralai/Mistral-7B-Instruct-v0.1'],
+            ollama:       ['llama3.2', 'mistral', 'neural-chat', 'dolphin-mixtral']
+        },
+
+        onChange() {
+            this.updateSelect();
+        },
+
+        updateSelect() {
+            const provider = document.getElementById('aiProvider').value;
+            const sel = document.getElementById('modelSelect');
+            const models = this.MODELS[provider] || [];
+            sel.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+        }
+    },
+
+    Chat: {
+        newChat() {
+            const id = 'conv_' + Date.now();
+            STATE.conversations[id] = {
+                id,
+                title: 'Nova Conversa',
+                messages: [],
+                createdAt: Date.now()
+            };
+            STATE.activeConvId = id;
+            APP.Storage.save();
+            this.renderConversations();
+            this.loadConv(id);
+            APP.UI.toast('✅ Novo chat iniciado!', 'success');
+        },
+
+        loadConv(id) {
+            STATE.activeConvId = id;
+            const conv = STATE.conversations[id];
+            if (!conv) return;
+            document.getElementById('convTitleEdit').value = conv.title;
+            this.renderMessages(conv.messages);
+            APP.Context.updateBar(conv.messages);
+            this.renderConversations();
+        },
+
+        renameConv(title) {
+            const conv = STATE.conversations[STATE.activeConvId];
+            if (!conv || !title.trim()) return;
+            conv.title = title.trim();
+            this.renderConversations();
+            APP.Storage.save();
+        },
+
+        deleteConv(id, e) {
+            e.stopPropagation();
+            if (!confirm('Deletar esta conversa?')) return;
+            delete STATE.conversations[id];
+            if (STATE.activeConvId === id) {
+                const keys = Object.keys(STATE.conversations);
+                if (keys.length > 0) this.loadConv(keys[keys.length - 1]);
+                else this.newChat();
+            }
+            APP.Storage.save();
+            this.renderConversations();
+        },
+
+        renderConversations() {
+            const list = document.getElementById('convList');
+            list.innerHTML = '';
+            const convs = Object.values(STATE.conversations)
+                .sort((a, b) => b.createdAt - a.createdAt);
+            convs.forEach(conv => {
+                const div = document.createElement('div');
+                div.className = 'conv-item' + (conv.id === STATE.activeConvId ? ' active' : '');
+                div.innerHTML = `
+                    <div style="flex:1;overflow:hidden">
+                        <div class="conv-title">${escapeHtml(conv.title)}</div>
+                        <div class="conv-meta">${conv.messages?.length || 0} msgs</div>
+                    </div>
+                    <span class="conv-delete" onclick="APP.Chat.deleteConv('${conv.id}',event)">✕</span>
+                `;
+                div.onclick = (e) => {
+                    if (e.target.classList.contains('conv-delete')) return;
+                    this.loadConv(conv.id);
+                };
+                list.appendChild(div);
+            });
+        },
+
+        renderMessages(messages) {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            (messages || []).forEach(msg => this.appendMsg(msg));
+            container.scrollTop = container.scrollHeight;
+        },
+
+        appendMsg(msg) {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            const emoji = msg.role === 'user' ? '👤' : '🤖';
+            div.className = `message ${msg.role === 'user' ? 'user' : 'ai'}`;
+            const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('pt-BR') : '';
+            div.innerHTML = `
+                <div class="avatar">${emoji}</div>
+                <div class="bubble">
+                    ${formatMessage(msg.content)}
+                    ${time ? `<div class="msg-time">${time}</div>` : ''}
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        },
+
+        async send() {
+            if (STATE.isLoading) return;
+            const input = document.getElementById('userInput');
+            let text = input.value.trim();
+            if (!text) return;
+
+            const codeMode = document.getElementById('codeMode').checked;
+            const codeContent = document.getElementById('codeEditor').value.trim();
+            if (codeMode && codeContent) {
+                const lang = document.getElementById('codeLang').value;
+                text += `\n\n**Código no editor:**\n\`\`\`${lang}\n${codeContent}\n\`\`\``;
+            }
+
+            const conv = STATE.conversations[STATE.activeConvId];
+            if (!conv) { this.newChat(); return; }
+
+            const userMsg = { role: 'user', content: text, timestamp: Date.now() };
+            conv.messages.push(userMsg);
+            this.appendMsg(userMsg);
+
+            if (conv.messages.length === 1) {
+                conv.title = text.substring(0, 45) + (text.length > 45 ? '...' : '');
+                document.getElementById('convTitleEdit').value = conv.title;
+                this.renderConversations();
+            }
+
+            input.value = '';
+            APP.UI.autoResize(input);
+            APP.Context.updateBar(conv.messages);
+
+            STATE.isLoading = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const reply = await APP.AI.call(conv.messages);
+                const aiMsg = { role: 'assistant', content: reply, timestamp: Date.now() };
+                conv.messages.push(aiMsg);
+                this.appendMsg(aiMsg);
+                APP.Context.updateBar(conv.messages);
+                APP.Storage.save();
+            } catch(err) {
+                const errMsg = { role: 'assistant', content: `❌ Erro: ${err.message}`, timestamp: Date.now() };
+                conv.messages.push(errMsg);
+                this.appendMsg(errMsg);
+                APP.UI.toast('❌ ' + err.message, 'error');
+            }
+
+            STATE.isLoading = false;
+            document.getElementById('sendBtn').disabled = false;
+        }
+    },
+
+    Context: {
+        estimateTokens(messages) {
+            return Math.ceil((messages || []).reduce((a, m) => a + (m.content?.length || 0), 0) / 4);
+        },
+
+        updateBar(messages) {
+            const tokens = this.estimateTokens(messages);
+            const limit = parseInt(STATE.settings.contextLimit) || 8000;
+            const pct = Math.min(100, (tokens / limit) * 100);
+            document.getElementById('tokenCount').textContent = tokens.toLocaleString('pt-BR');
+            const fill = document.getElementById('contextFill');
+            fill.style.width = pct + '%';
+            fill.style.background = pct > 80 ? 'var(--red)' : pct > 55 ? 'var(--yellow)' : 'var(--green)';
+        },
+
+        clear() {
+            const conv = STATE.conversations[STATE.activeConvId];
+            if (!conv) return;
+            if (!confirm('Limpar contexto?')) return;
+            conv.messages = [];
+            APP.Chat.renderMessages([]);
+            this.updateBar([]);
+            APP.Storage.save();
+            APP.UI.toast('✂️ Contexto limpo!', 'success');
+        }
+    },
+
+    AI: {
+        async call(messages) {
+            const { provider, model } = this.current();
+            const s = STATE.settings;
+            const temp = parseFloat(document.getElementById('tempSlider').value);
+            const maxT = parseInt(document.getElementById('maxTokens').value);
+
+            const msgs = [{
+                role: 'system',
+                content: s.systemPrompt || 'Você é um assistente especialista em programação.'
+            }, ...messages.map(m => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: m.content
+            }))];
+
+            switch (provider) {
+                case 'openai': return await this.openai(msgs, model, s.apiKey, temp, maxT);
+                case 'anthropic': return await this.anthropic(msgs, model, s.anthropicKey, temp, maxT);
+                case 'gemini': return await this.gemini(msgs, model, s.geminiKey, temp, maxT);
+                case 'groq': return await this.groq(msgs, model, s.apiKey, temp, maxT);
+                case 'huggingface': return await this.huggingface(msgs, model, s.huggingfaceKey, temp, maxT);
+                case 'cohere': return await this.cohere(msgs, model, s.cohereKey, temp, maxT);
+                case 'together': return await this.together(msgs, model, s.togetherKey, temp, maxT);
+                case 'ollama': return await this.ollama(msgs, model, temp, maxT);
+                default: throw new Error('Provider não suportado');
+            }
+        },
+
+        current() {
+            return {
+                provider: document.getElementById('aiProvider').value,
+                model: document.getElementById('modelSelect').value
+            };
+        },
+
+        async openai(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key OpenAI não configurada!');
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({ model, messages, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error?.message || `HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            return data.choices[0].message.content;
+        },
+
+        async anthropic(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Anthropic não configurada!');
+            const system = messages.find(m => m.role === 'system')?.content || '';
+            const msgs = messages.filter(m => m.role !== 'system');
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({ model, messages: msgs, system, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.content[0].text;
+        },
+
+        async gemini(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Gemini não configurada!');
+            const contents = messages
+                .filter(m => m.role !== 'system')
+                .map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                }));
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents,
+                        generationConfig: { temperature: temp, maxOutputTokens: maxTokens }
+                    })
+                }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.candidates[0].content.parts[0].text;
+        },
+
+        async groq(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Groq não configurada!');
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({ model, messages, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.choices[0].message.content;
+        },
+
+        async huggingface(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('HuggingFace Token não configurado!');
+            const text = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+            const res = await fetch('https://api-inference.huggingface.co/models/' + model, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputs: text,
+                    parameters: { temperature: temp, max_length: maxTokens }
+                })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return Array.isArray(data) ? data[0].generated_text : data.generated_text;
+        },
+
+        async cohere(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('Cohere API Key não configurada!');
+            const text = messages.map(m => m.content).join('\n');
+            const res = await fetch('https://api.cohere.com/v1/generate', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: text,
+                    temperature: temp,
+                    max_tokens: maxTokens,
+                    model: model
+                })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.generations[0].text;
+        },
+
+        async together(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('Together AI Key não configurada!');
+            const res = await fetch('https://api.together.xyz/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model,
+                    messages,
+                    temperature: temp,
+                    max_tokens: maxTokens
+                })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.choices[0].message.content;
+        },
+
+        async ollama(messages, model, temp, maxTokens) {
+            const url = STATE.settings.ollamaUrl || 'http://localhost:11434';
+            const res = await fetch(`${url}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model,
+                    messages: messages.map(m => ({ role: m.role, content: m.content })),
+                    options: { temperature: temp, num_predict: maxTokens },
+                    stream: false
+                })
+            });
+            if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+            const data = await res.json();
+            return data.message.content;
+        }
+    },
+
+    Playground: {
+        newTab(name = null) {
+            const tab = {
+                id: 'tab_' + Date.now(),
+                name: name || `código_${STATE.codeTabs.length + 1}`,
+                content: '',
+                language: 'html'
+            };
+            STATE.codeTabs.push(tab);
+            STATE.activeCodeTab = STATE.codeTabs.length - 1;
+            this.renderTabs();
+            this.loadTab(STATE.activeCodeTab);
+            APP.Storage.save();
+        },
+
+        renderTabs() {
+            const container = document.getElementById('codeTabs');
+            container.innerHTML = '';
+            STATE.codeTabs.forEach((tab, i) => {
+                const div = document.createElement('div');
+                div.className = 'code-tab' + (i === STATE.activeCodeTab ? ' active' : '');
+                div.innerHTML = `
+                    <span onclick="APP.Playground.switchTab(${i})">${escapeHtml(tab.name)}</span>
+                    <span class="code-tab-close" onclick="APP.Playground.closeTab(${i},event)">✕</span>
+                `;
+                container.appendChild(div);
+            });
+        },
+
+        switchTab(i) {
+            this.saveCurrentTab();
+            STATE.activeCodeTab = i;
+            this.loadTab(i);
+            this.renderTabs();
+        },
+
+        closeTab(i, e) {
+            e.stopPropagation();
+            if (STATE.codeTabs.length === 1) { APP.UI.toast('Mínimo 1 tab', 'error'); return; }
+            STATE.codeTabs.splice(i, 1);
+            if (STATE.activeCodeTab >= STATE.codeTabs.length) STATE.activeCodeTab = STATE.codeTabs.length - 1;
+            this.renderTabs();
+            this.loadTab(STATE.activeCodeTab);
+            APP.Storage.save();
+        },
+
+        loadTab(i) {
+            const tab = STATE.codeTabs[i];
+            if (!tab) return;
+            document.getElementById('codeEditor').value = tab.content;
+            document.getElementById('codeLang').value = tab.language || 'html';
+        },
+
+        saveCurrentTab() {
+            const tab = STATE.codeTabs[STATE.activeCodeTab];
+            if (!tab) return;
+            tab.content = document.getElementById('codeEditor').value;
+            tab.language = document.getElementById('codeLang').value;
+        },
+
+        copyClean() {
+            this.saveCurrentTab();
+            const code = cleanCode(document.getElementById('codeEditor').value);
+            navigator.clipboard.writeText(code).then(() => {
+                APP.UI.toast('✅ Código copiado!', 'success');
+            }).catch(() => {
+                APP.UI.toast('❌ Erro ao copiar', 'error');
+            });
+        },
+
+        paste() {
+            navigator.clipboard.readText().then(text => {
+                const editor = document.getElementById('codeEditor');
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const before = editor.value.substring(0, start);
+                const after = editor.value.substring(end);
+                editor.value = before + text + after;
+                editor.selectionStart = editor.selectionEnd = start + text.length;
+                this.saveCurrentTab();
+                APP.UI.toast('📌 Código colado!', 'success');
+            }).catch(() => {
+                APP.UI.toast('❌ Erro ao colar', 'error');
+            });
+        },
+
+        sendToChat() {
+            this.saveCurrentTab();
+            const code = document.getElementById('codeEditor').value.trim();
+            const lang = document.getElementById('codeLang').value;
+            if (!code) { APP.UI.toast('Editor vazio!', 'error'); return; }
+            const input = document.getElementById('userInput');
+            input.value = `Analise este código:\n\`\`\`${lang}\n${code}\n\`\`\``;
+            APP.UI.autoResize(input);
+            APP.switchTab('chat');
+            input.focus();
+        },
+
+        clear() {
+            if (!confirm('Limpar editor?')) return;
+            document.getElementById('codeEditor').value = '';
+            this.saveCurrentTab();
+        },
+
+        download() {
+            this.saveCurrentTab();
+            const tab = STATE.codeTabs[STATE.activeCodeTab];
+            const code = cleanCode(tab.content);
+            const extMap = {
+                javascript: 'js', python: 'py', html: 'html', css: 'css',
+                typescript: 'ts', text: 'txt'
+            };
+            const ext = extMap[tab.language] || 'txt';
+            APP.Storage._download(code, `${tab.name}.${ext}`, 'text/plain');
+            APP.UI.toast('⬇️ Download iniciado!', 'success');
+        },
+
+        updatePreview() {
+            this.saveCurrentTab();
+            const tab = STATE.codeTabs[STATE.activeCodeTab];
+            const lang = tab.language;
+            const content = tab.content;
+            const preview = document.getElementById('previewContent');
+
+            if (lang === 'html') {
+                const iframe = document.createElement('iframe');
+                iframe.className = 'preview-frame';
+                iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
+                preview.innerHTML = '';
+                preview.appendChild(iframe);
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                doc.open();
+                doc.write(content);
+                doc.close();
+            } else {
+                preview.innerHTML = `<div class="preview-placeholder">Preview disponível apenas para HTML</div>`;
+            }
+        }
+    },
+
+    Settings: {
+        open() {
+            const s = STATE.settings;
+            document.getElementById('apiKeyInput').value = s.apiKey || '';
+            document.getElementById('anthropicKeyInput').value = s.anthropicKey || '';
+            document.getElementById('geminiKeyInput').value = s.geminiKey || '';
+            document.getElementById('huggingfaceKeyInput').value = s.huggingfaceKey || '';
+            document.getElementById('cohereKeyInput').value = s.cohereKey || '';
+            document.getElementById('togetherKeyInput').value = s.togetherKey || '';
+            document.getElementById('ollamaUrl').value = s.ollamaUrl || 'http://localhost:11434';
+            document.getElementById('contextLimit').value = s.contextLimit || 8000;
+            document.getElementById('systemPrompt').value = s.systemPrompt || '';
+            document.getElementById('settingsModal').classList.add('open');
+        },
+
+        close() {
+            document.getElementById('settingsModal').classList.remove('open');
+        },
+
+        save() {
+            const s = STATE.settings;
+            s.apiKey = document.getElementById('apiKeyInput').value;
+            s.anthropicKey = document.getElementById('anthropicKeyInput').value;
+            s.geminiKey = document.getElementById('geminiKeyInput').value;
+            s.huggingfaceKey = document.getElementById('huggingfaceKeyInput').value;
+            s.cohereKey = document.getElementById('cohereKeyInput').value;
+            s.togetherKey = document.getElementById('togetherKeyInput').value;
+            s.ollamaUrl = document.getElementById('ollamaUrl').value;
+            s.contextLimit = parseInt(document.getElementById('contextLimit').value);
+            s.systemPrompt = document.getElementById('systemPrompt').value;
+            s.provider = document.getElementById('aiProvider').value;
+            s.model = document.getElementById('modelSelect').value;
+            s.temperature = parseFloat(document.getElementById('tempSlider').value);
+            s.maxTokens = parseInt(document.getElementById('maxTokens').value);
+            APP.Storage.save();
+            this.close();
+            APP.UI.toast('✅ Configurações salvas!', 'success');
+        }
+    },
+
+    Storage: {
+        save() {
+            try {
+                localStorage.setItem('aiStudio_v3', JSON.stringify({
+                    conversations: STATE.conversations,
+                    activeConvId: STATE.activeConvId,
+                    codeTabs: STATE.codeTabs,
+                    activeCodeTab: STATE.activeCodeTab,
+                    settings: STATE.settings
+                }));
+            } catch(e) {
+                APP.UI.toast('⚠️ Erro ao salvar', 'error');
+            }
+        },
+
+        load() {
+            try {
+                const raw = localStorage.getItem('aiStudio_v3');
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                STATE.conversations = d.conversations || {};
+                STATE.activeConvId = d.activeConvId || null;
+                STATE.codeTabs = d.codeTabs || [];
+                STATE.activeCodeTab = d.activeCodeTab || 0;
+                if (d.settings) STATE.settings = { ...STATE.settings, ...d.settings };
+            } catch(e) {
+                console.error('Erro ao carregar:', e);
+            }
+        },
+
+        exportAll() {
+            const data = {
+                exportedAt: new Date().toISOString(),
+                conversations: STATE.conversations,
+                codeTabs: STATE.codeTabs,
+                settings: { ...STATE.settings, apiKey: '***', anthropicKey: '***', geminiKey: '***', huggingfaceKey: '***', cohereKey: '***', togetherKey: '***' }
+            };
+            this._download(JSON.stringify(data, null, 2), `backup-${Date.now()}.json`, 'application/json');
+            APP.UI.toast('💾 Backup exportado!', 'success');
+        },
+
+        _download(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+    },
+
+    UI: {
+        toast(msg, type = '') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = `toast show ${type}`;
+            clearTimeout(el._t);
+            el._t = setTimeout(() => { el.className = 'toast'; }, 3000);
+        },
+
+        autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+        },
+
+        handleKey(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                APP.Chat.send();
+            }
+        }
+    }
+};
+
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function cleanCode(code) {
+    return String(code)
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\u00A0/g, ' ')
+        .trim();
+}
+
+function formatMessage(text) {
+    text = String(text);
+    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const clean = escapeHtml(cleanCode(code.trim()));
+        return `<pre><button class="copy-code-btn" onclick="copyCodeBlock(this)">📋 Copiar</button><code>${clean}</code></pre>`;
+    });
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/`([^`]+)`/g, '<code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:monospace">$1</code>');
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+function copyCodeBlock(btn) {
+    const code = cleanCode(btn.nextElementSibling.textContent);
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = '✅ Copiado!';
+        setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+    });
+}
+
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+});
+
+document.getElementById('fileImportCode').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const content = evt.target.result;
+        const editor = document.getElementById('codeEditor');
+        editor.value = content;
+        const ext = file.name.split('.').pop().toLowerCase();
+        const langMap = { js: 'javascript', py: 'python', html: 'html', css: 'css', ts: 'typescript', txt: 'text', jsx: 'javascript', tsx: 'typescript', md: 'text', json: 'text' };
+        document.getElementById('codeLang').value = langMap[ext] || 'text';
+        APP.Playground.saveCurrentTab();
+        APP.UI.toast(`📂 ${file.name} importado!`, 'success');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+document.getElementById('tempSlider').addEventListener('input', function() {
+    document.getElementById('tempVal').textContent = this.value;
+});
+
+function INIT() {
+    APP.Storage.load();
+    APP.Provider.updateSelect();
+
+    if (STATE.activeConvId && STATE.conversations[STATE.activeConvId]) {
+        APP.Chat.loadConv(STATE.activeConvId);
+    } else {
+        APP.Chat.newChat();
+    }
+
+    if (STATE.codeTabs.length === 0) {
+        APP.Playground.newTab();
+    } else {
+        APP.Playground.renderTabs();
+        APP.Playground.loadTab(STATE.activeCodeTab);
+    }
+
+    APP.UI.toast('🚀 AI Code Studio + Playground pronto!', 'success');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', INIT);
+} else {
+    INIT();
+}
+</script>
+
+</body>
+</html>
