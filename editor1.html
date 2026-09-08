@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Editor Jurídico - Iara</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      display: flex;
+      flex-direction: column;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    /* NAVBAR */
+    #navbar {
+      height: 44px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .logo { font-weight: 700; font-size: 14px; color: #58a6ff; }
+    .nav-sep { width: 1px; height: 20px; background: #30363d; }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: .15s;
+    }
+    .nav-btn:hover { background: #1c2128; color: #e6edf3; }
+
+    /* CONTAINER */
+    #container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 220px;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width .2s;
+    }
+    #sidebar.hidden { width: 0; border: none; }
+    #sidebar-top {
+      padding: 8px 10px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      min-height: 36px;
+    }
+    #sidebar-top span {
+      font-size: 10px;
+      font-weight: 700;
+      color: #8b949e;
+      flex: 1;
+      text-transform: uppercase;
+    }
+    .sb-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: .1s;
+    }
+    .sb-btn:hover { background: #1c2128; color: #e6edf3; }
+    #file-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      margin: 1px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: .1s;
+      user-select: none;
+      font-size: 12px;
+    }
+    .tree-item:hover { background: #1c2128; }
+    .tree-item.active { background: #1f6feb; color: #fff; }
+    .tree-icon { flex-shrink: 0; width: 14px; text-align: center; }
+    .tree-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree-actions {
+      display: none;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity .1s;
+    }
+    .tree-item:hover .tree-actions { display: flex; opacity: 1; }
+    .tree-action-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      padding: 2px 4px;
+      font-size: 11px;
+      border-radius: 3px;
+      transition: .1s;
+    }
+    .tree-action-btn:hover { background: rgba(255,255,255,.1); color: #e6edf3; }
+    .tree-children { padding-left: 12px; }
+    .tree-children.hidden { display: none; }
+    .tree-toggle {
+      font-size: 10px;
+      transition: transform .15s;
+      display: inline-block;
+      width: 10px;
+    }
+    .tree-toggle.open { transform: rotate(90deg); }
+
+    /* MAIN EDITOR */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    #toolbar {
+      height: 38px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    #filename {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #e6edf3;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      max-width: 150px;
+      transition: .1s;
+    }
+    #filename:hover { border-color: #30363d; }
+    #filename:focus { outline: none; border-color: #58a6ff; background: #1c2128; }
+    .badge {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #8b949e;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      transition: .1s;
+    }
+    .tool-btn:hover { background: #1c2128; border-color: #30363d; color: #e6edf3; }
+    .tool-btn.active { background: #1c2128; border-color: #58a6ff; color: #58a6ff; }
+    .spacer { flex: 1; }
+
+    /* EDITOR AREA */
+    #editor-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #code-wrapper {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      background: #0d1117;
+      min-height: 0;
+    }
+    #line-numbers {
+      background: #161b22;
+      border-right: 1px solid #21262d;
+      padding: 10px 0;
+      min-width: 40px;
+      text-align: right;
+      overflow: hidden;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .line-num {
+      display: block;
+      padding: 0 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #484f58;
+      font-family: 'Courier New', monospace;
+    }
+    #code-editor {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #e6edf3;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 12px;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+      overflow-y: auto;
+    }
+
+    /* PREVIEW */
+    #preview-section {
+      display: none;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 200px;
+      min-height: 60px;
+      max-height: 70vh;
+      border-top: 2px solid #30363d;
+      background: #0d1117;
+    }
+    #preview-section.visible { display: flex; }
+    #preview-bar {
+      height: 32px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      flex-shrink: 0;
+      cursor: row-resize;
+      user-select: none;
+    }
+    #preview-label { font-size: 11px; color: #8b949e; flex: 1; }
+    .preview-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: .1s;
+    }
+    .preview-btn:hover { background: #1c2128; color: #e6edf3; }
+    #preview-frame {
+      flex: 1;
+      border: none;
+      background: #fff;
+      min-height: 0;
+    }
+
+    /* MODALS */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .modal-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      width: min(500px, 90vw);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+    }
+    .close-btn:hover { color: #e6edf3; }
+    .input-group {
+      margin-bottom: 10px;
+    }
+    .input-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: block;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      transition: .1s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #58a6ff;
+      background: #1c2128;
+    }
+    .btn {
+      background: #1f6feb;
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: .1s;
+    }
+    .btn:hover { background: #388bfd; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+    }
+    .btn-secondary:hover { border-color: #58a6ff; color: #58a6ff; }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
+
+    /* CONTEXT MENU */
+    #ctx-menu {
+      display: none;
+      position: fixed;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 4px;
+      z-index: 2000;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    #ctx-menu.open { display: block; }
+    .ctx-item {
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: .1s;
+    }
+    .ctx-item:hover { background: #1c2128; }
+    .ctx-sep { height: 1px; background: #30363d; margin: 2px 0; }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .3s;
+      max-width: 300px;
+      word-break: break-word;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { background: #238636; color: #fff; }
+    #toast.error { background: #da3633; color: #fff; }
+    #toast.warn { background: #d29922; color: #000; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <span class="logo">⚡ Editor Jurídico</span>
+  <div class="nav-sep"></div>
+  <button class="nav-btn" onclick="toggleSidebar()" title="Arquivos">☰ Arquivos</button>
+  <button class="nav-btn" onclick="openImportModal()" title="Importar ZIP">📦 Importar</button>
+  <button class="nav-btn" onclick="exportZip()" title="Exportar ZIP">📤 Exportar</button>
+  <div class="spacer"></div>
+  <button class="nav-btn" onclick="saveFile()" title="Salvar">💾 Salvar</button>
+</nav>
+
+<!-- CONTAINER -->
+<div id="container">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <span>Arquivos</span>
+      <button class="sb-btn" onclick="newFile()" title="Novo arquivo">📄+</button>
+      <button class="sb-btn" onclick="newFolder()" title="Nova pasta">📁+</button>
+      <button class="sb-btn" onclick="toggleSidebar()" title="Fechar">✕</button>
+    </div>
+    <div id="file-tree"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOOLBAR -->
+    <div id="toolbar">
+      <button class="tool-btn" onclick="toggleSidebar()" title="Sidebar">☰</button>
+      <input id="filename" type="text" placeholder="sem arquivo" onblur="renameFile()" onkeydown="if(event.key==='Enter')this.blur()">
+      <span class="badge" id="file-badge"></span>
+      <div class="spacer"></div>
+      <button class="tool-btn" id="preview-toggle" onclick="togglePreview()" title="Preview">👁 Preview</button>
+      <button class="tool-btn" onclick="saveFile()" title="Salvar">💾</button>
+    </div>
+
+    <!-- EDITOR -->
+    <div id="editor-area">
+      <div id="code-wrapper">
+        <div id="line-numbers"></div>
+        <textarea id="code-editor" placeholder="Selecione um arquivo..." spellcheck="false"></textarea>
+      </div>
+
+      <!-- PREVIEW -->
+      <div id="preview-section">
+        <div id="preview-bar">
+          <button class="preview-btn" onclick="togglePreviewSize()">⬆ Preview</button>
+          <span id="preview-label"></span>
+          <button class="preview-btn" onclick="togglePreview()">✕</button>
+        </div>
+        <iframe id="preview-frame"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu"></div>
+
+<!-- MODALS -->
+<div id="import-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>📦 Importar ZIP</span>
+      <button class="close-btn" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Selecione um arquivo ZIP:</label>
+      <input type="file" id="zip-input" accept=".zip" onchange="handleZipImport(event)">
+    </div>
+  </div>
+</div>
+
+<div id="rename-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="rename-title">✏️ Renomear</span>
+      <button class="close-btn" onclick="closeRenameModal()">✕</button>
+    </div>
+    <div class="input-group">
+      <input type="text" id="rename-input" placeholder="Novo nome">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeRenameModal()">Cancelar</button>
+      <button class="btn" onclick="confirmRename()">Renomear</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  // ===== UTILS =====
+  const qs = s => document.querySelector(s);
+  const qsa = s => [...document.querySelectorAll(s)];
+  const ls = k => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  function toast(msg, type = 'success') {
+    const el = qs('#toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function getExt(path) {
+    return (path.split('.').pop() || '').toLowerCase();
+  }
+
+  function getIcon(name) {
+    const ext = getExt(name);
+    const icons = {
+      html: '🌐', htm: '🌐', css: '🎨', scss: '🎨', sass: '🎨', less: '🎨',
+      js: '📜', mjs: '📜', cjs: '📜', jsx: '⚛', ts: '📘', tsx: '⚛',
+      json: '📋', yaml: '📋', yml: '📋', toml: '📋',
+      md: '📝', txt: '📄', sh: '⚙', bat: '⚙',
+      py: '🐍', java: '☕', kt: '🟠', php: '🐘', rb: '💎', go: '🐹', rs: '🦀',
+      sql: '🗄', prisma: '🗄', graphql: '🔷',
+      png: '🖼', jpg: '🖼', jpeg: '🖼', gif: '🖼', svg: '🖼', webp: '🖼', ico: '🖼',
+      pdf: '📕', zip: '📦', env: '🔒'
+    };
+    return icons[ext] || '📄';
+  }
+
+  // ===== STATE =====
+  let files = {};
+  let curFile = null;
+  let folderOpen = {};
+  let renameCtx = null;
+  let previewMode = 'off';
+  let vDragging = false;
+  let vDragStart = 0;
+  let vDragStartH = 0;
+
+  // ===== INIT =====
+  function init() {
+    const saved = ls('editor-files');
+    if (saved) try { files = JSON.parse(saved); } catch {}
+    if (!Object.keys(files).length) {
+      files['index.html'] = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meu Projeto</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>Bem-vindo!</h1>
+  <p>Comece a editar...</p>
+</body>
+</html>`;
+    }
+    renderTree();
+    const first = Object.keys(files)[0];
+    if (first) openFile(first);
+  }
+
+  // ===== SIDEBAR =====
+  function toggleSidebar() {
+    qs('#sidebar').classList.toggle('hidden');
+  }
+
+  function renderTree() {
+    const tree = buildTree(files);
+    qs('#file-tree').innerHTML = renderNode(tree.children, '');
+  }
+
+  function buildTree(fileMap) {
+    const root = { __type: 'folder', __name: '', children: {} };
+    for (const path of Object.keys(fileMap)) {
+      const parts = path.replace(/^\/*/, '').split('/');
+      let node = root;
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        if (i === parts.length - 1) {
+          node.children[p] = { __type: 'file', __name: p, __path: path };
+        } else {
+          if (!node.children[p]) node.children[p] = { __type: 'folder', __name: p, children: {} };
+          node = node.children[p];
+        }
+      }
+    }
+    return root;
+  }
+
+  function renderNode(children, parentPath) {
+    const entries = Object.entries(children).sort(([an, av], [bn, bv]) => {
+      if (av.__type === 'folder' && bv.__type === 'file') return -1;
+      if (av.__type === 'file' && bv.__type === 'folder') return 1;
+      return an.localeCompare(bn);
+    });
+
+    return entries.map(([name, node]) => {
+      const fullPath = parentPath ? parentPath + '/' + name : name;
+      if (node.__type === 'folder') {
+        const open = folderOpen[fullPath] !== false;
+        return `
+          <div class="tree-item" style="padding-left:${(fullPath.split('/').length - 1) * 12}px">
+            <span class="tree-toggle ${open ? 'open' : ''}" onclick="toggleFolder('${fullPath}', event)">▶</span>
+            <span class="tree-icon">📁</span>
+            <span class="tree-name">${esc(name)}</span>
+            <div class="tree-actions">
+              <button class="tree-action-btn" onclick="event.stopPropagation();newFileIn('${fullPath}')" title="Novo arquivo">+</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();openRenameModal('folder', '${fullPath}')" title="Renomear">✏️</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();deleteFolder('${fullPath}')" title="Excluir">🗑</button>
+            </div>
+          </div>
+          <div class="tree-children ${open ? '' : 'hidden'}" id="fc-${CSS.escape(fullPath)}">
+            ${renderNode(node.children, fullPath)}
+          </div>
+        `;
+      } else {
+        const active = node.__path === curFile ? 'active' : '';
+        return `
+          <div class="tree-item ${active}" style="padding-left:${(fullPath.split('/').length - 1) * 12}px" onclick="openFile('${node.__path}')" oncontextmenu="openCtxMenu(event, 'file', '${node.__path}')">
+            <span class="tree-icon">${getIcon(name)}</span>
+            <span class="tree-name">${esc(name)}</span>
+            <div class="tree-actions">
+              <button class="tree-action-btn" onclick="event.stopPropagation();openRenameModal('file', '${node.__path}')" title="Renomear">✏️</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();dupFile('${node.__path}')" title="Duplicar">⧉</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();downloadFile('${node.__path}')" title="Baixar">⬇</button>
+              <button class="tree-action-btn" onclick="event.stopPropagation();deleteFile('${node.__path}')" title="Excluir">🗑</button>
+            </div>
+          </div>
+        `;
+      }
+    }).join('');
+  }
+
+  function toggleFolder(path, e) {
+    e.stopPropagation();
+    folderOpen[path] = folderOpen[path] === false ? true : false;
+    renderTree();
+  }
+
+  // ===== FILE OPERATIONS =====
+  function newFile() {
+    const name = prompt('Nome do arquivo (ex: index.html):');
+    if (!name || !name.trim()) return;
+    const path = name.trim();
+    if (files[path] !== undefined) { toast('Arquivo já existe', 'warn'); return; }
+    files[path] = '';
+    saveAll();
+    renderTree();
+    openFile(path);
+  }
+
+  function newFileIn(folder) {
+    const name = prompt('Nome do arquivo:');
+    if (!name || !name.trim()) return;
+    const path = folder + '/' + name.trim();
+    if (files[path] !== undefined) { toast('Arquivo já existe', 'warn'); return; }
+    files[path] = '';
+    saveAll();
+    renderTree();
+    openFile(path);
+  }
+
+  function newFolder() {
+    const name = prompt('Nome da pasta:');
+    if (!name || !name.trim()) return;
+    const path = name.trim() + '/.gitkeep';
+    if (!files[path]) files[path] = '';
+    folderOpen[name.trim()] = true;
+    saveAll();
+    renderTree();
+    toast('📁 Pasta criada!');
+  }
+
+  function openFile(path) {
+    if (curFile && files[curFile] !== undefined) {
+      files[curFile] = qs('#code-editor').value;
+      saveAll();
+    }
+    curFile = path;
+    qs('#code-editor').value = files[path] || '';
+    qs('#filename').value = path.split('/').pop();
+    qs('#file-badge').textContent = getExt(path) || 'txt';
+    renderTree();
+    updateLineNums();
+    if (getExt(path) === 'html' && previewMode !== 'off') refreshPreview();
+    else setNonHtmlPreview();
+  }
+
+  function saveFile() {
+    if (!curFile) return;
+    files[curFile] = qs('#code-editor').value;
+    saveAll();
+    toast('💾 Salvo!');
+  }
+
+  function saveAll() {
+    lsSet('editor-files', JSON.stringify(files));
+  }
+
+  function renameFile() {
+    if (!curFile) return;
+    const newName = (qs('#filename').value || '').trim();
+    if (!newName) { qs('#filename').value = curFile.split('/').pop(); return; }
+    const dir = curFile.includes('/') ? curFile.slice(0, curFile.lastIndexOf('/') + 1) : '';
+    const newPath = dir + newName;
+    if (newPath === curFile) return;
+    if (files[newPath] !== undefined) { toast('Nome já existe', 'error'); qs('#filename').value = curFile.split('/').pop(); return; }
+    files[newPath] = files[curFile];
+    delete files[curFile];
+    curFile = newPath;
+    qs('#file-badge').textContent = getExt(newPath) || 'txt';
+    saveAll();
+    renderTree();
+    toast('✅ Renomeado!');
+  }
+
+  function deleteFile(path) {
+    if (!confirm(`Excluir "${path}"?`)) return;
+    delete files[path];
+    if (curFile === path) {
+      curFile = null;
+      qs('#code-editor').value = '';
+      qs('#filename').value = 'sem arquivo';
+      qs('#file-badge').textContent = '';
+    }
+    saveAll();
+    renderTree();
+    toast('🗑 Excluído!');
+  }
+
+  function deleteFolder(path) {
+    const count = Object.keys(files).filter(k => k.startsWith(path + '/')).length;
+    if (!confirm(`Excluir pasta "${path}" e ${count} arquivo(s)?`)) return;
+    for (const k of Object.keys(files)) if (k.startsWith(path + '/')) delete files[k];
+    if (curFile?.startsWith(path + '/')) {
+      curFile = null;
+      qs('#code-editor').value = '';
+      qs('#filename').value = 'sem arquivo';
+      qs('#file-badge').textContent = '';
+    }
+    saveAll();
+    renderTree();
+    toast('🗑 Pasta excluída!');
+  }
+
+  function dupFile(path) {
+    const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+    const base = path.split('/').pop().replace(/(\.[^.]+)$/, '');
+    const ext = path.includes('.') ? '.' + getExt(path) : '';
+    let newPath = dir + base + '_copia' + ext;
+    let i = 2;
+    while (files[newPath] !== undefined) newPath = dir + base + '_copia' + (i++) + ext;
+    files[newPath] = files[path];
+    saveAll();
+    renderTree();
+    openFile(newPath);
+    toast('⧉ Duplicado!');
+  }
+
+  function downloadFile(path) {
+    const content = files[path] || '';
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = path.split('/').pop();
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 6000);
+  }
+
+  // ===== RENAME MODAL =====
+  function openRenameModal(type, path) {
+    renameCtx = { type, path };
+    const name = path.split('/').pop();
+    qs('#rename-title').textContent = type === 'folder' ? '✏️ Renomear Pasta' : '✏️ Renomear Arquivo';
+    qs('#rename-input').value = name;
+    qs('#rename-modal').classList.add('open');
+    setTimeout(() => qs('#rename-input').select(), 50);
+  }
+
+  function closeRenameModal() {
+    qs('#rename-modal').classList.remove('open');
+    renameCtx = null;
+  }
+
+  function confirmRename() {
+    if (!renameCtx) return;
+    const newName = (qs('#rename-input').value || '').trim();
+    if (!newName) { toast('Nome inválido', 'error'); return; }
+    const { type, path } = renameCtx;
+    const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+    const newPath = dir + newName;
+    if (type === 'file') {
+      if (files[newPath] !== undefined && newPath !== path) { toast('Nome já existe', 'error'); return; }
+      files[newPath] = files[path];
+      delete files[path];
+      if (curFile === path) curFile = newPath;
+    } else {
+      const prefix = path + '/';
+      const newPrefix = newPath + '/';
+      for (const k of Object.keys(files)) {
+        if (k.startsWith(prefix)) {
+          files[newPrefix + k.slice(prefix.length)] = files[k];
+          delete files[k];
+          if (curFile === k) curFile = newPrefix + k.slice(prefix.length);
+        }
+      }
+      const newFO = {};
+      for (const [k, v] of Object.entries(folderOpen)) {
+        if (k === path) newFO[newPath] = v;
+        else if (k.startsWith(path + '/')) newFO[newPath + k.slice(path.length)] = v;
+        else newFO[k] = v;
+      }
+      folderOpen = newFO;
+    }
+    saveAll();
+    renderTree();
+    if (curFile) {
+      qs('#filename').value = curFile.split('/').pop();
+      qs('#file-badge').textContent = getExt(curFile) || 'txt';
+    }
+    closeRenameModal();
+    toast('✅ Renomeado!');
+  }
+
+  // ===== CONTEXT MENU =====
+  function openCtxMenu(e, type, path) {
+    e.preventDefault();
+    const menu = qs('#ctx-menu');
+    menu.innerHTML = `
+      <div class="ctx-item" onclick="newFileIn('${path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : ''}')">📄 Novo arquivo</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" onclick="openRenameModal('${type}', '${path}')">✏️ Renomear</div>
+      ${type === 'file' ? `<div class="ctx-item" onclick="dupFile('${path}')">⧉ Duplicar</div>` : ''}
+      ${type === 'file' ? `<div class="ctx-item" onclick="downloadFile('${path}')">⬇ Baixar</div>` : ''}
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" onclick="deleteFile('${path}')" style="color:#f85149">🗑 Excluir</div>
+    `;
+    menu.classList.add('open');
+    menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+    menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+    document.addEventListener('click', closeCtxMenu);
+  }
+
+  function closeCtxMenu() {
+    qs('#ctx-menu').classList.remove('open');
+    document.removeEventListener('click', closeCtxMenu);
+  }
+
+  // ===== EDITOR =====
+  function updateLineNums() {
+    const ta = qs('#code-editor');
+    const ln = qs('#line-numbers');
+    const lines = ta.value.split('\n').length;
+    ln.innerHTML = Array.from({ length: lines }, (_, i) => `<span class="line-num">${i + 1}</span>`).join('');
+  }
+
+  function syncScroll() {
+    const ta = qs('#code-editor');
+    const ln = qs('#line-numbers');
+    if (ln) ln.scrollTop = ta.scrollTop;
+  }
+
+  qs('#code-editor').addEventListener('input', () => {
+    if (curFile) files[curFile] = qs('#code-editor').value;
+    updateLineNums();
+  });
+
+  qs('#code-editor').addEventListener('scroll', syncScroll);
+
+  qs('#code-editor').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const ta = e.target;
+      const s = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+    }
+    if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      saveFile();
+    }
+  });
+
+  // ===== PREVIEW =====
+  function togglePreview() {
+    if (previewMode === 'off') {
+      previewMode = 'split';
+      qs('#preview-section').classList.add('visible');
+      qs('#preview-toggle').classList.add('active');
+      refreshPreview();
+    } else if (previewMode === 'split') {
+      previewMode = 'full';
+      qs('#preview-section').style.height = '65vh';
+      refreshPreview();
+    } else {
+      previewMode = 'off';
+      qs('#preview-section').classList.remove('visible');
+      qs('#preview-toggle').classList.remove('active');
+    }
+  }
+
+  function togglePreviewSize() {
+    const ps = qs('#preview-section');
+    if (ps.style.height === '30px') {
+      ps.style.height = '200px';
+      qs('#preview-frame').style.display = '';
+      qs('#preview-bar .preview-btn:first-child').textContent = '⬆ Preview';
+    } else {
+      ps.style.height = '30px';
+      qs('#preview-frame').style.display = 'none';
+      qs('#preview-bar .preview-btn:first-child').textContent = '⬇ Preview';
+    }
+  }
+
+  function refreshPreview() {
+    if (!curFile) return;
+    const ext = getExt(curFile);
+    const frame = qs('#preview-frame');
+    const lbl = qs('#preview-label');
+    if (ext === 'html') {
+      lbl.textContent = '🌐 ' + curFile;
+      frame.srcdoc = files[curFile] || '';
+    } else if (ext === 'css') {
+      lbl.textContent = '🎨 Preview CSS';
+      frame.srcdoc = `<html><head><style>${files[curFile] || ''}</style></head><body style="background:#f5f5f5;padding:20px"><h2>Preview CSS</h2><p>Estilos aplicados.</p></body></html>`;
+    } else {
+      lbl.textContent = '📄 ' + curFile;
+      frame.srcdoc = `<html><body style="font-family:monospace;padding:20px;white-space:pre-wrap"><pre>${esc(files[curFile] || '')}</pre></body></html>`;
+    }
+  }
+
+  function setNonHtmlPreview() {
+    qs('#preview-frame').srcdoc = `<body style="background:#f5f5f5;color:#666;font-family:sans-serif;padding:20px;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><div style="font-size:32px;margin-bottom:8px">📄</div><div>Preview disponível para .html</div></div></body>`;
+  }
+
+  // Preview drag
+  qs('#preview-bar').addEventListener('mousedown', (e) => {
+    if (previewMode === 'off') return;
+    vDragging = true;
+    vDragStart = e.clientY;
+    vDragStartH = qs('#preview-section').getBoundingClientRect().height;
+    document.addEventListener('mousemove', onVDrag);
+    document.addEventListener('mouseup', stopVDrag);
+  });
+
+  function onVDrag(e) {
+    if (!vDragging) return;
+    const col = qs('#editor-area').getBoundingClientRect().height;
+    const delta = vDragStart - e.clientY;
+    const newH = Math.max(60, Math.min(col - 60, vDragStartH + delta));
+    qs('#preview-section').style.height = newH + 'px';
+  }
+
+  function stopVDrag() {
+    vDragging = false;
+    document.removeEventListener('mousemove', onVDrag);
+    document.removeEventListener('mouseup', stopVDrag);
+  }
+
+  // ===== ZIP IMPORT/EXPORT =====
+  function openImportModal() {
+    qs('#import-modal').classList.add('open');
+  }
+
+  function closeImportModal() {
+    qs('#import-modal').classList.remove('open');
+    qs('#zip-input').value = '';
+  }
+
+  async function handleZipImport(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (!window.JSZip) { toast('JSZip não carregado', 'error'); return; }
+    try {
+      const z = await JSZip.loadAsync(f);
+      const nf = {};
+      for (const [p, obj] of Object.entries(z.files)) {
+        if (obj.dir) continue;
+        try { nf[p] = await obj.async('string'); } catch {}
+      }
+      files = nf;
+      folderOpen = {};
+      renderTree();
+      const first = Object.keys(files)[0];
+      if (first) openFile(first);
+      saveAll();
+      toast(`📦 ${Object.keys(files).length} arquivos importados!`);
+      closeImportModal();
+    } catch (err) {
+      toast('Erro ao importar: ' + err.message, 'error');
+    }
+  }
+
+  async function exportZip() {
+    if (!window.JSZip) { toast('JSZip não carregado', 'error'); return; }
+    if (curFile) files[curFile] = qs('#code-editor').value;
+    try {
+      const z = new JSZip();
+      for (const [n, c] of Object.entries(files)) z.file(n, c || '');
+      const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'projeto-' + Date.now() + '.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 6000);
+      toast('📤 ZIP exportado!');
+    } catch (err) {
+      toast('Erro ao exportar: ' + err.message, 'error');
+    }
+  }
+
+  // ===== START =====
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
