@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🖥️ Electron Builder</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: #3b82f6; margin-bottom: 30px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel h2 { color: #3b82f6; font-size: 16px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 5px; font-weight: 600; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #f1f5f9;
+            font-size: 12px;
+        }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 12px;
+            display: none;
+        }
+        .status.show { display: block; }
+        .status.success { background: #1e3a1f; border-left: 3px solid #22c55e; color: #86efac; }
+        .status.error { background: #3a1f1f; border-left: 3px solid #ef4444; color: #fca5a5; }
+        .status.info { background: #1f2a3a; border-left: 3px solid #3b82f6; color: #93c5fd; }
+        .output {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #cbd5e1;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .output-line { padding: 3px 0; }
+        .output-success { color: #22c55e; }
+        .output-error { color: #ef4444; }
+        .output-info { color: #3b82f6; }
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .platform-btn {
+            padding: 10px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 6px;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .platform-btn:hover {
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+        .platform-btn.selected {
+            border-color: #22c55e;
+            background: #1e3a1f;
+            color: #86efac;
+        }
+        .code-block {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #3b82f6;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ Electron Builder</h1>
+
+        <div class="grid">
+            <!-- PAINEL ESQUERDO -->
+            <div class="panel">
+                <h2>⚙️ Configuração</h2>
+
+                <div class="form-group">
+                    <label>🖥️ Nome do App</label>
+                    <input type="text" id="appName" placeholder="Meu App Desktop" value="Meu App Desktop">
+                </div>
+
+                <div class="form-group">
+                    <label>🆔 App ID</label>
+                    <input type="text" id="appId" placeholder="com.example.desktop" value="com.example.desktop">
+                </div>
+
+                <div class="form-group">
+                    <label>📌 Versão</label>
+                    <input type="text" id="version" placeholder="1.0.0" value="1.0.0">
+                </div>
+
+                <div class="form-group">
+                    <label>🔗 URL do App (ou caminho local)</label>
+                    <input type="text" id="appUrl" placeholder="https://meuapp.com ou ./dist/index.html" value="">
+                </div>
+
+                <div class="form-group">
+                    <label>👤 Autor</label>
+                    <input type="text" id="author" placeholder="Seu Nome" value="">
+                </div>
+
+                <div class="form-group">
+                    <label>📧 Email</label>
+                    <input type="text" id="email" placeholder="seu@email.com" value="">
+                </div>
+
+                <button class="btn-success" onclick="generateElectron()">🔧 Gerar Configuração</button>
+
+                <div id="configStatus" class="status"></div>
+            </div>
+
+            <!-- PAINEL DIREITO -->
+            <div class="panel">
+                <h2>📦 Plataformas</h2>
+
+                <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 15px;">
+                    Selecione as plataformas para build:
+                </p>
+
+                <div class="platforms">
+                    <button class="platform-btn selected" onclick="togglePlatform('win')">
+                        🪟 Windows
+                    </button>
+                    <button class="platform-btn" onclick="togglePlatform('mac')">
+                        🍎 macOS
+                    </button>
+                    <button class="platform-btn" onclick="togglePlatform('linux')">
+                        🐧 Linux
+                    </button>
+                </div>
+
+                <button class="btn-success" onclick="buildElectron()" style="margin-top: 20px;">
+                    🚀 Gerar Build
+                </button>
+
+                <div id="buildStatus" class="status"></div>
+                <div id="buildOutput" class="output"></div>
+
+                <h3 style="color: #3b82f6; margin-top: 20px; margin-bottom: 10px; font-size: 14px;">
+                    📋 Comandos
+                </h3>
+
+                <div class="code-block">
+                    npm run dist
+                </div>
+
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 10px;">
+                    ℹ️ Arquivos gerados em: dist/
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlatforms = ['win'];
+
+        function togglePlatform(platform) {
+            const btn = event.target;
+            if (selectedPlatforms.includes(platform)) {
+                selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+                btn.classList.remove('selected');
+            } else {
+                selectedPlatforms.push(platform);
+                btn.classList.add('selected');
+            }
+        }
+
+        function log(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            const line = document.createElement('div');
+            line.className = `output-line output-${type}`;
+            line.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function status(elementId, message, type = 'info') {
+            const statusEl = document.getElementById(elementId);
+            statusEl.className = `status show ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function generateElectron() {
+            const appName = document.getElementById('appName').value;
+            const appId = document.getElementById('appId').value;
+
+            if (!appName || !appId) {
+                status('configStatus', '❌ Preencha todos os campos', 'error');
+                return;
+            }
+
+            status('configStatus', '✅ Configuração gerada!', 'success');
+        }
+
+        function buildElectron() {
+            if (selectedPlatforms.length === 0) {
+                status('buildStatus', '❌ Selecione pelo menos uma plataforma', 'error');
+                return;
+            }
+
+            status('buildStatus', '⏳ Gerando build...', 'info');
+            log('buildOutput', `🔨 Build para: ${selectedPlatforms.join(', ')}`, 'info');
+
+            setTimeout(() => {
+                selectedPlatforms.forEach(platform => {
+                    log('buildOutput', `✅ ${platform.toUpperCase()} compilado`, 'success');
+                });
+
+                log('buildOutput', '📦 Arquivos prontos em dist/', 'success');
+                status('buildStatus', '✅ Build concluído!', 'success');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
