@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🔧 ConstruAPK Pro — Analisador e Gerador</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',monospace;background:#0d1117;color:#c9d1d9;height:100vh;display:flex;flex-direction:column}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{font-size:15px;color:#58a6ff;white-space:nowrap}
+.hbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.hbtns button{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600}
+.btn-import{background:#1f6feb;color:#fff}
+.btn-folder{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.btn-export{background:#238636;color:#fff}
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:260px;min-width:180px;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s}
+.sidebar.collapsed{width:0;min-width:0}
+.sb-header{padding:8px;border-bottom:1px solid #30363d;display:flex;gap:4px;flex-wrap:wrap}
+.sb-header button{font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer}
+.sb-header button:hover{background:#30363d}
+.sb-search{padding:4px 8px;border-bottom:1px solid #30363d}
+.sb-search input{width:100%;padding:4px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;font-size:11px;outline:none}
+.file-tree{flex:1;overflow-y:auto;padding:4px 0}
+.ti{display:flex;align-items:center;gap:5px;padding:2px 8px;cursor:pointer;font-size:11px;user-select:none;border-radius:3px;margin:0 4px}
+.ti:hover{background:#21262d}
+.ti.active{background:#1f3a5f;color:#58a6ff}
+.ti.folder{color:#e3b341}
+.ti .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ti .sz{color:#8b949e;font-size:9px}
+.ti .warn{color:#f85149;font-size:9px;margin-left:2px}
+
+/* EDITOR */
+.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.tabs{background:#161b22;border-bottom:1px solid #30363d;display:flex;overflow-x:auto;min-height:34px;align-items:stretch}
+.tab{padding:6px 12px;font-size:11px;cursor:pointer;border-right:1px solid #30363d;white-space:nowrap;display:flex;align-items:center;gap:5px;color:#8b949e;flex-shrink:0}
+.tab:hover{background:#21262d;color:#c9d1d9}
+.tab.active{background:#0d1117;color:#c9d1d9;border-bottom:2px solid #58a6ff}
+.tab .cx{opacity:0.5;font-size:13px;line-height:1}
+.tab .cx:hover{opacity:1;color:#f85149}
+.ec{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.ec-bar{padding:3px 10px;background:#161b22;border-bottom:1px solid #30363d;font-size:10px;color:#8b949e;display:flex;gap:10px;align-items:center}
+.ec-bar button{padding:2px 7px;border-radius:3px;border:none;cursor:pointer;font-size:10px}
+.ec-bar .b-save{background:#238636;color:#fff}
+.ec-bar .b-clean{background:#9a6700;color:#fff}
+textarea.ce{flex:1;width:100%;background:#0d1117;color:#c9d1d9;border:none;outline:none;padding:12px;font-family:'Fira Code',monospace;font-size:12px;line-height:1.6;resize:none;tab-size:2}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#8b949e;gap:10px;padding:20px;text-align:center}
+.welcome h2{color:#58a6ff;font-size:16px}
+
+/* PAINEL */
+.panel{width:300px;min-width:240px;background:#161b22;border-left:1px solid #30363d;display:flex;flex-direction:column;overflow:hidden}
+.ptabs{display:flex;border-bottom:1px solid #30363d}
+.ptab{flex:1;padding:7px 4px;font-size:10px;text-align:center;cursor:pointer;color:#8b949e;border-bottom:2px solid transparent;white-space:nowrap}
+.ptab:hover{color:#c9d1d9}
+.ptab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.pc{flex:1;overflow-y:auto;padding:10px}
+
+/* Cards de análise */
+.card{border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:11px;display:flex;align-items:flex-start;gap:7px}
+.card.ok{background:#0d2818;border-left:3px solid #3fb950;color:#3fb950}
+.card.warn{background:#2d1f00;border-left:3px solid #e3b341;color:#e3b341}
+.card.err{background:#2d0f0f;border-left:3px solid #f85149;color:#f85149}
+.card .ci{flex-shrink:0;font-size:14px}
+.card .ct{flex:1}
+.card .cl{font-weight:700}
+.card .cd{color:#8b949e;font-size:10px;margin-top:2px}
+.card .fix-btn{margin-top:4px;padding:2px 7px;border-radius:3px;border:none;cursor:pointer;font-size:10px;background:#1f6feb;color:#fff}
+.card .fix-btn:hover{background:#388bfd}
+
+/* Botões de geração */
+.gb{width:100%;padding:7px 10px;margin-bottom:5px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;font-size:11px;text-align:left;display:flex;align-items:center;gap:7px}
+.gb:hover{background:#30363d;border-color:#58a6ff;color:#fff}
+.gb .gbi{font-size:14px;flex-shrink:0}
+.gb .gbt{flex:1}
+.gb .gbd{font-size:9px;color:#8b949e;display:block;margin-top:1px}
+.gb .badge{font-size:9px;padding:1px 5px;border-radius:8px;color:#fff;flex-shrink:0}
+.bg-ok{background:#238636}
+.bg-warn{background:#9a6700}
+.bg-info{background:#1f6feb}
+.bg-err{background:#da3633}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.stat{background:#21262d;border-radius:6px;padding:6px;text-align:center}
+.stat .n{font-size:18px;font-weight:700;color:#58a6ff}
+.stat .l{font-size:9px;color:#8b949e;margin-top:1px}
+
+/* Seção */
+.sec{margin-bottom:14px}
+.sec h3{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid #21262d}
+
+/* Alerta de problema */
+.problem{background:#2d0f0f;border:1px solid #f85149;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:11px}
+.problem .pt{color:#f85149;font-weight:700;margin-bottom:3px}
+.problem .pd{color:#c9d1d9;font-size:10px}
+.problem .pf{margin-top:5px;padding:2px 8px;border-radius:3px;border:none;cursor:pointer;font-size:10px;background:#da3633;color:#fff}
+
+/* Drop */
+.drop-overlay{position:fixed;inset:0;background:rgba(88,166,255,0.08);border:3px dashed #58a6ff;z-index:999;display:none;align-items:center;justify-content:center;font-size:22px;color:#58a6ff;flex-direction:column;gap:8px}
+.drop-overlay.active{display:flex}
+
+/* Toast */
+.toast{position:fixed;bottom:16px;right:16px;padding:9px 14px;border-radius:7px;font-size:12px;z-index:9999;animation:fin 0.3s ease;max-width:280px;color:#fff}
+.toast.ok{background:#238636}
+.toast.err{background:#da3633}
+.toast.warn{background:#9a6700}
+@keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+
+input[type=file]{display:none}
+
+/* Modo target */
+.target-selector{display:flex;gap:6px;margin-bottom:10px}
+.target-btn{flex:1;padding:6px;border-radius:6px;border:2px solid #30363d;background:#21262d;color:#8b949e;cursor:pointer;font-size:11px;text-align:center;transition:all 0.2s}
+.target-btn:hover{border-color:#58a6ff;color:#c9d1d9}
+.target-btn.active{border-color:#58a6ff;background:#1f3a5f;color:#58a6ff;font-weight:700}
+.target-btn .tbi{font-size:18px;display:block;margin-bottom:2px}
+
+/* Progress */
+.progress-bar{height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#1f6feb,#58a6ff);border-radius:2px;transition:width 0.5s}
+</style>
+</head>
+<body>
+
+<div class="drop-overlay" id="dropOverlay">
+  <span>📂</span>
+  <span>Solte o ZIP aqui</span>
+</div>
+
+<header>
+  <span style="font-size:18px">🔧</span>
+  <h1>ConstruAPK Pro — Analisador & Gerador</h1>
+  <div class="hbtns">
+    <button class="btn-import" onclick="document.getElementById('fi').click()">📂 ZIP</button>
+    <button class="btn-folder" onclick="document.getElementById('fld').click()">📁 Pasta</button>
+    <button class="btn-export" onclick="exportZip()">💾 Exportar</button>
+    <button style="padding:5px 10px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;font-size:11px" onclick="toggleSidebar()">☰</button>
+  </div>
+</header>
+
+<input type="file" id="fi" accept=".zip" onchange="importZip(this)"/>
+<input type="file" id="fld" webkitdirectory multiple onchange="importFolder(this)"/>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <button onclick="expandAll()">▼</button>
+      <button onclick="collapseAll()">▶</button>
+      <button onclick="runAnalysis()" id="abtn" style="display:none;background:#1f6feb;color:#fff;border-color:#1f6feb">⚡ Analisar</button>
+    </div>
+    <div class="sb-search">
+      <input id="srch" placeholder="🔍 Filtrar arquivos..." oninput="renderTree()"/>
+    </div>
+    <div class="file-tree" id="ft">
+      <div style="padding:20px;text-align:center;color:#8b949e;font-size:11px">
+        <div style="font-size:28px;margin-bottom:6px">📂</div>
+        Importe um projeto
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor-area">
+    <div class="tabs" id="tabs"></div>
+    <div class="ec" id="ec">
+      <div class="welcome">
+        <div style="font-size:40px">🔧</div>
+        <h2>ConstruAPK Pro</h2>
+        <p>Importe um ZIP ou pasta → analise → corrija → gere APK ou EXE</p>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button onclick="document.getElementById('fi').click()" style="padding:7px 14px;background:#1f6feb;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">📂 Importar ZIP</button>
+          <button onclick="document.getElementById('fld').click()" style="padding:7px 14px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;cursor:pointer;font-size:12px">📁 Importar Pasta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="panel">
+    <div class="ptabs">
+      <div class="ptab active" onclick="switchP('diag')">🔍 Diagnóstico</div>
+      <div class="ptab" onclick="switchP('gerar')">⚙️ Gerar</div>
+      <div class="ptab" onclick="switchP('limpar')">🧹 Limpar</div>
+      <div class="ptab" onclick="switchP('deploy')">🚀 Deploy</div>
+    </div>
+    <div class="pc" id="pc">
+      <div style="color:#8b949e;font-size:11px;text-align:center;padding:20px">
+        <div style="font-size:28px;margin-bottom:6px">🔍</div>
+        Importe um projeto para começar
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+let P={}, TABS=[], ATAB=null, AN=null, PANEL='diag', TS={}, TARGET='apk';
+
+// ══════════════════════════════════════════
+// IMPORTAÇÃO
+// ══════════════════════════════════════════
+async function importZip(inp){
+  const f=inp.files[0]; if(!f) return;
+  toast('⏳ Lendo ZIP...');
+  try{
+    const JSZ=await loadJSZ();
+    const z=await JSZ.loadAsync(await f.arrayBuffer());
+    P={}; let n=0;
+    const paths=Object.entries(z.files).filter(([,v])=>!v.dir).map(([k])=>k);
+    const tops=[...new Set(paths.map(k=>k.split('/')[0]))];
+    const pre=tops.length===1?tops[0]+'/':'';
+    for(const [path,entry] of Object.entries(z.files)){
+      if(entry.dir) continue;
+      const rel=pre?path.slice(pre.length):path;
+      if(!rel) continue;
+      const buf=await entry.async('arraybuffer');
+      const txt=decodeText(buf);
+      P[rel]={content:txt,binary:txt===null,raw:buf,modified:false};
+      n++;
+    }
+    toast(`✅ ${n} arquivos importados!`);
+    afterImport();
+  }catch(e){toast('Erro: '+e.message,'err');}
+  inp.value='';
+}
+
+function importFolder(inp){
+  const files=Array.from(inp.files); if(!files.length) return;
+  P={}; let done=0;
+  const proms=files.map(f=>new Promise(res=>{
+    const path=f.webkitRelativePath.replace(/^[^/]+\//,'');
+    if(!path){res();return;}
+    const r=new FileReader();
+    r.onload=e=>{
+      const buf=e.target.result;
+      const txt=decodeText(buf);
+      P[path]={content:txt,binary:txt===null,raw:buf,modified:false};
+      done++; res();
+    };
+    r.readAsArrayBuffer(f);
+  }));
+  Promise.all(proms).then(()=>{toast(`✅ ${done} arquivos!`);afterImport();});
+  inp.value='';
+}
+
+function afterImport(){
+  renderTree();
+  document.getElementById('abtn').style.display='block';
+  runAnalysis();
+}
+
+function decodeText(buf){
+  try{
+    const b=new Uint8Array(buf);
+    for(let i=0;i<Math.min(512,b.length);i++) if(b[i]===0) return null;
+    return new TextDecoder('utf-8',{fatal:true}).decode(buf);
+  }catch{try{return new TextDecoder('latin1').decode(buf);}catch{return null;}}
+}
+
+// ══════════════════════════════════════════
+// ÁRVORE
+// ══════════════════════════════════════════
+function renderTree(){
+  const ft=document.getElementById('ft');
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const paths=Object.keys(P).filter(p=>!q||p.toLowerCase().includes(q)).sort();
+  if(!paths.length){ft.innerHTML='<div style="padding:16px;text-align:center;color:#8b949e;font-size:11px">Nenhum arquivo</div>';return;}
+  const root=buildTree(paths);
+  ft.innerHTML=renderNode(root,0);
+}
+
+function buildTree(paths){
+  const root={type:'folder',name:'',children:{}};
+  for(const p of paths){
+    const parts=p.split('/');
+    let node=root;
+    for(let i=0;i<parts.length-1;i++){
+      const part=parts[i];
+      if(!node.children[part]) node.children[part]={type:'folder',name:part,children:{},path:parts.slice(0,i+1).join('/')};
+      node=node.children[part];
+    }
+    node.children[parts[parts.length-1]]={type:'file',name:parts[parts.length-1],path:p};
+  }
+  return root;
+}
+
+function renderNode(node,depth){
+  let h='';
+  const sorted=Object.values(node.children).sort((a,b)=>{
+    if(a.type!==b.type) return a.type==='folder'?-1:1;
+    return a.name.localeCompare(b.name);
+  });
+  for(const c of sorted){
+    const ind=depth*14;
+    if(c.type==='folder'){
+      const exp=TS[c.path]!==false;
+      h+=`<div class="ti folder" style="padding-left:${8+ind}px" onclick="toggleF('${c.path}')">
+        <span>${exp?'📂':'📁'}</span>
+        <span class="nm">${c.name}</span>
+        <span class="sz">${cntF(c)}</span>
+      </div>`;
+      if(exp) h+=renderNode(c,depth+1);
+    }else{
+      const mod=P[c.path]?.modified?'●':'';
+      const warn=hasProblems(c.path)?'⚠':'';
+      h+=`<div class="ti file ${ATAB===c.path?'active':''}" style="padding-left:${8+ind}px" onclick="openFile('${esc(c.path)}')">
+        <span>${fIcon(c.name)}</span>
+        <span class="nm">${c.name}${mod?'<span style="color:#e3b341"> '+mod+'</span>':''}</span>
+        <span class="sz">${fmtSz(P[c.path]?.content?.length||0)}</span>
+        ${warn?`<span class="warn">${warn}</span>`:''}
+      </div>`;
+    }
+  }
+  return h;
+}
+
+function hasProblems(path){
+  if(!AN) return false;
+  return AN.problemFiles?.includes(path);
+}
+
+function cntF(n){let c=0;for(const x of Object.values(n.children)){if(x.type==='file')c++;else c+=cntF(x);}return c;}
+function toggleF(p){TS[p]=TS[p]===false?true:false;renderTree();}
+function expandAll(){Object.keys(P).forEach(p=>{const pts=p.split('/');for(let i=1;i<pts.length;i++)TS[pts.slice(0,i).join('/')]=true;});renderTree();}
+function collapseAll(){Object.keys(TS).forEach(k=>TS[k]=false);renderTree();}
+function toggleSidebar(){const s=document.getElementById('sidebar');s.classList.toggle('collapsed');}
+
+function fIcon(n){
+  const e=n.split('.').pop()?.toLowerCase();
+  const m={html:'🌐',htm:'🌐',css:'🎨',js:'📜',ts:'📘',tsx:'⚛️',jsx:'⚛️',json:'📋',md:'📝',txt:'📄',yml:'⚙️',yaml:'⚙️',sh:'💻',png:'🖼️',jpg:'🖼️',svg:'🎭',ico:'🎯',zip:'📦',apk:'📱',exe:'🖥️',gradle:'🔨',xml:'📋',java:'☕',kt:'🎯',env:'🔑',lock:'🔒',sql:'🗄️'};
+  return m[e]||'📄';
+}
+function fmtSz(b){if(!b)return'';if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'K';return(b/1048576).toFixed(1)+'M';}
+function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+// ══════════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════════
+function openFile(path){
+  const f=P[path]; if(!f) return;
+  if(f.binary){toast('Arquivo binário','warn');return;}
+  if(!TABS.includes(path)) TABS.push(path);
+  if(TABS.length>12) TABS.shift();
+  ATAB=path;
+  renderTabs(); renderEditor(); renderTree();
+}
+
+function closeTab(path,e){
+  e.stopPropagation();
+  const i=TABS.indexOf(path); TABS.splice(i,1);
+  if(ATAB===path) ATAB=TABS[Math.min(i,TABS.length-1)]||null;
+  renderTabs(); renderEditor(); renderTree();
+}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS.map(p=>{
+    const n=p.split('/').pop();
+    const mod=P[p]?.modified;
+    return `<div class="tab ${p===ATAB?'active':''}" onclick="openFile('${esc(p)}')">
+      <span>${fIcon(n)} ${n}</span>
+      <span class="cx" style="${mod?'color:#e3b341':''}" onclick="closeTab('${esc(p)}',event)">${mod?'●':'×'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderEditor(){
+  const ec=document.getElementById('ec');
+  if(!ATAB||!P[ATAB]){
+    ec.innerHTML='<div class="welcome"><div style="font-size:36px">📄</div><p>Selecione um arquivo</p></div>';
+    return;
+  }
+  const f=P[ATAB];
+  const txt=(f.content||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  ec.innerHTML=`
+    <div class="ec-bar">
+      <span style="color:#58a6ff">${ATAB}</span>
+      <span>${fmtSz(f.content?.length||0)}</span>
+      ${f.modified?'<span style="color:#e3b341">● Modificado</span>':''}
+      <button class="b-save" onclick="saveF('${esc(ATAB)}')">💾 Salvar</button>
+      <button class="b-clean" onclick="cleanReplit('${esc(ATAB)}')">🧹 Limpar Replit</button>
+      <button style="padding:2px 7px;border-radius:3px;border:none;cursor:pointer;font-size:10px;background:#21262d;color:#c9d1d9;border:1px solid #30363d" onclick="analyzeFile('${esc(ATAB)}')">🔍 Analisar</button>
+    </div>
+    <textarea class="ce" id="ce" oninput="markMod('${esc(ATAB)}',this)">${txt}</textarea>`;
+}
+
+function markMod(path,ta){P[path].content=ta.value;P[path].modified=true;renderTabs();}
+function saveF(path){P[path].modified=false;renderTabs();renderTree();toast('💾 Salvo!');}
+
+// ══════════════════════════════════════════
+// ANÁLISE COMPLETA
+// ══════════════════════════════════════════
+function runAnalysis(){
+  const paths=Object.keys(P);
+  if(!paths.length) return;
+
+  const has=p=>typeof p==='string'?paths.some(x=>x===p||x.endsWith('/'+p)||x.includes(p)):paths.some(x=>p.test(x));
+  const get=p=>paths.find(x=>typeof p==='string'?(x===p||x.endsWith('/'+p)):p.test(x));
+  const content=p=>{const k=get(p);return k?P[k]?.content||'':'';}
+
+  // package.json
+  let pkg={};
+  try{pkg=JSON.parse(content('package.json'));}catch{}
+  const deps={...pkg.dependencies,...pkg.devDependencies};
+
+  // Detecções
+  const isReact=!!(deps.react);
+  const isVite=!!(deps.vite)||has('vite.config');
+  const isExpo=!!(deps.expo)||has('app.json')||has('app.config.js');
+  const isElectron=!!(deps.electron)||has('electron/main.js')||has('main.js');
+  const isCapacitor=!!(deps['@capacitor/core'])||has('capacitor.config');
+  const isNext=!!(deps.next);
+  const isWorkspace=pkg.name?.includes('/')||pkg.name?.includes('@workspace')||!!pkg.workspaces;
+  const hasManifest=has('manifest.json');
+  const hasSW=has('sw.js')||has('service-worker.js');
+  const hasWorkflow=has('.github/workflows');
+  const hasAndroid=paths.some(p=>p.startsWith('android/'));
+  const hasElectronBuilder=has('electron-builder.yml')||has('electron-builder.json');
+  const hasIndexHtml=has('index.html');
+  const hasEnv=has('.env');
+  const hasReplitRefs=paths.some(p=>/replit\.dev|repl\.co|REPL_ID|REPLIT|cartographer|vite-plugin-dev-banner/i.test(P[p]?.content||''));
+  const hasTsconfigBase=paths.some(p=>{const c=P[p]?.content||'';return c.includes('../../tsconfig')||c.includes('../tsconfig.base');});
+  const hasWorkspaceRef=paths.some(p=>{const c=P[p]?.content||'';return c.includes('@workspace/');});
+
+  // Tipo de projeto
+  let type='HTML Puro';
+  if(isExpo) type='Expo / React Native';
+  else if(isElectron&&isReact) type='Electron + React';
+  else if(isElectron) type='Electron';
+  else if(isNext) type='Next.js';
+  else if(isReact&&isVite) type='React + Vite';
+  else if(isReact) type='React';
+  else if(pkg.name) type='Node.js';
+
+  // Arquivos com problemas
+  const problemFiles=[];
+  if(hasTsconfigBase) paths.filter(p=>P[p]?.content?.includes('../../tsconfig')).forEach(p=>problemFiles.push(p));
+  if(hasWorkspaceRef) paths.filter(p=>P[p]?.content?.includes('@workspace/')).forEach(p=>problemFiles.push(p));
+  if(hasReplitRefs) paths.filter(p=>/replit\.dev|repl\.co|REPL_ID|REPLIT/i.test(P[p]?.content||'')).forEach(p=>problemFiles.push(p));
+
+  // Problemas críticos
+  const problems=[];
+  if(isWorkspace) problems.push({type:'err',title:'Monorepo / Workspace detectado',desc:'package.json tem referências @workspace/ que impedem rodar standalone',fix:'fixWorkspace'});
+  if(hasTsconfigBase) problems.push({type:'err',title:'tsconfig.json aponta para pasta superior',desc:'extends: ../../tsconfig.base.json — não existe fora do monorepo',fix:'genTsconfig'});
+  if(hasWorkspaceRef) problems.push({type:'err',title:'Imports @workspace/ encontrados',desc:'Arquivos importam de @workspace/ que não existe standalone',fix:'fixWorkspaceImports'});
+  if(hasReplitRefs) problems.push({type:'warn',title:'Referências ao Replit detectadas',desc:'URLs replit.dev / REPL_ID / plugins do Replit encontrados',fix:'cleanAllReplit'});
+  if(!hasIndexHtml) problems.push({type:'warn',title:'index.html não encontrado',desc:'Necessário como ponto de entrada do app'});
+  if(!hasManifest&&!isElectron) problems.push({type:'warn',title:'manifest.json ausente',desc:'Necessário para PWA e APK via Capacitor'});
+  if(!hasSW&&!isElectron) problems.push({type:'warn',title:'Service Worker ausente',desc:'Necessário para funcionamento offline'});
+  if(isElectron&&!hasElectronBuilder) problems.push({type:'warn',title:'electron-builder.yml ausente',desc:'Necessário para gerar .exe / .dmg / .AppImage'});
+  if(isCapacitor&&!hasAndroid) problems.push({type:'warn',title:'Pasta android/ ausente',desc:'Execute: npx cap add android'});
+  if(!hasWorkflow) problems.push({type:'warn',title:'GitHub Actions ausente',desc:'Sem workflow para build automático'});
+
+  AN={
+    type,paths,pkg,deps,
+    isReact,isVite,isExpo,isElectron,isCapacitor,isNext,
+    isWorkspace,hasManifest,hasSW,hasWorkflow,hasAndroid,
+    hasElectronBuilder,hasIndexHtml,hasEnv,hasReplitRefs,
+    hasTsconfigBase,hasWorkspaceRef,
+    problems,problemFiles,
+    total:paths.length,
+    totalSize:paths.reduce((s,p)=>s+(P[p]?.content?.length||0),0),
+  };
+
+  renderPanel();
+  switchP('diag');
+}
+
+function analyzeFile(path){
+  const c=P[path]?.content||'';
+  const issues=[];
+  if(/replit\.dev|repl\.co|REPL_ID/i.test(c)) issues.push('⚠️ Referências ao Replit');
+  if(c.includes('../../tsconfig')) issues.push('❌ Aponta para tsconfig fora da pasta');
+  if(c.includes('@workspace/')) issues.push('❌ Import @workspace/ — não funciona standalone');
+  if(c.includes('localhost:3000')&&!c.includes('proxy')) issues.push('⚠️ URL hardcoded localhost:3000');
+  if(issues.length===0) issues.push('✅ Nenhum problema encontrado');
+  toast(issues.join(' | '), issues.some(i=>i.includes('❌'))?'err':issues.some(i=>i.includes('⚠️'))?'warn':'ok');
+}
+
+// ══════════════════════════════════════════
+// PAINEL
+// ══════════════════════════════════════════
+function switchP(tab){
+  PANEL=tab;
+  document.querySelectorAll('.ptab').forEach((t,i)=>{
+    t.classList.toggle('active',['diag','gerar','limpar','deploy'][i]===tab);
+  });
+  renderPanel();
+}
+
+function renderPanel(){
+  const el=document.getElementById('pc');
+  if(!AN){el.innerHTML='<div style="color:#8b949e;font-size:11px;text-align:center;padding:20px"><div style="font-size:28px;margin-bottom:6px">🔍</div>Importe um projeto</div>';return;}
+  if(PANEL==='diag') renderDiag(el);
+  else if(PANEL==='gerar') renderGerar(el);
+  else if(PANEL==='limpar') renderLimpar(el);
+  else if(PANEL==='deploy') renderDeploy(el);
+}
+
+function renderDiag(el){
+  const a=AN;
+  const errs=a.problems.filter(p=>p.type==='err').length;
+  const warns=a.problems.filter(p=>p.type==='warn').length;
+  el.innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="n">${a.total}</div><div class="l">Arquivos</div></div>
+      <div class="stat"><div class="n" style="color:${errs?'#f85149':'#3fb950'}">${errs}</div><div class="l">Erros</div></div>
+      <div class="stat"><div class="n" style="color:${warns?'#e3b341':'#3fb950'}">${warns}</div><div class="l">Avisos</div></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${Math.max(10,100-errs*20-warns*10)}%"></div></div>
+    <div class="sec">
+      <h3>Tipo de Projeto</h3>
+      <div class="card ok"><span class="ci">🏗️</span><div class="ct"><div class="cl">${a.type}</div><div class="cd">${fmtSz(a.totalSize)} · ${a.total} arquivos</div></div></div>
+    </div>
+    ${a.problems.length?`
+    <div class="sec">
+      <h3>Problemas Encontrados</h3>
+      ${a.problems.map(p=>`
+        <div class="problem">
+          <div class="pt">${p.type==='err'?'❌':'⚠️'} ${p.title}</div>
+          <div class="pd">${p.desc}</div>
+          ${p.fix?`<button class="pf" onclick="${p.fix}()">🔧 Corrigir automaticamente</button>`:''}
+        </div>`).join('')}
+    </div>`:'<div class="card ok"><span class="ci">✅</span><div class="ct"><div class="cl">Nenhum problema crítico!</div></div></div>'}
+    <div class="sec">
+      <h3>Checklist</h3>
+      ${chk('index.html',a.hasIndexHtml,'Ponto de entrada')}
+      ${chk('manifest.json',a.hasManifest,'PWA / APK')}
+      ${chk('Service Worker',a.hasSW,'Offline')}
+      ${chk('Capacitor',a.isCapacitor,'APK Android')}
+      ${chk('android/',a.hasAndroid,'Pasta nativa')}
+      ${chk('Electron',a.isElectron,'Desktop .exe')}
+      ${chk('electron-builder',a.hasElectronBuilder,'Config .exe')}
+      ${chk('GitHub Actions',a.hasWorkflow,'Build automático')}
+    </div>
+    <button class="gb" onclick="switchP('gerar')" style="background:#1f3a5f;border-color:#1f6feb;margin-top:4px">
+      <span class="gbi">⚙️</span><div class="gbt">Gerar arquivos que faltam<span class="gbd">Corrige automaticamente</span></div><span class="badge bg-info">→</span>
+    </button>`;
+}
+
+function chk(label,ok,detail){
+  return `<div class="card ${ok?'ok':'warn'}">
+    <span class="ci">${ok?'✅':'⚠️'}</span>
+    <div class="ct"><div class="cl">${label}</div><div class="cd">${ok?'Encontrado':'Faltando — '+detail}</div></div>
+  </div>`;
+}
+
+function renderGerar(el){
+  const a=AN;
+  el.innerHTML=`
+    <div class="sec">
+      <h3>Alvo do Build</h3>
+      <div class="target-selector">
+        <button class="target-btn ${TARGET==='apk'?'active':''}" onclick="setTarget('apk')">
+          <span class="tbi">📱</span>APK
+        </button>
+        <button class="target-btn ${TARGET==='exe'?'active':''}" onclick="setTarget('exe')">
+          <span class="tbi">🖥️</span>EXE
+        </button>
+        <button class="target-btn ${TARGET==='pwa'?'active':''}" onclick="setTarget('pwa')">
+          <span class="tbi">🌐</span>PWA
+        </button>
+        <button class="target-btn ${TARGET==='all'?'active':''}" onclick="setTarget('all')">
+          <span class="tbi">🎯</span>Todos
+        </button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Gerar Tudo de Uma Vez</h3>
+      <button class="gb" onclick="genAll()" style="background:#0d2818;border-color:#238636">
+        <span class="gbi">🚀</span>
+        <div class="gbt">Gerar TODOS os arquivos necessários<span class="gbd">Para ${TARGET==='all'?'APK + EXE + PWA':TARGET.toUpperCase()}</span></div>
+        <span class="badge bg-ok">AUTO</span>
+      </button>
+    </div>
+    <div class="sec">
+      <h3>Arquivos Individuais</h3>
+      ${!a.hasManifest?gb('📋','Gerar manifest.json','PWA obrigatório','genManifest','falta'):''}
+      ${!a.hasSW?gb('⚙️','Gerar service-worker.js','Cache offline','genSW','falta'):''}
+      ${!a.isCapacitor?gb('📱','Gerar capacitor.config.ts','Para APK Android','genCapacitor','falta'):''}
+      ${!a.hasElectronBuilder?gb('🖥️','Gerar electron-builder.yml','Para .exe Windows','genElectronBuilder','falta'):''}
+      ${!a.hasWorkflow?gb('🔄','Gerar workflow APK','GitHub Actions','genWfApk','falta'):''}
+      ${!a.hasWorkflow?gb('🖥️','Gerar workflow EXE','GitHub Actions Windows','genWfExe','falta'):''}
+      ${!a.hasWorkflow?gb('🌐','Gerar workflow Pages','Deploy GitHub Pages','genWfPages','falta'):''}
+      ${gb('📦','Corrigir package.json','Remove @workspace/','fixWorkspace','corrigir')}
+      ${gb('📘','Gerar tsconfig.json','Standalone sem monorepo','genTsconfig','gerar')}
+      ${gb('⚡','Gerar vite.config.ts','Configuração correta','genVite','gerar')}
+      ${gb('📋','Gerar manifest.json','PWA completo','genManifest','gerar')}
+      ${gb('⚙️','Gerar service-worker.js','Offline cache','genSW','gerar')}
+      ${gb('📱','Gerar capacitor.config.ts','Android config','genCapacitor','gerar')}
+      ${gb('🖥️','Gerar electron-builder.yml','Desktop config','genElectronBuilder','gerar')}
+      ${gb('📋','Gerar eas.json','Expo EAS Build','genEas','gerar')}
+    </div>`;
+}
+
+function gb(icon,label,detail,fn,badge){
+  const bc=badge==='falta'?'bg-err':badge==='corrigir'?'bg-warn':'bg-info';
+  return `<button class="gb" onclick="${fn}()">
+    <span class="gbi">${icon}</span>
+    <div class="gbt">${label}<span class="gbd">${detail}</span></div>
+    <span class="badge ${bc}">${badge}</span>
+  </button>`;
+}
+
+function setTarget(t){TARGET=t;renderPanel();}
+
+function renderLimpar(el){
+  const rFiles=Object.keys(P).filter(p=>/replit\.dev|repl\.co|REPL_ID|REPLIT|cartographer|vite-plugin-dev-banner|vite-plugin-runtime-error/i.test(P[p]?.content||''));
+  const wsFiles=Object.keys(P).filter(p=>P[p]?.content?.includes('@workspace/'));
+  const tsFiles=Object.keys(P).filter(p=>P[p]?.content?.includes('../../tsconfig'));
+  el.innerHTML=`
+    <div class="sec">
+      <h3>Limpeza Automática</h3>
+      <button class="gb" onclick="cleanAll()" style="background:#2d0f0f;border-color:#f85149">
+        <span class="gbi">🧹</span>
+        <div class="gbt">Limpar TUDO automaticamente<span class="gbd">Replit + @workspace + tsconfig</span></div>
+        <span class="badge bg-err">${rFiles.length+wsFiles.length+tsFiles.length}</span>
+      </button>
+    </div>
+    <div class="sec">
+      <h3>Referências Replit ${rFiles.length?`(${rFiles.length})`:'✅'}</h3>
+      ${rFiles.length===0
+        ?'<div class="card ok"><span class="ci">✅</span><div class="ct"><div class="cl">Limpo!</div></div></div>'
+        :`<button class="gb" onclick="cleanAllReplit()" style="background:#2d1f00;border-color:#9a6700">
+            <span class="gbi">🧹</span><div class="gbt">Limpar todos<span class="gbd">${rFiles.length} arquivos</span></div>
+            <span class="badge bg-warn">${rFiles.length}</span>
+          </button>
+          ${rFiles.slice(0,8).map(p=>`
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#2d1f00;border-radius:4px;margin-bottom:3px;font-size:10px;color:#e3b341">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fIcon(p.split('/').pop())} ${p}</span>
+              <button onclick="cleanReplit('${esc(p)}')" style="padding:1px 6px;border-radius:3px;border:none;background:#9a6700;color:#fff;cursor:pointer;font-size:9px;flex-shrink:0">Limpar</button>
+            </div>`).join('')}`}
+    </div>
+    <div class="sec">
+      <h3>Imports @workspace/ ${wsFiles.length?`(${wsFiles.length})`:'✅'}</h3>
+      ${wsFiles.length===0
+        ?'<div class="card ok"><span class="ci">✅</span><div class="ct"><div class="cl">Limpo!</div></div></div>'
+        :`<button class="gb" onclick="fixWorkspaceImports()" style="background:#2d1f00;border-color:#9a6700">
+            <span class="gbi">🔧</span><div class="gbt">Corrigir todos<span class="gbd">${wsFiles.length} arquivos</span></div>
+            <span class="badge bg-warn">${wsFiles.length}</span>
+          </button>`}
+    </div>
+    <div class="sec">
+      <h3>Outros</h3>
+      <button class="gb" onclick="rmNodeModules()"><span class="gbi">🗑️</span><div class="gbt">Remover node_modules/<span class="gbd">Reduz tamanho do ZIP</span></div><span class="badge bg-warn">pesado</span></button>
+      <button class="gb" onclick="rmDist()"><span class="gbi">🗑️</span><div class="gbt">Remover dist/ build/ www/<span class="gbd">Rebuild necessário</span></div><span class="badge bg-info">rebuild</span></button>
+    </div>`;
+}
+
+function renderDeploy(el){
+  el.innerHTML=`
+    <div class="sec">
+      <h3>Instruções de Deploy</h3>
+      <div class="card ok"><span class="ci">1️⃣</span><div class="ct"><div class="cl">Gere os arquivos</div><div class="cd">Aba ⚙️ Gerar → clique "Gerar TODOS"</div></div></div>
+      <div class="card ok"><span class="ci">2️⃣</span><div class="ct"><div class="cl">Exporte o ZIP</div><div class="cd">Botão 💾 Exportar no topo</div></div></div>
+      <div class="card ok"><span class="ci">3️⃣</span><div class="ct"><div class="cl">Suba no GitHub</div><div class="cd">Crie repositório e faça upload do ZIP</div></div></div>
+      <div class="card ok"><span class="ci">4️⃣</span><div class="ct"><div class="cl">Configure Secrets</div><div class="cd">Settings → Secrets → Actions</div></div></div>
+      <div class="card ok"><span class="ci">5️⃣</span><div class="ct"><div class="cl">Dispare o workflow</div><div class="cd">Actions → Run workflow</div></div></div>
+    </div>
+    <div class="sec">
+      <h3>Secrets necessários</h3>
+      ${secret('GITHUB_TOKEN','Gerado automaticamente pelo GitHub','✅ Automático')}
+      ${secret('KEYSTORE_BASE64','Para assinar APK de produção','⚠️ Opcional')}
+      ${secret('KEY_ALIAS','Alias do keystore','⚠️ Opcional')}
+      ${secret('KEY_PASSWORD','Senha do keystore','⚠️ Opcional')}
+    </div>
+    <div class="sec">
+      <h3>Exportar</h3>
+      <button class="gb" onclick="exportZip()" style="background:#0d2818;border-color:#238636">
+        <span class="gbi">💾</span><div class="gbt">Baixar projeto corrigido<span class="gbd">Pronto para subir no GitHub</span></div>
+        <span class="badge bg-ok">ZIP</span>
+      </button>
+    </div>`;
+}
+
+function secret(name,desc,status){
+  return `<div class="card ${status.includes('✅')?'ok':'warn'}">
+    <span class="ci">${status.includes('✅')?'✅':'⚠️'}</span>
+    <div class="ct"><div class="cl">${name}</div><div class="cd">${desc} — ${status}</div></div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// LIMPEZA
+// ══════════════════════════════════════════
+const RP=[
+  [/https?:\/\/[a-z0-9-]+\.replit\.dev[^\s"'`)]*/gi,''],
+  [/https?:\/\/[a-z0-9-]+\.repl\.co[^\s"'`)]*/gi,''],
+  [/"REPLIT_DEV_DOMAIN"\s*:\s*"[^"]*"/gi,'"REPLIT_DEV_DOMAIN":""'],
+  [/"REPL_ID"\s*:\s*"[^"]*"/gi,'"REPL_ID":""'],
+  [/process\.env\.REPL_ID/g,'""'],
+  [/process\.env\.REPLIT_DEV_DOMAIN/g,'""'],
+  [/import\.meta\.env\.REPLIT[A-Z_]*/g,'""'],
+  [/import[^;]*vite-plugin-dev-banner[^;]*;\n?/g,''],
+  [/import[^;]*vite-plugin-runtime-error[^;]*;\n?/g,''],
+  [/cartographer[^\n]*/g,''],
+  [/RuntimeErrorModal[^\n]*/g,''],
+  [/DevBanner[^\n]*/g,''],
+];
+
+function cleanReplit(path){
+  let c=P[path]?.content||''; let changed=false;
+  for(const [pat,rep] of RP){const n=c.replace(pat,rep);if(n!==c){c=n;changed=true;}}
+  if(changed){P[path].content=c;P[path].modified=true;if(ATAB===path)renderEditor();renderTree();toast(`🧹 Limpo: ${path.split('/').pop()}`);}
+  else toast('Nada encontrado','warn');
+  runAnalysis();
+}
+
+function cleanAllReplit(){
+  const files=Object.keys(P).filter(p=>/replit\.dev|repl\.co|REPL_ID|REPLIT|cartographer|vite-plugin-dev-banner|vite-plugin-runtime-error/i.test(P[p]?.content||''));
+  files.forEach(p=>cleanReplit(p));
+  toast(`🧹 ${files.length} arquivos limpos!`);
+}
+
+function fixWorkspaceImports(){
+  let fixed=0;
+  Object.keys(P).forEach(path=>{
+    const c=P[path]?.content||'';
+    if(c.includes('@workspace/')){
+      P[path].content=c.replace(/@workspace\/[a-z0-9-]+\//g,'../');
+      P[path].modified=true; fixed++;
+    }
+  });
+  toast(`🔧 ${fixed} arquivos corrigidos!`);
+  runAnalysis();
+}
+
+function fixWorkspace(){
+  const path=Object.keys(P).find(p=>p==='package.json'||p.endsWith('/package.json')&&!p.includes('node_modules'));
+  if(!path){toast('package.json não encontrado','err');return;}
+  try{
+    const pkg=JSON.parse(P[path].content);
+    if(pkg.name?.includes('/')) pkg.name=pkg.name.split('/').pop();
+    pkg.name=(pkg.name||'meu-app').replace(/@[^/]+\//,'');
+    delete pkg.workspaces;
+    P[path].content=JSON.stringify(pkg,null,2);
+    P[path].modified=true;
+    openFile(path); runAnalysis();
+    toast('✅ package.json corrigido!');
+  }catch(e){toast('Erro: '+e.message,'err');}
+}
+
+function cleanAll(){
+  cleanAllReplit();
+  fixWorkspaceImports();
+  fixWorkspace();
+  toast('🧹 Limpeza completa!');
+}
+
+function rmNodeModules(){const k=Object.keys(P).filter(p=>p.startsWith('node_modules/'));k.forEach(x=>delete P[x]);toast(`🗑️ ${k.length} removidos`);renderTree();runAnalysis();}
+function rmDist(){const k=Object.keys(P).filter(p=>/^(dist|build|www)\//.test(p));k.forEach(x=>delete P[x]);toast(`🗑️ ${k.length} removidos`);renderTree();runAnalysis();}
+
+// ══════════════════════════════════════════
+// GERADORES
+// ══════════════════════════════════════════
+function addFile(path,content){
+  P[path]={content,modified:true,binary:false};
+  renderTree(); openFile(path); runAnalysis();
+  toast(`✅ ${path.split('/').pop()} gerado!`);
+}
+
+function getAppName(){
+  try{const p=JSON.parse(P[Object.keys(P).find(x=>x==='package.json'||x.endsWith('/package.json'))]?.content||'{}');return(p.name||'meu-app').replace(/@[^/]+\//,'').replace(/[^a-z0-9-]/gi,'-');}catch{return'meu-app';}
+}
+
+function genAll(){
+  const a=AN; const name=getAppName();
+  if(!a.hasManifest) genManifest();
+  if(!a.hasSW) genSW();
+  if(TARGET==='apk'||TARGET==='all'){if(!a.isCapacitor)genCapacitor();genWfApk();}
+  if(TARGET==='exe'||TARGET==='all'){if(!a.hasElectronBuilder)genElectronBuilder();genWfExe();}
+  if(TARGET==='pwa'||TARGET==='all') genWfPages();
+  genTsconfig(); genVite();
+  toast(`🚀 Arquivos gerados para ${TARGET.toUpperCase()}!`);
+}
+
+function genManifest(){
+  const name=getAppName();
+  addFile('manifest.json',JSON.stringify({
+    name,short_name:name,description:`Aplicativo ${name}`,
+    start_url:'/',display:'standalone',
+    background_color:'#0f172a',theme_color:'#6366f1',
+    orientation:'portrait',
+    icons:[
+      {src:'icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
+      {src:'icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'},
+    ]
+  },null,2));
+}
+
+function genSW(){
+  addFile('public/sw.js',`const CACHE='app-v1';
+const FILES=['/','/index.html','/manifest.json'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`);
+}
+
+function genCapacitor(){
+  const name=getAppName();
+  const id=`com.app.${name.replace(/[^a-z0-9]/gi,'').toLowerCase()}`;
+  addFile('capacitor.config.ts',`import type{CapacitorConfig}from'@capacitor/cli';
+const config:CapacitorConfig={
+  appId:'${id}',
+  appName:'${name}',
+  webDir:'dist',
+  server:{androidScheme:'https'},
+  plugins:{SplashScreen:{launchShowDuration:2000,backgroundColor:'#0f172a'}},
+};
+export default config;`);
+}
+
+function genElectronBuilder(){
+  const name=getAppName();
+  addFile('electron-builder.yml',`appId: com.app.${name.toLowerCase()}
+productName: ${name}
+copyright: Copyright © 2026
+
+directories:
+  output: dist-electron
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - node_modules/**/*
+  - package.json
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+  icon: build/icon.png
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: build/icon.icns
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true`);
+}
+
+function genWfApk(){
+  addFile('.github/workflows/build-apk.yml',`name: Build APK Android
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli @capacitor/core @capacitor/android
+
+      - name: Add Android platform
+        run: npx cap add android || true
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/
+          retention-days: 30
+
+      - name: Build Release APK (se keystore configurado)
+        if: secrets.KEYSTORE_BASE64 != ''
+        run: |
+          cd android
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=keystore.jks \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEY_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+
+      - name: Upload Release APK
+        if: secrets.KEYSTORE_BASE64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/
+          retention-days: 30`);
+}
+
+function genWfExe(){
+  addFile('.github/workflows/build-exe.yml',`name: Build EXE Windows
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Build Electron EXE
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-windows-exe
+          path: dist-electron/*.exe
+          retention-days: 30
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Build Electron Linux
+        run: npx electron-builder --linux --x64
+        env:
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-linux-appimage
+          path: dist-electron/*.AppImage
+          retention-days: 30`);
+}
+
+function genWfPages(){
+  addFile('.github/workflows/deploy-pages.yml',`name: Deploy GitHub Pages (PWA)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4`);
+}
+
+function genTsconfig(){
+  addFile('tsconfig.json',JSON.stringify({
+    compilerOptions:{
+      target:'ES2020',
+      useDefineForClassFields:true,
+      lib:['ES2020','DOM','DOM.Iterable'],
+      module:'ESNext',
+      skipLibCheck:true,
+      moduleResolution:'bundler',
+      allowImportingTsExtensions:true,
+      resolveJsonModule:true,
+      isolatedModules:true,
+      noEmit:true,
+      jsx:'react-jsx',
+      strict:true,
+      noUnusedLocals:false,
+      noUnusedParameters:false,
+      noFallthroughCasesInSwitch:true,
+      baseUrl:'.',
+      paths:{'@/*':['./src/*']}
+    },
+    include:['src'],
+    exclude:['node_modules','dist','android','ios','electron']
+  },null,2));
+}
+
+function genVite(){
+  const name=getAppName();
+  addFile('vite.config.ts',`import{defineConfig}from'vite';
+import react from'@vitejs/plugin-react';
+import path from'path';
+
+export default defineConfig({
+  plugins:[react()],
+  resolve:{
+    alias:{'@':path.resolve(__dirname,'./src')},
+  },
+  base:'./',
+  build:{
+    outDir:'dist',
+    emptyOutDir:true,
+    rollupOptions:{
+      output:{
+        manualChunks:{
+          vendor:['react','react-dom'],
+        },
+      },
+    },
+  },
+  server:{
+    port:5173,
+    host:true,
+    proxy:{
+      '/api':{
+        target:'http://localhost:3000',
+        changeOrigin:true,
+      },
+    },
+  },
+});`);
+}
+
+function genEas(){
+  const name=getAppName();
+  addFile('eas.json',JSON.stringify({
+    cli:{version:'>= 7.0.0'},
+    build:{
+      development:{
+        developmentClient:true,
+        distribution:'internal',
+        android:{buildType:'apk'}
+      },
+      preview:{
+        distribution:'internal',
+        android:{buildType:'apk'}
+      },
+      production:{
+        android:{buildType:'app-bundle'}
+      }
+    },
+    submit:{production:{}}
+  },null,2));
+}
+
+// ══════════════════════════════════════════
+// EXPORTAR ZIP
+// ══════════════════════════════════════════
+async function exportZip(){
+  if(!Object.keys(P).length){toast('Nenhum projeto carregado','err');return;}
+  toast('⏳ Gerando ZIP...');
+  try{
+    const JSZ=await loadJSZ();
+    const zip=new JSZ();
+    for(const[path,f]of Object.entries(P)){
+      if(f.binary&&f.raw) zip.file(path,f.raw);
+      else if(f.content!=null) zip.file(path,f.content);
+    }
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=(getAppName()||'projeto')+'-corrigido.zip';
+    a.click(); URL.revokeObjectURL(url);
+    toast('✅ ZIP baixado!');
+  }catch(e){toast('Erro: '+e.message,'err');}
+}
+
+// ══════════════════════════════════════════
+// JSZIP LOADER
+// ══════════════════════════════════════════
+function loadJSZ(){
+  return new Promise((res,rej)=>{
+    if(window.JSZip){res(window.JSZip);return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=()=>res(window.JSZip);
+    s.onerror=()=>rej(new Error('JSZip não carregou'));
+    document.head.appendChild(s);
+  });
+}
+
+// ══════════════════════════════════════════
+// DRAG & DROP
+// ══════════════════════════════════════════
+const ov=document.getElementById('dropOverlay');
+document.addEventListener('dragover',e=>{e.preventDefault();ov.classList.add('active');});
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget)ov.classList.remove('active');});
+document.addEventListener('drop',async e=>{
+  e.preventDefault(); ov.classList.remove('active');
+  const f=e.dataTransfer.files[0];
+  if(!f) return;
+  if(f.name.endsWith('.zip')){
+    const inp=document.getElementById('fi');
+    const dt=new DataTransfer(); dt.items.add(f);
+    inp.files=dt.files; importZip(inp);
+  }else toast('Arraste um arquivo .zip','warn');
+});
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+</body>
+</html>
