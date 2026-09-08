@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 AI Chat</title>
+    <style>
+:root {
+    --bg:      #0d1117;
+    --bg2:     #161b22;
+    --bg3:     #21262d;
+    --border:  #30363d;
+    --text:    #c9d1d9;
+    --text2:   #8b949e;
+    --accent:  #58a6ff;
+    --green:   #3fb950;
+    --red:     #f85149;
+    --yellow:  #d29922;
+    --purple:  #bc8cff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    font-size: 15px;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.header-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 5px 11px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+}
+
+.btn:hover { background: var(--border); }
+.btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+.btn.primary:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+select, input[type="text"], input[type="password"], input[type="number"] {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+}
+
+select:focus, input:focus { border-color: var(--accent); }
+
+.main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 210px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conversations {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.conv-item {
+    padding: 7px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 3px;
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conv-item:hover { background: var(--bg3); }
+.conv-item.active { background: var(--bg3); border-color: var(--accent); }
+
+.conv-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conv-meta { font-size: 10px; color: var(--text2); }
+.conv-delete { color: var(--red); cursor: pointer; opacity: 0; }
+.conv-item:hover .conv-delete { opacity: 1; }
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-toolbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.conv-title-edit {
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.conv-title-edit:hover { border-color: var(--border); }
+.conv-title-edit:focus { border-color: var(--accent); outline: none; background: var(--bg3); }
+
+.context-info {
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.context-bar {
+    width: 80px;
+    height: 5px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.context-fill {
+    height: 100%;
+    background: var(--green);
+    transition: width 0.3s;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    display: flex;
+    gap: 8px;
+}
+
+.message.user { flex-direction: row-reverse; }
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.message.user .avatar { background: var(--accent); color: #000; }
+.message.ai .avatar { background: var(--purple); color: #000; }
+
+.bubble {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 13px;
+    max-width: 82%;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.message.user .bubble { background: var(--bg3); border-color: var(--accent); }
+
+.bubble pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    overflow-x: auto;
+    margin: 7px 0;
+    position: relative;
+}
+
+.bubble code { font-family: 'Consolas', monospace; font-size: 12px; }
+
+.copy-code-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 2px 7px;
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.copy-code-btn:hover { background: var(--accent); color: #000; }
+
+.input-area {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+}
+
+.input-options {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 7px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.input-options label {
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.input-row {
+    display: flex;
+    gap: 7px;
+    align-items: flex-end;
+}
+
+.input-box {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 180px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.input-box:focus { border-color: var(--accent); }
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal h2 {
+    font-size: 16px;
+    margin-bottom: 18px;
+    color: var(--accent);
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 7px 10px;
+}
+
+.form-group textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.section-title {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 14px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 15px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+.typing {
+    display: flex;
+    gap: 4px;
+    padding: 3px 0;
+}
+
+.typing span {
+    width: 7px;
+    height: 7px;
+    background: var(--text2);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+}
+
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-5px); opacity: 1; }
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>💬 AI Chat</h1>
+    <div class="header-controls">
+        <select id="aiProvider" onchange="CHAT.Provider.onChange()">
+            <option value="openai">OpenAI (GPT)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="gemini">Google (Gemini)</option>
+            <option value="groq">Groq (Llama)</option>
+            <option value="ollama">Ollama (Local)</option>
+        </select>
+        <select id="modelSelect" style="min-width:150px"></select>
+        <button class="btn" onclick="CHAT.Settings.open()">⚙️ Config</button>
+        <button class="btn primary" onclick="CHAT.newChat()">＋ Novo</button>
+        <button class="btn" onclick="CHAT.Storage.exportAll()">💾 Backup</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            Conversas
+            <button class="btn" style="padding:1px 7px;font-size:11px" onclick="CHAT.newChat()">+</button>
+        </div>
+        <div class="conversations" id="convList"></div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-toolbar">
+            <input class="conv-title-edit" id="convTitleEdit" value="Nova Conversa"
+                onblur="CHAT.renameConv(this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()">
+            <div class="context-info">
+                <span id="tokenCount">0</span>tk
+                <div class="context-bar">
+                    <div class="context-fill" id="contextFill" style="width:0%"></div>
+                </div>
+                <button class="btn" style="padding:2px 7px;font-size:11px" onclick="CHAT.Context.clear()">✂️</button>
+            </div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <div class="input-options">
+                <label>
+                    <input type="checkbox" id="codeMode" checked>
+                    💻 Código
+                </label>
+                <label>
+                    🌡️
+                    <input type="range" min="0" max="2" step="0.1" value="0.7" id="tempSlider" style="width:70px">
+                    <span id="tempVal">0.7</span>
+                </label>
+                <label>
+                    📏
+                    <input type="number" id="maxTokens" value="4096" min="256" max="32000" style="width:75px">
+                </label>
+            </div>
+            <div class="input-row">
+                <textarea class="input-box" id="userInput" placeholder="Mensagem... (Ctrl+Enter envia)"
+                    onkeydown="CHAT.UI.handleKey(event)" oninput="CHAT.UI.autoResize(this)"></textarea>
+                <button class="btn primary" onclick="CHAT.send()" id="sendBtn">Enviar ▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+        <h2>⚙️ Configurações</h2>
+
+        <div class="section-title">🔑 API Keys</div>
+        <div class="form-group">
+            <label>OpenAI / Groq Key</label>
+            <input type="password" id="apiKeyInput" placeholder="sk-...">
+        </div>
+        <div class="form-group">
+            <label>Anthropic (Claude) Key</label>
+            <input type="password" id="anthropicKeyInput" placeholder="sk-ant-...">
+        </div>
+        <div class="form-group">
+            <label>Google Gemini Key</label>
+            <input type="password" id="geminiKeyInput" placeholder="AIza...">
+        </div>
+
+        <div class="section-title">🏠 Ollama</div>
+        <div class="form-group">
+            <label>Ollama URL</label>
+            <input type="text" id="ollamaUrl" value="http://localhost:11434">
+        </div>
+
+        <div class="section-title">📏 Contexto</div>
+        <div class="form-group">
+            <label>Limite de tokens</label>
+            <input type="number" id="contextLimit" value="8000" min="1000" max="200000">
+        </div>
+
+        <div class="section-title">🤖 Comportamento</div>
+        <div class="form-group">
+            <label>System Prompt</label>
+            <textarea id="systemPrompt">Você é um assistente especialista em programação. Gere código limpo, sem caracteres estranhos, comentado em português.</textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="CHAT.Settings.close()">Cancelar</button>
+            <button class="btn primary" onclick="CHAT.Settings.save()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const STATE = {
+    conversations: {},
+    activeConvId: null,
+    settings: {
+        apiKey: '',
+        anthropicKey: '',
+        geminiKey: '',
+        ollamaUrl: 'http://localhost:11434',
+        contextLimit: 8000,
+        systemPrompt: '',
+        provider: 'openai',
+        model: '',
+        temperature: 0.7,
+        maxTokens: 4096
+    },
+    isLoading: false
+};
+
+const CHAT = {
+    Provider: {
+        MODELS: {
+            openai:    ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+            anthropic: ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+            gemini:    ['gemini-1.5-pro', 'gemini-1.5-flash'],
+            groq:      ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
+            ollama:    ['llama3.2', 'mistral', 'neural-chat']
+        },
+
+        onChange() {
+            this.updateSelect();
+        },
+
+        updateSelect() {
+            const provider = document.getElementById('aiProvider').value;
+            const sel = document.getElementById('modelSelect');
+            const models = this.MODELS[provider] || [];
+            sel.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+        }
+    },
+
+    newChat() {
+        const id = 'conv_' + Date.now();
+        STATE.conversations[id] = {
+            id,
+            title: 'Nova Conversa',
+            messages: [],
+            createdAt: Date.now()
+        };
+        STATE.activeConvId = id;
+        this.Storage.save();
+        this.renderConversations();
+        this.loadConv(id);
+        this.UI.toast('✅ Novo chat iniciado!', 'success');
+    },
+
+    loadConv(id) {
+        STATE.activeConvId = id;
+        const conv = STATE.conversations[id];
+        if (!conv) return;
+        document.getElementById('convTitleEdit').value = conv.title;
+        this.renderMessages(conv.messages);
+        this.Context.updateBar(conv.messages);
+        this.renderConversations();
+    },
+
+    renameConv(title) {
+        const conv = STATE.conversations[STATE.activeConvId];
+        if (!conv || !title.trim()) return;
+        conv.title = title.trim();
+        this.renderConversations();
+        this.Storage.save();
+    },
+
+    deleteConv(id, e) {
+        e.stopPropagation();
+        if (!confirm('Deletar esta conversa?')) return;
+        delete STATE.conversations[id];
+        if (STATE.activeConvId === id) {
+            const keys = Object.keys(STATE.conversations);
+            if (keys.length > 0) this.loadConv(keys[keys.length - 1]);
+            else this.newChat();
+        }
+        this.Storage.save();
+        this.renderConversations();
+    },
+
+    renderConversations() {
+        const list = document.getElementById('convList');
+        list.innerHTML = '';
+        const convs = Object.values(STATE.conversations)
+            .sort((a, b) => b.createdAt - a.createdAt);
+        convs.forEach(conv => {
+            const div = document.createElement('div');
+            div.className = 'conv-item' + (conv.id === STATE.activeConvId ? ' active' : '');
+            div.innerHTML = `
+                <div style="flex:1;overflow:hidden">
+                    <div class="conv-title">${escapeHtml(conv.title)}</div>
+                    <div class="conv-meta">${conv.messages?.length || 0} msgs</div>
+                </div>
+                <span class="conv-delete" onclick="CHAT.deleteConv('${conv.id}',event)">✕</span>
+            `;
+            div.onclick = (e) => {
+                if (e.target.classList.contains('conv-delete')) return;
+                this.loadConv(conv.id);
+            };
+            list.appendChild(div);
+        });
+    },
+
+    renderMessages(messages) {
+        const container = document.getElementById('messages');
+        container.innerHTML = '';
+        (messages || []).forEach(msg => this.appendMsg(msg));
+        container.scrollTop = container.scrollHeight;
+    },
+
+    appendMsg(msg) {
+        const container = document.getElementById('messages');
+        const div = document.createElement('div');
+        const emoji = msg.role === 'user' ? '👤' : '🤖';
+        div.className = `message ${msg.role === 'user' ? 'user' : 'ai'}`;
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('pt-BR') : '';
+        div.innerHTML = `
+            <div class="avatar">${emoji}</div>
+            <div class="bubble">
+                ${formatMessage(msg.content)}
+                ${time ? `<div style="font-size:10px;color:var(--text2);margin-top:4px;text-align:right">${time}</div>` : ''}
+            </div>
+        `;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    },
+
+    async send() {
+        if (STATE.isLoading) return;
+        const input = document.getElementById('userInput');
+        let text = input.value.trim();
+        if (!text) return;
+
+        const conv = STATE.conversations[STATE.activeConvId];
+        if (!conv) { this.newChat(); return; }
+
+        const userMsg = { role: 'user', content: text, timestamp: Date.now() };
+        conv.messages.push(userMsg);
+        this.appendMsg(userMsg);
+
+        if (conv.messages.length === 1) {
+            conv.title = text.substring(0, 45) + (text.length > 45 ? '...' : '');
+            document.getElementById('convTitleEdit').value = conv.title;
+            this.renderConversations();
+        }
+
+        input.value = '';
+        this.UI.autoResize(input);
+        this.Context.updateBar(conv.messages);
+
+        STATE.isLoading = true;
+        document.getElementById('sendBtn').disabled = true;
+
+        try {
+            const reply = await this.AI.call(conv.messages);
+            const aiMsg = { role: 'assistant', content: reply, timestamp: Date.now() };
+            conv.messages.push(aiMsg);
+            this.appendMsg(aiMsg);
+            this.Context.updateBar(conv.messages);
+            this.Storage.save();
+        } catch(err) {
+            const errMsg = { role: 'assistant', content: `❌ Erro: ${err.message}`, timestamp: Date.now() };
+            conv.messages.push(errMsg);
+            this.appendMsg(errMsg);
+            this.UI.toast('❌ ' + err.message, 'error');
+        }
+
+        STATE.isLoading = false;
+        document.getElementById('sendBtn').disabled = false;
+    },
+
+    Context: {
+        estimateTokens(messages) {
+            return Math.ceil((messages || []).reduce((a, m) => a + (m.content?.length || 0), 0) / 4);
+        },
+
+        updateBar(messages) {
+            const tokens = this.estimateTokens(messages);
+            const limit = parseInt(STATE.settings.contextLimit) || 8000;
+            const pct = Math.min(100, (tokens / limit) * 100);
+            document.getElementById('tokenCount').textContent = tokens.toLocaleString('pt-BR');
+            const fill = document.getElementById('contextFill');
+            fill.style.width = pct + '%';
+            fill.style.background = pct > 80 ? 'var(--red)' : pct > 55 ? 'var(--yellow)' : 'var(--green)';
+        },
+
+        clear() {
+            const conv = STATE.conversations[STATE.activeConvId];
+            if (!conv) return;
+            if (!confirm('Limpar contexto?')) return;
+            conv.messages = [];
+            CHAT.renderMessages([]);
+            this.updateBar([]);
+            CHAT.Storage.save();
+            CHAT.UI.toast('✂️ Contexto limpo!', 'success');
+        }
+    },
+
+    AI: {
+        async call(messages) {
+            const { provider, model } = this.current();
+            const s = STATE.settings;
+            const temp = parseFloat(document.getElementById('tempSlider').value);
+            const maxT = parseInt(document.getElementById('maxTokens').value);
+
+            const msgs = [{
+                role: 'system',
+                content: s.systemPrompt || 'Você é um assistente especialista em programação.'
+            }, ...messages.map(m => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: m.content
+            }))];
+
+            switch (provider) {
+                case 'openai': return await this.openai(msgs, model, s.apiKey, temp, maxT);
+                case 'anthropic': return await this.anthropic(msgs, model, s.anthropicKey, temp, maxT);
+                case 'gemini': return await this.gemini(msgs, model, s.geminiKey, temp, maxT);
+                case 'groq': return await this.groq(msgs, model, s.apiKey, temp, maxT);
+                case 'ollama': return await this.ollama(msgs, model, temp, maxT);
+                default: throw new Error('Provider não suportado');
+            }
+        },
+
+        current() {
+            return {
+                provider: document.getElementById('aiProvider').value,
+                model: document.getElementById('modelSelect').value
+            };
+        },
+
+        async openai(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key OpenAI não configurada!');
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({ model, messages, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error?.message || `HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            return data.choices[0].message.content;
+        },
+
+        async anthropic(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Anthropic não configurada!');
+            const system = messages.find(m => m.role === 'system')?.content || '';
+            const msgs = messages.filter(m => m.role !== 'system');
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({ model, messages: msgs, system, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.content[0].text;
+        },
+
+        async gemini(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Gemini não configurada!');
+            const contents = messages
+                .filter(m => m.role !== 'system')
+                .map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                }));
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents,
+                        generationConfig: { temperature: temp, maxOutputTokens: maxTokens }
+                    })
+                }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.candidates[0].content.parts[0].text;
+        },
+
+        async groq(messages, model, apiKey, temp, maxTokens) {
+            if (!apiKey) throw new Error('API Key Groq não configurada!');
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({ model, messages, temperature: temp, max_tokens: maxTokens })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.choices[0].message.content;
+        },
+
+        async ollama(messages, model, temp, maxTokens) {
+            const url = STATE.settings.ollamaUrl || 'http://localhost:11434';
+            const res = await fetch(`${url}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model,
+                    messages: messages.map(m => ({ role: m.role, content: m.content })),
+                    options: { temperature: temp, num_predict: maxTokens },
+                    stream: false
+                })
+            });
+            if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+            const data = await res.json();
+            return data.message.content;
+        }
+    },
+
+    Settings: {
+        open() {
+            const s = STATE.settings;
+            document.getElementById('apiKeyInput').value = s.apiKey || '';
+            document.getElementById('anthropicKeyInput').value = s.anthropicKey || '';
+            document.getElementById('geminiKeyInput').value = s.geminiKey || '';
+            document.getElementById('ollamaUrl').value = s.ollamaUrl || 'http://localhost:11434';
+            document.getElementById('contextLimit').value = s.contextLimit || 8000;
+            document.getElementById('systemPrompt').value = s.systemPrompt || '';
+            document.getElementById('settingsModal').classList.add('open');
+        },
+
+        close() {
+            document.getElementById('settingsModal').classList.remove('open');
+        },
+
+        save() {
+            const s = STATE.settings;
+            s.apiKey = document.getElementById('apiKeyInput').value;
+            s.anthropicKey = document.getElementById('anthropicKeyInput').value;
+            s.geminiKey = document.getElementById('geminiKeyInput').value;
+            s.ollamaUrl = document.getElementById('ollamaUrl').value;
+            s.contextLimit = parseInt(document.getElementById('contextLimit').value);
+            s.systemPrompt = document.getElementById('systemPrompt').value;
+            s.provider = document.getElementById('aiProvider').value;
+            s.model = document.getElementById('modelSelect').value;
+            s.temperature = parseFloat(document.getElementById('tempSlider').value);
+            s.maxTokens = parseInt(document.getElementById('maxTokens').value);
+            this.close();
+            CHAT.Storage.save();
+            CHAT.UI.toast('✅ Configurações salvas!', 'success');
+        }
+    },
+
+    Storage: {
+        save() {
+            try {
+                localStorage.setItem('chat_v1', JSON.stringify({
+                    conversations: STATE.conversations,
+                    activeConvId: STATE.activeConvId,
+                    settings: STATE.settings
+                }));
+            } catch(e) {
+                CHAT.UI.toast('⚠️ Erro ao salvar', 'error');
+            }
+        },
+
+        load() {
+            try {
+                const raw = localStorage.getItem('chat_v1');
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                STATE.conversations = d.conversations || {};
+                STATE.activeConvId = d.activeConvId || null;
+                if (d.settings) STATE.settings = { ...STATE.settings, ...d.settings };
+            } catch(e) {
+                console.error('Erro ao carregar:', e);
+            }
+        },
+
+        exportAll() {
+            const data = {
+                exportedAt: new Date().toISOString(),
+                conversations: STATE.conversations,
+                settings: { ...STATE.settings, apiKey: '***', anthropicKey: '***', geminiKey: '***' }
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `chat-backup-${Date.now()}.json`;
+            a.click();
+            CHAT.UI.toast('💾 Backup exportado!', 'success');
+        }
+    },
+
+    UI: {
+        toast(msg, type = '') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = `toast show ${type}`;
+            clearTimeout(el._t);
+            el._t = setTimeout(() => { el.className = 'toast'; }, 3000);
+        },
+
+        autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+        },
+
+        handleKey(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                CHAT.send();
+            }
+        }
+    }
+};
+
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function formatMessage(text) {
+    text = String(text);
+    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const clean = escapeHtml(code.trim());
+        return `<pre><button class="copy-code-btn" onclick="copyCodeBlock(this)">📋 Copiar</button><code>${clean}</code></pre>`;
+    });
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/`([^`]+)`/g, '<code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:monospace">$1</code>');
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+function copyCodeBlock(btn) {
+    const code = btn.nextElementSibling.textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = '✅ Copiado!';
+        setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+    });
+}
+
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+});
+
+document.getElementById('tempSlider').addEventListener('input', function() {
+    document.getElementById('tempVal').textContent = this.value;
+});
+
+function INIT() {
+    CHAT.Storage.load();
+    CHAT.Provider.updateSelect();
+
+    if (STATE.activeConvId && STATE.conversations[STATE.activeConvId]) {
+        CHAT.loadConv(STATE.activeConvId);
+    } else {
+        CHAT.newChat();
+    }
+
+    CHAT.UI.toast('🚀 Chat pronto!', 'success');
+}
+
+INIT();
+</script>
+
+</body>
+</html>
