@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<!--
+═══════════════════════════════════════════
+📅 DIÁRIO DO ROBÔ JURÍDICO - v0.1
+═══════════════════════════════════════════
+✅ FEITO HOJE:
+   - Núcleo base criado
+   - TTS natural funcionando
+   - Interface limpa
+
+📁 ESTRUTURA:
+   - index.html (este arquivo)
+   - Memória: ainda não
+   - Lógica: ainda não
+
+🚀 PRÓXIMO:
+   - PARTE 2: Sistema de memória
+   - PARTE 3: Lógica base
+
+💡 CONTEXTO:
+   - Robô jurídico pessoal
+   - Não é IA, é lógica
+   - Modular sempre!
+═══════════════════════════════════════════
+-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚖️ Robô Jurídico</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── CABEÇALHO ── */
+        .cabecalho {
+            background: #1e293b;
+            border-bottom: 2px solid #3b82f6;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cabecalho h1 {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+
+        .status-robo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .bolinha {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pisca 2s infinite;
+        }
+
+        @keyframes pisca {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ── CHAT ── */
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mensagem {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: aparecer 0.3s ease;
+        }
+
+        @keyframes aparecer {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .mensagem.robo {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: 4px solid #3b82f6;
+            align-self: flex-start;
+        }
+
+        .mensagem.usuario {
+            background: #1d4ed8;
+            align-self: flex-end;
+            border-radius: 12px 12px 4px 12px;
+        }
+
+        .mensagem .autor {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mensagem.usuario .autor {
+            color: #bfdbfe;
+        }
+
+        /* ── HUMOR DO ROBÔ ── */
+        .humor-bar {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .humor-icone {
+            font-size: 20px;
+        }
+
+        .confianca-bar {
+            flex: 1;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confianca-fill {
+            height: 100%;
+            background: #22c55e;
+            border-radius: 3px;
+            transition: width 0.5s ease, background 0.5s ease;
+            width: 100%;
+        }
+
+        /* ── INPUT ── */
+        .input-area {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-area textarea {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 12px;
+            font-size: 14px;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn-enviar {
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+            height: 50px;
+        }
+
+        .btn-enviar:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .btn-mic {
+            background: #334155;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+            height: 50px;
+        }
+
+        .btn-mic:hover { background: #475569; }
+        .btn-mic.gravando {
+            background: #ef4444;
+            animation: pisca 1s infinite;
+        }
+
+        /* ── VOZ CONFIG ── */
+        .voz-config {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .voz-config select,
+        .voz-config input[type="range"] {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .voz-config label {
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-falar {
+            background: #7c3aed;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-falar:hover { background: #6d28d9; }
+        .btn-falar.falando { background: #ef4444; }
+    </style>
+</head>
+<body>
+
+<!-- CABEÇALHO -->
+<div class="cabecalho">
+    <h1>⚖️ Robô Jurídico</h1>
+    <div class="status-robo">
+        <div class="bolinha" id="bolinhaStatus"></div>
+        <span id="textoStatus">Pronto</span>
+    </div>
+</div>
+
+<!-- HUMOR DO ROBÔ -->
+<div class="humor-bar">
+    <span class="humor-icone" id="humorIcone">😊</span>
+    <span id="humorTexto">Confiança:</span>
+    <div class="confianca-bar">
+        <div class="confianca-fill" id="confiancaFill"></div>
+    </div>
+    <span id="confiancaValor">100%</span>
+</div>
+
+<!-- CHAT -->
+<div class="chat" id="chat"></div>
+
+<!-- CONFIG DE VOZ -->
+<div class="voz-config">
+    <label>🗣️ Voz:
+        <select id="vozSelect"></select>
+    </label>
+    <label>⚡
+        <input type="range" id="velocidade" min="0.5" max="2" step="0.1" value="1">
+    </label>
+    <label>🎵
+        <input type="range" id="tom" min="0.5" max="2" step="0.1" value="1">
+    </label>
+    <button class="btn-falar" id="btnFalar" onclick="alternarFala()">
+        🔊 Voz: ON
+    </button>
+</div>
+
+<!-- INPUT -->
+<div class="input-area">
+    <button class="btn-mic" id="btnMic" onclick="alternarMic()">🎤</button>
+    <textarea
+        id="inputTexto"
+        placeholder="Digite ou fale algo..."
+        onkeydown="teclaEnter(event)"
+    ></textarea>
+    <button class="btn-enviar" onclick="enviarMensagem()">➤</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// 🤖 ROBÔ JURÍDICO - NÚCLEO BASE v0.1
+// ═══════════════════════════════════════════
+
+// ── ESTADO DO ROBÔ ──
+const ROBO = {
+    nome: "Lex",
+    humor: "normal",      // normal, confuso, desconfiado, feliz
+    confianca: 100,       // 0 a 100
+    vozAtiva: true,
+    falando: false,
+    vozes: [],
+    vozEscolhida: null
+};
+
+// ── FRASES DO ROBÔ POR HUMOR ──
+const FRASES = {
+    saudacao: [
+        "Olá! Sou o Lex, seu robô jurídico. Como posso ajudar?",
+        "Pronto para trabalhar! O que precisa hoje?",
+        "Lex online. Pode falar!"
+    ],
+    naoEntendeu: [
+        "Hmm... pode explicar melhor?",
+        "Não entendi bem. Pode reformular?",
+        "Preciso de mais detalhes para ajudar."
+    ],
+    confirmacao: [
+        "Entendido! Guardei essa informação.",
+        "Anotado! Pode continuar.",
+        "Registrado com sucesso."
+    ],
+    desconfiado: [
+        "Espera... isso parece diferente do que você disse antes.",
+        "Hmm... tenho dúvidas sobre isso. Pode confirmar?",
+        "Isso contradiz algo que registrei. Vamos verificar?"
+    ]
+};
+
+// ── INICIALIZAR ──
+window.addEventListener('load', () => {
+    carregarVozes();
+    window.speechSynthesis.onvoiceschanged = carregarVozes;
+    roboFala(frasAleatoria(FRASES.saudacao));
+});
+
+// ── CARREGAR VOZES ──
+function carregarVozes() {
+    ROBO.vozes = window.speechSynthesis.getVoices();
+    const sel = document.getElementById('vozSelect');
+    sel.innerHTML = '';
+
+    ROBO.vozes.forEach((v, i) => {
+        const op = document.createElement('option');
+        op.value = i;
+        op.textContent = `${v.name} (${v.lang})`;
+        // Preferir voz PT-BR
+        if (v.lang.includes('pt') && !ROBO.vozEscolhida) {
+            op.selected = true;
+            ROBO.vozEscolhida = i;
+        }
+        sel.appendChild(op);
+    });
+}
+
+// ── FRASE ALEATÓRIA ──
+function frasAleatoria(lista) {
+    return lista[Math.floor(Math.random() * lista.length)];
+}
+
+// ── ROBÔ FALA ──
+function roboFala(texto, humor = 'normal') {
+    // Atualiza humor
+    atualizarHumor(humor);
+
+    // Adiciona no chat
+    adicionarMensagem(texto, 'robo');
+
+    // TTS se ativo
+    if (ROBO.vozAtiva) {
+        falarTTS(texto);
+    }
+}
+
+// ── TTS ──
+function falarTTS(texto) {
+    window.speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(texto);
+    const idx = document.getElementById('vozSelect').value;
+
+    if (ROBO.vozes[idx]) u.voice = ROBO.vozes[idx];
+    u.rate  = parseFloat(document.getElementById('velocidade').value);
+    u.pitch = parseFloat(document.getElementById('tom').value);
+    u.lang  = 'pt-BR';
+
+    u.onstart = () => {
+        ROBO.falando = true;
+        document.getElementById('btnFalar').textContent = '🔇 Parar';
+        document.getElementById('btnFalar').classList.add('falando');
+        setStatus('Falando...', '#3b82f6');
+    };
+
+    u.onend = () => {
+        ROBO.falando = false;
+        document.getElementById('btnFalar').textContent = '🔊 Voz: ON';
+        document.getElementById('btnFalar').classList.remove('falando');
+        setStatus('Pronto', '#22c55e');
+    };
+
+    window.speechSynthesis.speak(u);
+}
+
+// ── ALTERNAR FALA ──
+function alternarFala() {
+    if (ROBO.falando) {
+        window.speechSynthesis.cancel();
+        ROBO.falando = false;
+        document.getElementById('btnFalar').textContent = '🔊 Voz: ON';
+        document.getElementById('btnFalar').classList.remove('falando');
+    } else {
+        ROBO.vozAtiva = !ROBO.vozAtiva;
+        document.getElementById('btnFalar').textContent =
+            ROBO.vozAtiva ? '🔊 Voz: ON' : '🔇 Voz: OFF';
+    }
+}
+
+// ── ADICIONAR MENSAGEM NO CHAT ──
+function adicionarMensagem(texto, tipo) {
+    const chat = document.getElementById('chat');
+    const div  = document.createElement('div');
+    div.className = `mensagem ${tipo}`;
+
+    const autor = tipo === 'robo' ? '⚖️ Lex' : '👤 Você';
+    div.innerHTML = `<div class="autor">${autor}</div>${texto}`;
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ── ENVIAR MENSAGEM ──
+function enviarMensagem() {
+    const input = document.getElementById('inputTexto');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    adicionarMensagem(texto, 'usuario');
+    input.value = '';
+    input.style.height = '50px';
+
+    // Processar (por enquanto simples)
+    setTimeout(() => processarEntrada(texto), 500);
+}
+
+// ── PROCESSAR ENTRADA ──
+function processarEntrada(texto) {
+    // Base simples - será expandida na PARTE 2 e 3
+    const lower = texto.toLowerCase();
+
+    if (lower.includes('olá') || lower.includes('oi') || lower.includes('bom dia')) {
+        roboFala(frasAleatoria(FRASES.saudacao));
+    } else if (lower.includes('obrigado') || lower.includes('valeu')) {
+        roboFala("Disponha! Estou aqui para ajudar!", 'feliz');
+    } else {
+        roboFala(frasAleatoria(FRASES.confirmacao));
+    }
+}
+
+// ── ATUALIZAR HUMOR ──
+function atualizarHumor(humor) {
+    ROBO.humor = humor;
+    const icone   = document.getElementById('humorIcone');
+    const fill    = document.getElementById('confiancaFill');
+    const valor   = document.getElementById('confiancaValor');
+
+    const humores = {
+        normal:       { icone: '😊', cor: '#22c55e' },
+        feliz:        { icone: '😄', cor: '#3b82f6' },
+        confuso:      { icone: '🤔', cor: '#f59e0b' },
+        desconfiado:  { icone: '🧐', cor: '#f97316' },
+        alerta:       { icone: '⚠️', cor: '#ef4444' }
+    };
+
+    const h = humores[humor] || humores.normal;
+    icone.textContent = h.icone;
+    fill.style.background = h.cor;
+    fill.style.width = ROBO.confianca + '%';
+    valor.textContent = ROBO.confianca + '%';
+}
+
+// ── STATUS ──
+function setStatus(texto, cor) {
+    document.getElementById('textoStatus').textContent = texto;
+    document.getElementById('bolinhaStatus').style.background = cor;
+}
+
+// ── TECLA ENTER ──
+function teclaEnter(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarMensagem();
+    }
+}
+
+// ── MICROFONE (base) ──
+let reconhecimento = null;
+
+function alternarMic() {
+    const btn = document.getElementById('btnMic');
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        roboFala("Seu navegador não suporta microfone. Use o Chrome!");
+        return;
+    }
+
+    if (reconhecimento) {
+        reconhecimento.stop();
+        reconhecimento = null;
+        btn.classList.remove('gravando');
+        btn.textContent = '🎤';
+        return;
+    }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconhecimento = new SR();
+    reconhecimento.lang = 'pt-BR';
+    reconhecimento.continuous = false;
+    reconhecimento.interimResults = false;
+
+    reconhecimento.onstart = () => {
+        btn.classList.add('gravando');
+        btn.textContent = '⏹️';
+        setStatus('Ouvindo...', '#f59e0b');
+    };
+
+    reconhecimento.onresult = (e) => {
+        const texto = e.results[0][0].transcript;
+        document.getElementById('inputTexto').value = texto;
+        enviarMensagem();
+    };
+
+    reconhecimento.onend = () => {
+        reconhecimento = null;
+        btn.classList.remove('gravando');
+        btn.textContent = '🎤';
+        setStatus('Pronto', '#22c55e');
+    };
+
+    reconhecimento.start();
+}
+</script>
+</body>
+</html>
