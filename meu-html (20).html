@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🔍 Tradutor de Erros</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:12px}
+h1{color:#58a6ff;font-size:16px;margin-bottom:12px;text-align:center}
+.box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:10px}
+textarea{width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:10px;font-size:11px;font-family:monospace;resize:vertical;outline:none;min-height:140px}
+button{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;margin:4px 4px 0 0}
+.b-analisar{background:#1f6feb;color:#fff;width:100%}
+.b-limpar{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.resultado{display:none}
+.card{border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px}
+.card.err{background:#2d0f0f;border-left:4px solid #f85149}
+.card.warn{background:#2d1f00;border-left:4px solid #e3b341}
+.card.ok{background:#0d2818;border-left:4px solid #3fb950}
+.card.info{background:#0d1f3a;border-left:4px solid #58a6ff}
+.card .titulo{font-weight:700;font-size:13px;margin-bottom:4px}
+.card .orig{font-family:monospace;font-size:10px;color:#8b949e;background:#0d1117;padding:4px 6px;border-radius:4px;margin:4px 0;word-break:break-all}
+.card .trad{color:#c9d1d9;margin-bottom:4px}
+.card .fix{color:#3fb950;font-size:11px;margin-top:4px}
+.card .fix::before{content:'✅ Como resolver: '}
+.resumo{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:10px}
+.resumo h3{color:#58a6ff;font-size:13px;margin-bottom:8px}
+.passo{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px}
+.passo .num{background:#1f6feb;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;margin-right:4px}
+.b-err{background:#da3633;color:#fff}
+.b-warn{background:#9a6700;color:#fff}
+.b-ok{background:#238636;color:#fff}
+.stats{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.stat{background:#21262d;border-radius:6px;padding:6px 12px;text-align:center;flex:1;min-width:60px}
+.stat .n{font-size:20px;font-weight:700}
+.stat .l{font-size:9px;color:#8b949e}
+.dica{background:#0d1f3a;border:1px solid #1f6feb;border-radius:6px;padding:8px 10px;font-size:11px;color:#79c0ff;margin-bottom:8px}
+</style>
+</head>
+<body>
+<h1>🔍 Tradutor & Analisador de Erros</h1>
+
+<div class="box">
+  <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Cole aqui o log de erro (em inglês, qualquer tamanho):</div>
+  <textarea id="inp" placeholder="Cole aqui o erro do GitHub Actions, terminal, APKBud, Electron, npm...
+
+Exemplos:
+- Error: Cannot find module 'xyz'
+- FAILURE: Build failed with an exception
+- error TS2307: Cannot find module
+- Process exited with code 1
+- ENOMEM: not enough memory"></textarea>
+  <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+    <button class="b-analisar" onclick="analisar()">🔍 Analisar e Traduzir</button>
+    <button class="b-limpar" onclick="limpar()">🗑️ Limpar</button>
+    <button class="b-limpar" onclick="colarExemplo()">📋 Ver Exemplo</button>
+  </div>
+</div>
+
+<div class="resultado" id="resultado"></div>
+
+<script>
+// ══════════════════════════════════════════
+// BASE DE ERROS CONHECIDOS
+// ══════════════════════════════════════════
+const ERROS = [
+  // NODE / NPM
+  {p:/cannot find module ['"]([^'"]+)['"]/i, tipo:'err',
+   titulo:'Módulo não encontrado',
+   trad:m=>`O arquivo ou pacote <b>${m[1]}</b> não existe ou não foi instalado.`,
+   fix:'Execute: npm install — ou verifique se o nome do import está correto'},
+
+  {p:/npm err! code e404/i, tipo:'err',
+   titulo:'Pacote não existe no npm',
+   trad:()=>'O pacote que você está tentando instalar não existe no registro do npm.',
+   fix:'Verifique o nome do pacote em npmjs.com'},
+
+  {p:/npm warn deprecated/i, tipo:'warn',
+   titulo:'Pacote desatualizado (aviso)',
+   trad:()=>'Um pacote que você usa está desatualizado. Não impede o build mas pode causar problemas futuros.',
+   fix:'Pode ignorar por enquanto — não é um erro crítico'},
+
+  {p:/enomem|not enough memory|heap out of memory|javascript heap/i, tipo:'err',
+   titulo:'Memória insuficiente',
+   trad:()=>'O processo ficou sem memória RAM durante o build. Comum em projetos grandes com Electron.',
+   fix:'Adicione no workflow: NODE_OPTIONS=--max-old-space-size=4096'},
+
+  {p:/enospc|no space left/i, tipo:'err',
+   titulo:'Sem espaço em disco',
+   trad:()=>'O servidor ficou sem espaço em disco durante o build.',
+   fix:'Limpe arquivos desnecessários: rm -rf node_modules/.cache dist'},
+
+  {p:/eacces|permission denied/i, tipo:'err',
+   titulo:'Sem permissão de acesso',
+   trad:()=>'O processo não tem permissão para acessar um arquivo ou pasta.',
+   fix:'Adicione: chmod +x gradlew (para Android) ou verifique permissões'},
+
+  // TYPESCRIPT
+  {p:/error ts(\d+):\s*(.+)/i, tipo:'err',
+   titulo:'Erro TypeScript',
+   trad:m=>`Erro de tipo TypeScript (TS${m[1]}): <b>${m[2]}</b>`,
+   fix:'Verifique o arquivo indicado na linha acima do erro'},
+
+  {p:/cannot find name ['"]([^'"]+)['"]/i, tipo:'err',
+   titulo:'Nome não reconhecido pelo TypeScript',
+   trad:m=>`O TypeScript não conhece o nome <b>${m[1]}</b>. Falta importar ou declarar.`,
+   fix:'Adicione o import correto no topo do arquivo'},
+
+  {p:/could not find a declaration file/i, tipo:'warn',
+   titulo:'Falta arquivo de tipos (@types)',
+   trad:()=>'Um pacote não tem definições de tipo para TypeScript.',
+   fix:'Execute: npm install --save-dev @types/nome-do-pacote'},
+
+  {p:/tsconfig.*not found|cannot read.*tsconfig/i, tipo:'err',
+   titulo:'tsconfig.json não encontrado',
+   trad:()=>'O arquivo de configuração do TypeScript não foi encontrado no caminho esperado.',
+   fix:'Gere um tsconfig.json na raiz do projeto (use o botão Gerar no ConstruAPK)'},
+
+  {p:/extends.*not found|failed to load.*tsconfig/i, tipo:'err',
+   titulo:'tsconfig extends apontando para lugar errado',
+   trad:()=>'O tsconfig.json tenta herdar configurações de outro arquivo que não existe (problema de monorepo).',
+   fix:'Remova a linha "extends" do tsconfig.json ou aponte para um arquivo que existe'},
+
+  // ANDROID / GRADLE
+  {p:/failure: build failed with an exception/i, tipo:'err',
+   titulo:'Build Android falhou',
+   trad:()=>'O Gradle (sistema de build do Android) encontrou um erro e parou.',
+   fix:'Veja as linhas acima desse erro — o erro real está antes dessa mensagem'},
+
+  {p:/sdk location not found/i, tipo:'err',
+   titulo:'Android SDK não encontrado',
+   trad:()=>'O Gradle não encontrou o Android SDK instalado.',
+   fix:'No workflow, adicione o passo: uses: android-actions/setup-android@v3'},
+
+  {p:/minimum sdk version.*is (\d+)/i, tipo:'warn',
+   titulo:'Versão mínima do Android incompatível',
+   trad:m=>`A versão mínima do Android requerida é ${m[1]}.`,
+   fix:'No build.gradle, ajuste minSdkVersion para 21 ou superior'},
+
+  {p:/duplicate class|duplicate resources/i, tipo:'err',
+   titulo:'Classe ou recurso duplicado',
+   trad:()=>'Dois pacotes têm arquivos com o mesmo nome, causando conflito.',
+   fix:'No build.gradle, adicione: configurations.all { resolutionStrategy { force ... } }'},
+
+  {p:/gradlew.*permission denied|chmod.*gradlew/i, tipo:'err',
+   titulo:'gradlew sem permissão de execução',
+   trad:()=>'O arquivo gradlew não tem permissão para ser executado.',
+   fix:'Adicione no workflow antes do build: chmod +x android/gradlew'},
+
+  {p:/could not resolve com\./i, tipo:'err',
+   titulo:'Dependência Android não encontrada',
+   trad:()=>'O Gradle não conseguiu baixar uma dependência do projeto Android.',
+   fix:'Verifique sua conexão ou adicione o repositório Maven no build.gradle'},
+
+  // ELECTRON
+  {p:/electron.*failed to load|failed to load.*electron/i, tipo:'err',
+   titulo:'Electron não carregou o app',
+   trad:()=>'O Electron iniciou mas não conseguiu carregar o arquivo HTML do app.',
+   fix:'Verifique o caminho no main.js: win.loadFile("dist/index.html")'},
+
+  {p:/app threw an error during load/i, tipo:'err',
+   titulo:'Erro ao carregar o app no Electron',
+   trad:()=>'O código do app tem um erro que impediu o carregamento.',
+   fix:'Abra o DevTools do Electron (Ctrl+Shift+I) para ver o erro detalhado'},
+
+  {p:/electron-builder.*error|error.*electron-builder/i, tipo:'err',
+   titulo:'Erro no electron-builder',
+   trad:()=>'O electron-builder encontrou um problema ao empacotar o app.',
+   fix:'Verifique se o electron-builder.yml está correto e se o dist/ foi gerado'},
+
+  // VITE / BUILD
+  {p:/vite.*error|error.*vite/i, tipo:'err',
+   titulo:'Erro no Vite (build)',
+   trad:()=>'O Vite encontrou um erro durante o processo de build.',
+   fix:'Veja a linha exata do erro acima — geralmente é um import incorreto'},
+
+  {p:/rollup.*error|error.*rollup/i, tipo:'err',
+   titulo:'Erro no Rollup (bundler)',
+   trad:()=>'O Rollup (usado pelo Vite) não conseguiu empacotar algum arquivo.',
+   fix:'Verifique imports circulares ou arquivos que não existem'},
+
+  {p:/failed to resolve import ['"]([^'"]+)['"]/i, tipo:'err',
+   titulo:'Import não resolvido',
+   trad:m=>`O arquivo <b>${m[1]}</b> foi importado mas não foi encontrado.`,
+   fix:'Verifique se o caminho do import está correto e o arquivo existe'},
+
+  // GITHUB ACTIONS
+  {p:/process completed with exit code (\d+)/i, tipo:'err',
+   titulo:'Processo terminou com erro',
+   trad:m=>`O processo terminou com código ${m[1]} (qualquer coisa diferente de 0 é erro).`,
+   fix:'Veja os passos anteriores no log para encontrar o erro real'},
+
+  {p:/error: resource not accessible by integration/i, tipo:'err',
+   titulo:'Token sem permissão',
+   trad:()=>'O GITHUB_TOKEN não tem permissão para fazer o que foi pedido.',
+   fix:'No workflow, adicione: permissions: contents: write'},
+
+  {p:/no such file or directory/i, tipo:'err',
+   titulo:'Arquivo ou pasta não existe',
+   trad:()=>'O comando tentou acessar um arquivo ou pasta que não existe.',
+   fix:'Verifique se o build gerou os arquivos esperados antes desse passo'},
+
+  {p:/command not found/i, tipo:'err',
+   titulo:'Comando não encontrado',
+   trad:()=>'Um comando foi chamado mas não está instalado no servidor.',
+   fix:'Adicione um passo de instalação antes: npm install -g nome-do-comando'},
+
+  {p:/workflow.*not found|\.github\/workflows/i, tipo:'warn',
+   titulo:'Workflow não encontrado',
+   trad:()=>'O arquivo de workflow do GitHub Actions não foi encontrado.',
+   fix:'Crie o arquivo em .github/workflows/build.yml'},
+
+  // CAPACITOR
+  {p:/capacitor.*error|error.*capacitor/i, tipo:'err',
+   titulo:'Erro no Capacitor',
+   trad:()=>'O Capacitor encontrou um problema ao sincronizar ou adicionar plataforma.',
+   fix:'Execute: npx cap sync android — ou verifique o capacitor.config.ts'},
+
+  {p:/web dir.*does not exist|webdir.*not found/i, tipo:'err',
+   titulo:'Pasta dist/ não existe para o Capacitor',
+   trad:()=>'O Capacitor procura a pasta dist/ mas ela não foi criada ainda.',
+   fix:'Execute npm run build ANTES do npx cap sync'},
+
+  // GENÉRICOS
+  {p:/syntax error/i, tipo:'err',
+   titulo:'Erro de sintaxe',
+   trad:()=>'Há um erro de escrita no código — uma vírgula, chave ou parêntese faltando.',
+   fix:'Veja o arquivo e linha indicados no erro'},
+
+  {p:/unexpected token/i, tipo:'err',
+   titulo:'Token inesperado',
+   trad:()=>'O código tem algo no lugar errado — geralmente uma vírgula a mais ou faltando.',
+   fix:'Verifique o arquivo e linha indicados'},
+
+  {p:/network error|econnrefused|econnreset|etimedout/i, tipo:'warn',
+   titulo:'Erro de rede',
+   trad:()=>'Houve um problema de conexão durante o download de dependências.',
+   fix:'Geralmente se resolve rodando o workflow novamente'},
+
+  {p:/warning|warn/i, tipo:'warn',
+   titulo:'Aviso (não é erro)',
+   trad:()=>'Isso é apenas um aviso — não impede o build de funcionar.',
+   fix:'Pode ignorar por enquanto'},
+];
+
+// ══════════════════════════════════════════
+// ANÁLISE
+// ══════════════════════════════════════════
+function analisar(){
+  const txt=document.getElementById('inp').value.trim();
+  if(!txt){alert('Cole um log de erro primeiro!');return;}
+
+  const linhas=txt.split('\n');
+  const encontrados=[];
+  const vistos=new Set();
+
+  for(const linha of linhas){
+    for(const e of ERROS){
+      const m=linha.match(e.p);
+      if(m){
+        const chave=e.titulo+(m[1]||'');
+        if(!vistos.has(chave)){
+          vistos.add(chave);
+          encontrados.push({...e,match:m,linha:linha.trim()});
+        }
+      }
+    }
+  }
+
+  // Erros não reconhecidos — linhas com "error" ou "failed"
+  const naoReconhecidos=linhas.filter(l=>{
+    const ll=l.toLowerCase();
+    return (ll.includes('error')||ll.includes('failed')||ll.includes('exception'))
+      && !encontrados.some(e=>l.match(e.p))
+      && l.trim().length>10;
+  }).slice(0,5);
+
+  renderResultado(encontrados,naoReconhecidos,txt);
+}
+
+function renderResultado(encontrados,naoRec,txt){
+  const el=document.getElementById('resultado');
+  el.style.display='block';
+
+  const errs=encontrados.filter(e=>e.tipo==='err').length;
+  const warns=encontrados.filter(e=>e.tipo==='warn').length;
+
+  let h=`
+    <div class="stats">
+      <div class="stat"><div class="n" style="color:${errs?'#f85149':'#3fb950'}">${errs}</div><div class="l">Erros</div></div>
+      <div class="stat"><div class="n" style="color:${warns?'#e3b341':'#3fb950'}">${warns}</div><div class="l">Avisos</div></div>
+      <div class="stat"><div class="n">${encontrados.length}</div><div class="l">Total</div></div>
+    </div>`;
+
+  if(encontrados.length===0&&naoRec.length===0){
+    h+=`<div class="card ok"><div class="titulo">✅ Nenhum erro reconhecido</div><div class="trad">O log não contém erros conhecidos. Pode ser um log de sucesso!</div></div>`;
+  }
+
+  // Resumo de passos
+  if(errs>0){
+    h+=`<div class="resumo"><h3>📋 Por onde começar</h3>`;
+    let passo=1;
+    for(const e of encontrados.filter(x=>x.tipo==='err')){
+      h+=`<div class="passo"><div class="num">${passo++}</div><div>${e.titulo} → ${e.fix}</div></div>`;
+    }
+    h+=`</div>`;
+  }
+
+  // Cards detalhados
+  for(const e of encontrados){
+    const cor=e.tipo==='err'?'#f85149':e.tipo==='warn'?'#e3b341':'#3fb950';
+    const icon=e.tipo==='err'?'❌':e.tipo==='warn'?'⚠️':'✅';
+    h+=`<div class="card ${e.tipo}">
+      <div class="titulo">${icon} ${e.titulo}</div>
+      <div class="orig">${escHtml(e.linha.substring(0,200))}</div>
+      <div class="trad">${typeof e.trad==='function'?e.trad(e.match):e.trad}</div>
+      <div class="fix">${e.fix}</div>
+    </div>`;
+  }
+
+  // Não reconhecidos
+  if(naoRec.length>0){
+    h+=`<div class="card warn">
+      <div class="titulo">⚠️ Linhas com erro não reconhecido</div>
+      <div class="trad">Essas linhas parecem ter erros mas não estão na base de dados:</div>
+      ${naoRec.map(l=>`<div class="orig">${escHtml(l.substring(0,200))}</div>`).join('')}
+      <div class="fix">Cole essas linhas específicas aqui para análise mais detalhada</div>
+    </div>`;
+  }
+
+  h+=`<div class="dica">💡 <b>Dica:</b> Se o erro não foi reconhecido, copie apenas a linha vermelha/destacada do log e cole novamente aqui.</div>`;
+
+  el.innerHTML=h;
+  el.scrollIntoView({behavior:'smooth'});
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function limpar(){document.getElementById('inp').value='';document.getElementById('resultado').style.display='none';}
+
+function colarExemplo(){
+  document.getElementById('inp').value=`> app@1.0.0 build
+> vite build
+
+vite v5.0.0 building for production...
+✓ 142 modules transformed.
+
+> app@1.0.0 electron:build
+> electron-builder --win --x64
+
+  • electron-builder  version=24.9.1
+  • loaded configuration  file=electron-builder.yml
+  
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not resolve com.android.tools.build:gradle:8.0.0.
+
+error TS2307: Cannot find module '@workspace/shared' or its corresponding type declarations.
+
+ENOMEM: not enough memory, 4096MB available
+
+Process completed with exit code 1`;
+  analisar();
+}
+</script>
+</body>
+</html>
