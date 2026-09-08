@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🔧 Analisador Universal de Projetos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',monospace;background:#0d1117;color:#c9d1d9;height:100vh;display:flex;flex-direction:column}
+header{background:#161b22;border-bottom:1px solid #30363d;padding:12px 20px;display:flex;align-items:center;gap:12px}
+header h1{font-size:16px;color:#58a6ff}
+header span{font-size:12px;color:#8b949e}
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR - árvore de arquivos */
+.sidebar{width:280px;min-width:200px;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:10px 12px;border-bottom:1px solid #30363d;display:flex;gap:6px;flex-wrap:wrap}
+.sidebar-header button{font-size:11px;padding:4px 8px;border-radius:4px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer}
+.sidebar-header button:hover{background:#30363d}
+.sidebar-header button.primary{background:#238636;border-color:#238636;color:#fff}
+.file-tree{flex:1;overflow-y:auto;padding:8px 0}
+.tree-item{display:flex;align-items:center;gap:6px;padding:3px 12px;cursor:pointer;font-size:12px;user-select:none}
+.tree-item:hover{background:#21262d}
+.tree-item.active{background:#1f3a5f;color:#58a6ff}
+.tree-item.folder{color:#e3b341}
+.tree-item.file{color:#c9d1d9}
+.tree-item .icon{font-size:13px;flex-shrink:0}
+.tree-item .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-item .size{color:#8b949e;font-size:10px;flex-shrink:0}
+.indent{padding-left:16px}
+
+/* EDITOR central */
+.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.editor-tabs{background:#161b22;border-bottom:1px solid #30363d;display:flex;overflow-x:auto;min-height:36px}
+.tab{padding:8px 14px;font-size:12px;cursor:pointer;border-right:1px solid #30363d;white-space:nowrap;display:flex;align-items:center;gap:6px;color:#8b949e}
+.tab:hover{background:#21262d;color:#c9d1d9}
+.tab.active{background:#0d1117;color:#c9d1d9;border-bottom:2px solid #58a6ff}
+.tab .close{opacity:0.5;font-size:14px}
+.tab .close:hover{opacity:1;color:#f85149}
+.editor-content{flex:1;overflow:hidden;position:relative}
+textarea.code-editor{width:100%;height:100%;background:#0d1117;color:#c9d1d9;border:none;outline:none;padding:16px;font-family:'Fira Code','Cascadia Code',monospace;font-size:13px;line-height:1.6;resize:none;tab-size:2}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#8b949e;gap:12px}
+.welcome h2{color:#58a6ff;font-size:18px}
+.welcome p{font-size:13px;text-align:center;max-width:400px}
+
+/* PAINEL DIREITO - análise */
+.panel{width:320px;min-width:260px;background:#161b22;border-left:1px solid #30363d;display:flex;flex-direction:column;overflow:hidden}
+.panel-tabs{display:flex;border-bottom:1px solid #30363d}
+.panel-tab{flex:1;padding:8px;font-size:11px;text-align:center;cursor:pointer;color:#8b949e;border-bottom:2px solid transparent}
+.panel-tab:hover{color:#c9d1d9}
+.panel-tab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.panel-content{flex:1;overflow-y:auto;padding:12px}
+
+/* Análise */
+.analysis-section{margin-bottom:16px}
+.analysis-section h3{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;margin-bottom:4px;font-size:12px}
+.check-item.ok{background:#0d2818;color:#3fb950}
+.check-item.warn{background:#2d1f00;color:#e3b341}
+.check-item.error{background:#2d0f0f;color:#f85149}
+.check-item .icon{flex-shrink:0;font-size:14px}
+.check-item .info{flex:1}
+.check-item .label{font-weight:600}
+.check-item .detail{color:#8b949e;font-size:11px;margin-top:2px}
+
+/* Botões de geração */
+.gen-btn{width:100%;padding:8px 12px;margin-bottom:6px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;font-size:12px;text-align:left;display:flex;align-items:center;gap:8px}
+.gen-btn:hover{background:#30363d;border-color:#58a6ff}
+.gen-btn .badge{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:10px;background:#238636;color:#fff}
+.gen-btn .badge.warn{background:#9a6700}
+.gen-btn .badge.info{background:#1f6feb}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-box{background:#21262d;border-radius:6px;padding:8px;text-align:center}
+.stat-box .num{font-size:20px;font-weight:700;color:#58a6ff}
+.stat-box .lbl{font-size:10px;color:#8b949e;margin-top:2px}
+
+/* Limpeza Replit */
+.replit-file{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;background:#2d1f00;margin-bottom:4px;font-size:11px;color:#e3b341}
+.replit-file button{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:4px;border:none;background:#9a6700;color:#fff;cursor:pointer}
+.replit-file button:hover{background:#b07800}
+
+/* Drag & Drop */
+.drop-overlay{position:fixed;inset:0;background:rgba(88,166,255,0.1);border:3px dashed #58a6ff;z-index:999;display:none;align-items:center;justify-content:center;font-size:24px;color:#58a6ff}
+.drop-overlay.active{display:flex}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#238636;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:9999;animation:fadeIn 0.3s ease;max-width:300px}
+.toast.error{background:#da3633}
+.toast.warn{background:#9a6700}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+input[type=file]{display:none}
+.drop-zone{border:2px dashed #30363d;border-radius:8px;padding:20px;text-align:center;color:#8b949e;font-size:13px;cursor:pointer;transition:all 0.2s}
+.drop-zone:hover{border-color:#58a6ff;color:#58a6ff;background:#0d1f3c}
+</style>
+</head>
+<body>
+
+<div class="drop-overlay" id="dropOverlay">📂 Solte o arquivo aqui</div>
+
+<header>
+  <span style="font-size:20px">🔧</span>
+  <h1>Analisador Universal de Projetos</h1>
+  <span>Importe ZIP ou pasta → analise → edite → gere arquivos</span>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button onclick="document.getElementById('fileInput').click()" style="padding:6px 12px;background:#1f6feb;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">📂 Importar ZIP</button>
+    <button onclick="document.getElementById('folderInput').click()" style="padding:6px 12px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;cursor:pointer;font-size:12px">📁 Importar Pasta</button>
+    <button onclick="exportProject()" style="padding:6px 12px;background:#238636;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">💾 Exportar ZIP</button>
+  </div>
+</header>
+
+<input type="file" id="fileInput" accept=".zip,.tar,.tar.gz,.tgz" onchange="handleFileInput(this)"/>
+<input type="file" id="folderInput" webkitdirectory multiple onchange="handleFolderInput(this)"/>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <button onclick="expandAll()">▼ Expandir</button>
+      <button onclick="collapseAll()">▶ Recolher</button>
+      <button onclick="filterFiles('')" id="filterBtn">🔍 Filtrar</button>
+      <button class="primary" onclick="runAnalysis()" id="analyzeBtn" style="display:none">⚡ Analisar</button>
+    </div>
+    <div style="padding:4px 8px;display:none" id="filterBox">
+      <input id="filterInput" type="text" placeholder="Filtrar arquivos..." oninput="filterFiles(this.value)"
+        style="width:100%;padding:4px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;font-size:12px"/>
+    </div>
+    <div class="file-tree" id="fileTree">
+      <div style="padding:20px;text-align:center;color:#8b949e;font-size:12px">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        Importe um projeto para começar
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor-area">
+    <div class="editor-tabs" id="editorTabs"></div>
+    <div class="editor-content" id="editorContent">
+      <div class="welcome">
+        <div style="font-size:48px">🔧</div>
+        <h2>Analisador Universal</h2>
+        <p>Importe um ZIP ou pasta para começar.<br/>
+        Clique em qualquer arquivo para editar.<br/>
+        Use o painel direito para analisar e gerar arquivos.</p>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="document.getElementById('fileInput').click()" style="padding:8px 16px;background:#1f6feb;border:none;border-radius:6px;color:#fff;cursor:pointer">📂 Importar ZIP</button>
+          <button onclick="document.getElementById('folderInput').click()" style="padding:8px 16px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;cursor:pointer">📁 Importar Pasta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL DIREITO -->
+  <div class="panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="switchPanel('analysis')">🔍 Análise</div>
+      <div class="panel-tab" onclick="switchPanel('generate')">⚙️ Gerar</div>
+      <div class="panel-tab" onclick="switchPanel('clean')">🧹 Limpar</div>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <div style="color:#8b949e;font-size:12px;text-align:center;padding:20px">
+        <div style="font-size:32px;margin-bottom:8px">🔍</div>
+        Importe um projeto e clique em<br/><strong style="color:#58a6ff">⚡ Analisar</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let PROJECT = {};        // { path: { content: string, modified: bool } }
+let OPEN_TABS = [];      // [ path ]
+let ACTIVE_TAB = null;
+let ANALYSIS = null;
+let PANEL = 'analysis';
+let TREE_STATE = {};     // { folderPath: expanded }
+let FILTER = '';
+
+// ═══════════════════════════════════════════════════════
+// IMPORTAÇÃO
+// ═══════════════════════════════════════════════════════
+async function handleFileInput(input) {
+  const file = input.files[0];
+  if (!file) return;
+  showToast('⏳ Lendo arquivo...');
+  try {
+    if (file.name.endsWith('.zip')) {
+      await importZip(file);
+    } else {
+      showToast('Use arquivos .zip por enquanto', 'warn');
+    }
+  } catch(e) {
+    showToast('Erro: ' + e.message, 'error');
+  }
+  input.value = '';
+}
+
+async function importZip(file) {
+  const { default: JSZip } = await loadJSZip();
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  PROJECT = {};
+  let count = 0;
+  const entries = Object.entries(zip.files);
+  // Detecta prefixo comum
+  const paths = entries.filter(([,v])=>!v.dir).map(([k])=>k);
+  const tops = [...new Set(paths.map(k=>k.split('/')[0]))];
+  const prefix = tops.length === 1 ? tops[0] + '/' : '';
+  for (const [path, entry] of entries) {
+    if (entry.dir) continue;
+    const rel = prefix ? path.slice(prefix.length) : path;
+    if (!rel) continue;
+    try {
+      const buf2 = await entry.async('arraybuffer');
+      const text = tryDecodeText(buf2);
+      PROJECT[rel] = { content: text, binary: text === null, raw: buf2, modified: false };
+      count++;
+    } catch {}
+  }
+  showToast(`✅ ${count} arquivos importados!`);
+  renderTree();
+  document.getElementById('analyzeBtn').style.display = 'block';
+  document.getElementById('filterBtn').style.display = 'block';
+  ANALYSIS = null;
+  runAnalysis();
+}
+
+function handleFolderInput(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  PROJECT = {};
+  let count = 0;
+  const readers = files.map(file => new Promise(resolve => {
+    const reader = new FileReader();
+    const path = file.webkitRelativePath.replace(/^[^/]+\//, '');
+    if (!path) { resolve(); return; }
+    reader.onload = e => {
+      const buf = e.target.result;
+      const text = tryDecodeText(buf);
+      PROJECT[path] = { content: text, binary: text === null, raw: buf, modified: false };
+      count++;
+      resolve();
+    };
+    reader.readAsArrayBuffer(file);
+  }));
+  Promise.all(readers).then(() => {
+    showToast(`✅ ${count} arquivos importados!`);
+    renderTree();
+    document.getElementById('analyzeBtn').style.display = 'block';
+    ANALYSIS = null;
+    runAnalysis();
+  });
+  input.value = '';
+}
+
+function tryDecodeText(buf) {
+  try {
+    const bytes = new Uint8Array(buf);
+    // Detecta binário pelos primeiros bytes
+    for (let i = 0; i < Math.min(512, bytes.length); i++) {
+      if (bytes[i] === 0) return null; // binário
+    }
+    return new TextDecoder('utf-8', { fatal: true }).decode(buf);
+  } catch {
+    try { return new TextDecoder('latin1').decode(buf); } catch { return null; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ÁRVORE DE ARQUIVOS
+// ═══════════════════════════════════════════════════════
+function renderTree() {
+  const tree = document.getElementById('fileTree');
+  const paths = Object.keys(PROJECT).filter(p => !FILTER || p.toLowerCase().includes(FILTER.toLowerCase())).sort();
+  if (!paths.length) {
+    tree.innerHTML = '<div style="padding:20px;text-align:center;color:#8b949e;font-size:12px">Nenhum arquivo encontrado</div>';
+    return;
+  }
+  // Constrói estrutura de pastas
+  const root = buildTree(paths);
+  tree.innerHTML = renderNode(root, 0);
+}
+
+function buildTree(paths) {
+  const root = { type: 'folder', name: '', children: {} };
+  for (const p of paths) {
+    const parts = p.split('/');
+    let node = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!node.children[part]) node.children[part] = { type: 'folder', name: part, children: {}, path: parts.slice(0,i+1).join('/') };
+      node = node.children[part];
+    }
+    const fname = parts[parts.length - 1];
+    node.children[fname] = { type: 'file', name: fname, path: p };
+  }
+  return root;
+}
+
+function renderNode(node, depth) {
+  let html = '';
+  const sorted = Object.values(node.children).sort((a,b) => {
+    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  for (const child of sorted) {
+    const indent = depth * 16;
+    if (child.type === 'folder') {
+      const expanded = TREE_STATE[child.path] !== false;
+      const icon = expanded ? '📂' : '📁';
+      html += `<div class="tree-item folder" style="padding-left:${12+indent}px" onclick="toggleFolder('${child.path}')">
+        <span class="icon">${icon}</span>
+        <span class="name">${child.name}</span>
+        <span style="color:#8b949e;font-size:10px">${countFiles(child)}</span>
+      </div>`;
+      if (expanded) html += renderNode(child, depth + 1);
+    } else {
+      const isActive = ACTIVE_TAB === child.path;
+      const isModified = PROJECT[child.path]?.modified ? ' ●' : '';
+      const isBinary = PROJECT[child.path]?.binary;
+      const fileIcon = getFileIcon(child.name);
+      const size = formatSize(PROJECT[child.path]?.raw?.byteLength || PROJECT[child.path]?.content?.length || 0);
+      html += `<div class="tree-item file ${isActive?'active':''}" style="padding-left:${12+indent}px" onclick="openFile('${child.path.replace(/'/g,"\\'")}')">
+        <span class="icon">${fileIcon}</span>
+        <span class="name">${child.name}${isModified}</span>
+        <span class="size">${isBinary?'bin':size}</span>
+      </div>`;
+    }
+  }
+  return html;
+}
+
+function countFiles(node) {
+  let n = 0;
+  for (const c of Object.values(node.children)) {
+    if (c.type === 'file') n++;
+    else n += countFiles(c);
+  }
+  return n;
+}
+
+function toggleFolder(path) {
+  TREE_STATE[path] = TREE_STATE[path] === false ? true : false;
+  renderTree();
+}
+
+function expandAll() {
+  Object.keys(PROJECT).forEach(p => {
+    const parts = p.split('/');
+    for (let i = 1; i < parts.length; i++) TREE_STATE[parts.slice(0,i).join('/')] = true;
+  });
+  renderTree();
+}
+
+function collapseAll() {
+  Object.keys(TREE_STATE).forEach(k => TREE_STATE[k] = false);
+  renderTree();
+}
+
+function filterFiles(val) {
+  FILTER = val;
+  const box = document.getElementById('filterBox');
+  if (val === '' && box.style.display !== 'none') {
+    // toggle
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  } else {
+    box.style.display = 'block';
+  }
+  renderTree();
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop()?.toLowerCase();
+  const icons = {
+    html:'🌐', htm:'🌐', css:'🎨', js:'📜', ts:'📘', tsx:'⚛️', jsx:'⚛️',
+    json:'📋', md:'📝', txt:'📄', yml:'⚙️', yaml:'⚙️', sh:'💻',
+    png:'🖼️', jpg:'🖼️', jpeg:'🖼️', svg:'🎭', ico:'🎯', gif:'🖼️',
+    zip:'📦', apk:'📱', exe:'🖥️', dmg:'🍎',
+    gradle:'🔨', xml:'📋', java:'☕', kt:'🎯', ts:'📘',
+    env:'🔑', gitignore:'👁️', lock:'🔒',
+  };
+  return icons[ext] || '📄';
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0B';
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + 'KB';
+  return (bytes/1024/1024).toFixed(1) + 'MB';
+}
+
+// ═══════════════════════════════════════════════════════
+// EDITOR DE ARQUIVOS
+// ═══════════════════════════════════════════════════════
+function openFile(path) {
+  const file = PROJECT[path];
+  if (!file) return;
+  if (file.binary) { showToast('Arquivo binário — não editável', 'warn'); return; }
+  if (!OPEN_TABS.includes(path)) {
+    OPEN_TABS.push(path);
+    if (OPEN_TABS.length > 10) {
+      const removed = OPEN_TABS.shift();
+      if (removed !== path) { /* ok */ }
+    }
+  }
+  ACTIVE_TAB = path;
+  renderTabs();
+  renderEditor();
+  renderTree();
+}
+
+function closeTab(path, e) {
+  e.stopPropagation();
+  const idx = OPEN_TABS.indexOf(path);
+  OPEN_TABS.splice(idx, 1);
+  if (ACTIVE_TAB === path) {
+    ACTIVE_TAB = OPEN_TABS[Math.min(idx, OPEN_TABS.length-1)] || null;
+  }
+  renderTabs();
+  renderEditor();
+  renderTree();
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('editorTabs');
+  tabs.innerHTML = OPEN_TABS.map(p => {
+    const name = p.split('/').pop();
+    const mod = PROJECT[p]?.modified ? '●' : '×';
+    const modColor = PROJECT[p]?.modified ? '#e3b341' : '';
+    return `<div class="tab ${p===ACTIVE_TAB?'active':''}" onclick="openFile('${p.replace(/'/g,"\\'")}')">
+      <span>${getFileIcon(name)} ${name}</span>
+      <span class="close" style="color:${modColor}" onclick="closeTab('${p.replace(/'/g,"\\'")}',event)">${mod}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderEditor() {
+  const content = document.getElementById('editorContent');
+  if (!ACTIVE_TAB || !PROJECT[ACTIVE_TAB]) {
+    content.innerHTML = `<div class="welcome"><div style="font-size:48px">📄</div><p>Selecione um arquivo na árvore</p></div>`;
+    return;
+  }
+  const file = PROJECT[ACTIVE_TAB];
+  const escaped = (file.content || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;padding:4px 12px;background:#161b22;border-bottom:1px solid #30363d;font-size:11px;color:#8b949e;gap:12px">
+      <span>${ACTIVE_TAB}</span>
+      <span>${formatSize(file.content?.length||0)}</span>
+      ${file.modified ? '<span style="color:#e3b341">● Modificado</span>' : ''}
+      <button onclick="saveFile('${ACTIVE_TAB.replace(/'/g,"\\'")}',this)" style="margin-left:auto;padding:2px 8px;background:#238636;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:11px">💾 Salvar</button>
+      <button onclick="cleanReplitInFile('${ACTIVE_TAB.replace(/'/g,"\\'")}',this)" style="padding:2px 8px;background:#9a6700;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:11px">🧹 Limpar Replit</button>
+    </div>
+    <textarea class="code-editor" id="codeEditor" onInput="markModified('${ACTIVE_TAB.replace(/'/g,"\\'")}',this)">${escaped}</textarea>`;
+}
+
+function markModified(path, textarea) {
+  PROJECT[path].content = textarea.value;
+  PROJECT[path].modified = true;
+  renderTabs();
+}
+
+function saveFile(path) {
+  PROJECT[path].modified = false;
+  renderTabs();
+  renderTree();
+  showToast('💾 Arquivo salvo!');
+}
+
+// ═══════════════════════════════════════════════════════
+// ANÁLISE DO PROJETO
+// ═══════════════════════════════════════════════════════
+function runAnalysis() {
+  const paths = Object.keys(PROJECT);
+  if (!paths.length) return;
+
+  const has = (pattern) => {
+    if (typeof pattern === 'string') return paths.some(p => p.endsWith(pattern) || p.includes(pattern));
+    return paths.some(p => pattern.test(p));
+  };
+  const get = (pattern) => paths.find(p => typeof pattern === 'string' ? (p.endsWith(pattern) || p === pattern) : pattern.test(p));
+
+  // Detecta tipo de projeto
+  const hasPackageJson = has('package.json');
+  const hasVite = has('vite.config') || has('vite.config.ts') || has('vite.config.js');
+  const hasReact = hasPackageJson && (() => { try { const p = JSON.parse(PROJECT[get('package.json')]?.content||'{}'); return !!(p.dependencies?.react || p.devDependencies?.react); } catch { return false; } })();
+  const hasExpo = has('app.json') || has('app.config.js') || has('expo');
+  const hasCapacitor = has('capacitor.config');
+  const hasEAS = has('eas.json');
+  const hasManifest = has('manifest.json');
+  const hasSW = has('sw.js') || has('service-worker.js') || has('serviceWorker');
+  const hasWorkflow = has('.github/workflows');
+  const hasIndexHtml = has('index.html');
+  const hasDistFolder = paths.some(p => p.startsWith('dist/') || p.startsWith('www/') || p.startsWith('build/'));
+  const hasAndroid = paths.some(p => p.startsWith('android/'));
+  const hasIcons = has('icon') || has('favicon') || paths.some(p => /\.(png|svg|ico)$/.test(p));
+  const hasEnvFile = has('.env') || has('.env.local');
+  const hasReplitRefs = paths.some(p => {
+    const c = PROJECT[p]?.content || '';
+    return /replit\.dev|repl\.co|REPL_ID|REPLIT/i.test(c);
+  });
+
+  // Detecta workspace/monorepo
+  let isWorkspace = false;
+  try {
+    const pkg = JSON.parse(PROJECT[get('package.json')]?.content || '{}');
+    isWorkspace = pkg.name?.includes('@workspace') || pkg.name?.includes('/');
+  } catch {}
+
+  let projectType = 'HTML Puro';
+  if (hasExpo) projectType = 'Expo / React Native';
+  else if (hasReact && hasVite) projectType = 'React + Vite';
+  else if (hasReact) projectType = 'React';
+  else if (hasPackageJson) projectType = 'Node.js / Web';
+
+  ANALYSIS = {
+    projectType, paths, hasPackageJson, hasVite, hasReact, hasExpo,
+    hasCapacitor, hasEAS, hasManifest, hasSW, hasWorkflow, hasIndexHtml,
+    hasDistFolder, hasAndroid, hasIcons, hasEnvFile, hasReplitRefs, isWorkspace,
+    totalFiles: paths.length,
+    totalSize: paths.reduce((s,p) => s + (PROJECT[p]?.content?.length||0), 0),
+  };
+
+  renderPanel();
+  switchPanel('analysis');
+}
+
+// ═══════════════════════════════════════════════════════
+// PAINEL DIREITO
+// ═══════════════════════════════════════════════════════
+function switchPanel(tab) {
+  PANEL = tab;
+  document.querySelectorAll('.panel-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['analysis','generate','clean'][i] === tab);
+  });
+  renderPanel();
+}
+
+function renderPanel() {
+  const el = document.getElementById('panelContent');
+  if (!ANALYSIS) {
+    el.innerHTML = '<div style="color:#8b949e;font-size:12px;text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px">🔍</div>Importe um projeto e clique em<br/><strong style="color:#58a6ff">⚡ Analisar</strong></div>';
+    return;
+  }
+  if (PANEL === 'analysis') renderAnalysisPanel(el);
+  else if (PANEL === 'generate') renderGeneratePanel(el);
+  else if (PANEL === 'clean') renderCleanPanel(el);
+}
+
+function renderAnalysisPanel(el) {
+  const a = ANALYSIS;
+  const checks = [];
+
+  // Tipo
+  checks.push({ ok: true, label: `Tipo: ${a.projectType}`, detail: `${a.totalFiles} arquivos · ${formatSize(a.totalSize)}` });
+
+  // Problemas críticos
+  if (a.isWorkspace) checks.push({ ok: false, label: 'Monorepo detectado', detail: 'package.json tem @workspace/ — não roda standalone' });
+  if (a.hasReplitRefs) checks.push({ ok: 'warn', label: 'Referências ao Replit', detail: 'Arquivos com replit.dev / REPL_ID detectados' });
+
+  // Estrutura básica
+  checks.push({ ok: a.hasIndexHtml, label: 'index.html', detail: a.hasIndexHtml ? 'Encontrado' : 'Faltando — necessário' });
+  checks.push({ ok: a.hasPackageJson, label: 'package.json', detail: a.hasPackageJson ? 'Encontrado' : 'Faltando' });
+
+  // PWA
+  checks.push({ ok: a.hasManifest, label: 'manifest.json', detail: a.hasManifest ? 'PWA configurado' : 'Faltando — necessário para PWA/APK' });
+  checks.push({ ok: a.hasSW ? true : 'warn', label: 'Service Worker', detail: a.hasSW ? 'Encontrado' : 'Faltando — necessário para offline' });
+  checks.push({ ok: a.hasIcons ? true : 'warn', label: 'Ícones', detail: a.hasIcons ? 'Encontrados' : 'Faltando ícones 192x192 e 512x512' });
+
+  // Build
+  checks.push({ ok: a.hasVite ? true : 'warn', label: 'Vite config', detail: a.hasVite ? 'Encontrado' : 'Faltando — necessário para build' });
+  checks.push({ ok: a.hasDistFolder ? true : 'warn', label: 'Pasta dist/www', detail: a.hasDistFolder ? 'Encontrada' : 'Não encontrada — rode npm run build' });
+
+  // Android
+  checks.push({ ok: a.hasCapacitor ? true : 'warn', label: 'Capacitor config', detail: a.hasCapacitor ? 'Configurado' : 'Faltando — necessário para APK' });
+  checks.push({ ok: a.hasAndroid ? true : 'warn', label: 'Pasta android/', detail: a.hasAndroid ? 'Encontrada' : 'Faltando — gere com Capacitor' });
+  checks.push({ ok: a.hasWorkflow ? true : 'warn', label: 'GitHub Actions', detail: a.hasWorkflow ? 'Workflow encontrado' : 'Faltando — necessário para build automático' });
+
+  // EAS
+  checks.push({ ok: a.hasEAS ? true : 'warn', label: 'eas.json', detail: a.hasEAS ? 'EAS configurado' : 'Opcional — para build via Expo EAS' });
+
+  const html = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${a.totalFiles}</div><div class="lbl">Arquivos</div></div>
+      <div class="stat-box"><div class="num">${formatSize(a.totalSize)}</div><div class="lbl">Tamanho</div></div>
+    </div>
+    <div class="analysis-section">
+      <h3>Diagnóstico</h3>
+      ${checks.map(c => `
+        <div class="check-item ${c.ok===true?'ok':c.ok==='warn'?'warn':'error'}">
+          <span class="icon">${c.ok===true?'✅':c.ok==='warn'?'⚠️':'❌'}</span>
+          <div class="info">
+            <div class="label">${c.label}</div>
+            <div class="detail">${c.detail}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <button class="gen-btn" onclick="switchPanel('generate')" style="background:#1f3a5f;border-color:#1f6feb">
+      ⚙️ Ver arquivos para gerar <span class="badge info">→</span>
+    </button>
+    ${a.hasReplitRefs ? `<button class="gen-btn" onclick="switchPanel('clean')" style="background:#2d1f00;border-color:#9a6700">
+      🧹 Limpar referências Replit <span class="badge warn">!</span>
+    </button>` : ''}
+  `;
+  el.innerHTML = html;
+}
+
+function renderGeneratePanel(el) {
+  const a = ANALYSIS;
+  const btns = [];
+
+  if (!a.hasManifest) btns.push({ icon:'📋', label:'Gerar manifest.json', detail:'PWA obrigatório', fn:'genManifest', badge:'falta' });
+  if (!a.hasSW) btns.push({ icon:'⚙️', label:'Gerar service-worker.js', detail:'Cache offline', fn:'genServiceWorker', badge:'falta' });
+  if (!a.hasCapacitor) btns.push({ icon:'📱', label:'Gerar capacitor.config.ts', detail:'Para gerar APK', fn:'genCapacitorConfig', badge:'falta' });
+  if (!a.hasWorkflow) btns.push({ icon:'🔄', label:'Gerar workflow APK', detail:'GitHub Actions', fn:'genWorkflowApk', badge:'falta' });
+  if (!a.hasWorkflow) btns.push({ icon:'🌐', label:'Gerar workflow Pages', detail:'Deploy GitHub Pages', fn:'genWorkflowPages', badge:'falta' });
+  if (a.isWorkspace) btns.push({ icon:'📦', label:'Corrigir package.json', detail:'Remove @workspace/', fn:'fixPackageJson', badge:'corrigir' });
+
+  // Sempre disponíveis
+  btns.push({ icon:'🔄', label:'Gerar workflow APK', detail:'GitHub Actions (Capacitor)', fn:'genWorkflowApk', badge:'gerar' });
+  btns.push({ icon:'🌐', label:'Gerar workflow Pages', detail:'Deploy GitHub Pages', fn:'genWorkflowPages', badge:'gerar' });
+  btns.push({ icon:'📦', label:'Gerar tsconfig.json', detail:'Standalone sem @workspace/', fn:'genTsconfig', badge:'gerar' });
+  btns.push({ icon:'📋', label:'Gerar manifest.json', detail:'PWA completo', fn:'genManifest', badge:'gerar' });
+  btns.push({ icon:'⚙️', label:'Gerar service-worker.js', detail:'Cache offline', fn:'genServiceWorker', badge:'gerar' });
+  btns.push({ icon:'📱', label:'Gerar capacitor.config.ts', detail:'Config Android', fn:'genCapacitorConfig', badge:'gerar' });
+  btns.push({ icon:'📋', label:'Gerar eas.json', detail:'Expo EAS Build', fn:'genEasJson', badge:'gerar' });
+
+  el.innerHTML = `
+    <div class="analysis-section">
+      <h3>Gerar Arquivos</h3>
+      <p style="font-size:11px;color:#8b949e;margin-bottom:10px">Os arquivos gerados são adicionados ao projeto e podem ser editados antes de exportar.</p>
+      ${btns.map(b => `
+        <button class="gen-btn" onclick="${b.fn}()">
+          ${b.icon} ${b.label}
+          <div style="flex:1;font-size:10px;color:#8b949e;margin-left:4px">${b.detail}</div>
+          <span class="badge ${b.badge==='falta'?'':'info'}">${b.badge}</span>
+        </button>`).join('')}
+    </div>
+    <div class="analysis-section" style="margin-top:16px">
+      <h3>Exportar</h3>
+      <button class="gen-btn" onclick="exportProject()" style="background:#0d2818;border-color:#238636">
+        💾 Baixar projeto corrigido (.zip) <span class="badge">ZIP</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderCleanPanel(el) {
+  const a = ANALYSIS;
+  const replitFiles = Object.keys(PROJECT).filter(p => {
+    const c = PROJECT[p]?.content || '';
+    return /replit\.dev|repl\.co|REPL_ID|REPLIT|cartographer|vite-plugin-dev-banner|vite-plugin-runtime-error/i.test(c);
+  });
+
+  el.innerHTML = `
+    <div class="analysis-section">
+      <h3>Limpeza de Código Replit</h3>
+      <p style="font-size:11px;color:#8b949e;margin-bottom:10px">Remove URLs, variáveis e plugins do Replit que impedem o app de funcionar fora do servidor.</p>
+      ${replitFiles.length === 0
+        ? '<div style="color:#3fb950;font-size:12px;padding:10px;background:#0d2818;border-radius:6px">✅ Nenhuma referência ao Replit encontrada!</div>'
+        : `<button class="gen-btn" onclick="cleanAllReplit()" style="background:#2d1f00;border-color:#9a6700;margin-bottom:12px">
+            🧹 Limpar TODOS os arquivos <span class="badge warn">${replitFiles.length}</span>
+          </button>
+          ${replitFiles.map(p => `
+            <div class="replit-file">
+              <span>${getFileIcon(p.split('/').pop())} ${p}</span>
+              <button onclick="cleanReplitInFile('${p.replace(/'/g,"\\'")}')">Limpar</button>
+            </div>`).join('')}`
+      }
+    </div>
+    <div class="analysis-section" style="margin-top:16px">
+      <h3>Limpeza Geral</h3>
+      <button class="gen-btn" onclick="removeNodeModules()">
+        🗑️ Remover node_modules/ <span class="badge warn">pesado</span>
+      </button>
+      <button class="gen-btn" onclick="removeDist()">
+        🗑️ Remover dist/ build/ www/ <span class="badge info">rebuild</span>
+      </button>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// LIMPEZA REPLIT
+// ═══════════════════════════════════════════════════════
+const REPLIT_PATTERNS = [
+  [/https?:\/\/[a-z0-9-]+\.replit\.dev[^\s"'`)]*/gi, ''],
+  [/https?:\/\/[a-z0-9-]+\.repl\.co[^\s"'`)]*/gi, ''],
+  [/"REPLIT_DEV_DOMAIN"\s*:\s*"[^"]*"/gi, '"REPLIT_DEV_DOMAIN":""'],
+  [/"REPL_ID"\s*:\s*"[^"]*"/gi, '"REPL_ID":""'],
+  [/process\.env\.REPL_ID/g, '""'],
+  [/process\.env\.REPLIT_DEV_DOMAIN/g, '""'],
+  [/import\.meta\.env\.REPLIT[A-Z_]*/g, '""'],
+  [/["']vite-plugin-dev-banner["']/g, ''],
+  [/["']vite-plugin-runtime-error-modal["']/g, ''],
+  [/import.*vite-plugin-dev-banner.*\n/g, ''],
+  [/import.*vite-plugin-runtime-error-modal.*\n/g, ''],
+  [/cartographer[^\n]*/g, ''],
+];
+
+function cleanReplitInFile(path) {
+  let content = PROJECT[path]?.content || '';
+  let changed = false;
+  for (const [pattern, replacement] of REPLIT_PATTERNS) {
+    const newContent = content.replace(pattern, replacement);
+    if (newContent !== content) { content = newContent; changed = true; }
+  }
+  if (changed) {
+    PROJECT[path].content = content;
+    PROJECT[path].modified = true;
+    if (ACTIVE_TAB === path) renderEditor();
+    renderTree();
+    showToast(`🧹 Limpeza feita em ${path.split('/').pop()}`);
+  } else {
+    showToast('Nenhuma referência encontrada neste arquivo', 'warn');
+  }
+  runAnalysis();
+}
+
+function cleanAllReplit() {
+  const files = Object.keys(PROJECT).filter(p => {
+    const c = PROJECT[p]?.content || '';
+    return /replit\.dev|repl\.co|REPL_ID|REPLIT|cartographer|vite-plugin-dev-banner|vite-plugin-runtime-error/i.test(c);
+  });
+  files.forEach(p => cleanReplitInFile(p));
+  showToast(`🧹 ${files.length} arquivos limpos!`);
+}
+
+function removeNodeModules() {
+  const keys = Object.keys(PROJECT).filter(p => p.startsWith('node_modules/'));
+  keys.forEach(k => delete PROJECT[k]);
+  showToast(`🗑️ ${keys.length} arquivos removidos`);
+  renderTree();
+  runAnalysis();
+}
+
+function removeDist() {
+  const keys = Object.keys(PROJECT).filter(p => /^(dist|build|www)\//.test(p));
+  keys.forEach(k => delete PROJECT[k]);
+  showToast(`🗑️ ${keys.length} arquivos removidos`);
+  renderTree();
+  runAnalysis();
+}
+
+// ═══════════════════════════════════════════════════════
+// GERADORES DE ARQUIVO
+// ═══════════════════════════════════════════════════════
+function addFile(path, content) {
+  PROJECT[path] = { content, modified: true, binary: false };
+  renderTree();
+  openFile(path);
+  runAnalysis();
+  showToast(`✅ ${path} gerado!`);
+}
+
+function getAppName() {
+  try {
+    const pkg = JSON.parse(PROJECT[Object.keys(PROJECT).find(p=>p.endsWith('package.json'))]?.content||'{}');
+    return pkg.name?.replace(/@[^/]+\//,'') || 'meu-app';
+  } catch { return 'meu-app'; }
+}
+
+function genManifest() {
+  const name = getAppName();
+  addFile('manifest.json', JSON.stringify({
+    name: name, short_name: name,
+    description: `Aplicativo ${name}`,
+    start_url: '/', display: 'standalone',
+    background_color: '#0f172a', theme_color: '#6366f1',
+    orientation: 'portrait',
+    icons: [
+      { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+    ]
+  }, null, 2));
+}
+
+function genServiceWorker() {
+  addFile('sw.js', `/* Service Worker */
+const CACHE = 'app-v1';
+const PRECACHE = ['/', '/index.html', '/manifest.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});`);
+}
+
+function genCapacitorConfig() {
+  const name = getAppName();
+  const id = `com.example.${name.replace(/[^a-z0-9]/gi,'').toLowerCase()}`;
+  addFile('capacitor.config.ts', `import type { CapacitorConfig } from '@capacitor/cli';
+const config: CapacitorConfig = {
+  appId: '${id}',
+  appName: '${name}',
+  webDir: 'dist',
+  server: { androidScheme: 'https' },
+};
+export default config;`);
+}
+
+function genWorkflowApk() {
+  addFile('.github/workflows/build-apk.yml', `name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web
+        run: npm run build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor CLI
+        run: npm install -g @capacitor/cli
+
+      - name: Capacitor sync
+        run: npx cap sync android
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk`);
+}
+
+function genWorkflowPages() {
+  addFile('.github/workflows/deploy-pages.yml', `name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4`);
+}
+
+function genTsconfig() {
+  addFile('tsconfig.json', JSON.stringify({
+    compilerOptions: {
+      target: 'ES2020', useDefineForClassFields: true,
+      lib: ['ES2020','DOM','DOM.Iterable'],
+      module: 'ESNext', skipLibCheck: true,
+      moduleResolution: 'bundler', allowImportingTsExtensions: true,
+      resolveJsonModule: true, isolatedModules: true,
+      noEmit: true, jsx: 'react-jsx',
+      strict: true, noUnusedLocals: true,
+      noUnusedParameters: true, noFallthroughCasesInSwitch: true,
+      baseUrl: '.', paths: { '@/*': ['./src/*'] }
+    },
+    include: ['src', '*.ts', '*.tsx'],
+    exclude: ['node_modules', 'dist']
+  }, null, 2));
+}
+
+function genEasJson() {
+  addFile('eas.json', JSON.stringify({
+    cli: { version: '>= 10.0.0' },
+    build: {
+      development: { developmentClient: true, distribution: 'internal' },
+      preview: { distribution: 'internal' },
+      production: {}
+    },
+    submit: { production: {} }
+  }, null, 2));
+}
+
+function fixPackageJson() {
+  const path = Object.keys(PROJECT).find(p => p.endsWith('package.json') && !p.includes('node_modules'));
+  if (!path) { showToast('package.json não encontrado', 'error'); return; }
+  try {
+    const pkg = JSON.parse(PROJECT[path].content);
+    if (pkg.name?.includes('/')) pkg.name = pkg.name.split('/').pop();
+    if (pkg.name?.includes('@')) pkg.name = pkg.name.replace(/@[^/]+\//, '');
+    PROJECT[path].content = JSON.stringify(pkg, null, 2);
+    PROJECT[path].modified = true;
+    openFile(path);
+    runAnalysis();
+    showToast('✅ package.json corrigido!');
+  } catch(e) {
+    showToast('Erro ao corrigir: ' + e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORTAR ZIP
+// ═══════════════════════════════════════════════════════
+async function exportProject() {
+  if (!Object.keys(PROJECT).length) { showToast('Nenhum projeto carregado', 'warn'); return; }
+  showToast('⏳ Gerando ZIP...');
+  const { default: JSZip } = await loadJSZip();
+  const zip = new JSZip();
+  for (const [path, file] of Object.entries(PROJECT)) {
+    if (file.binary && file.raw) zip.file(path, file.raw);
+    else if (file.content) zip.file(path, file.content);
+  }
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'projeto-corrigido.zip'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ ZIP baixado!');
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════════════════
+document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('dropOverlay').classList.add('active'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.getElementById('dropOverlay').classList.remove('active'); });
+document.addEventListener('drop', async e => {
+  e.preventDefault();
+  document.getElementById('dropOverlay').classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (file?.name.endsWith('.zip')) await importZip(file);
+  else showToast('Solte um arquivo .zip', 'warn');
+});
+
+// ═══════════════════════════════════════════════════════
+// JSZIP LOADER
+// ═══════════════════════════════════════════════════════
+let _jszipCache = null;
+async function loadJSZip() {
+  if (_jszipCache) return _jszipCache;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    s.onload = () => { _jszipCache = { default: window.JSZip }; resolve(_jszipCache); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+let _toastTimer = null;
+function showToast(msg, type = 'ok') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  if (_toastTimer) clearTimeout(_toastTimer);
+  const el = document.createElement('div');
+  el.className = `toast ${type === 'error' ? 'error' : type === 'warn' ? 'warn' : ''}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  _toastTimer = setTimeout(() => el.remove(), 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// ATALHOS DE TECLADO
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (ACTIVE_TAB) saveFile(ACTIVE_TAB);
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+    e.preventDefault();
+    if (ACTIVE_TAB) closeTab(ACTIVE_TAB, { stopPropagation: ()=>{} });
+  }
+});
+</script>
+</body>
+</html>
