@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Chat IA Pessoal</title>
+    <style>
+        /* ESTILOS VISUAIS - TEMA ESCURO PROFISSIONAL */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* BARRA LATERAL (CONFIGURAÇÕES) */
+        .sidebar {
+            width: 300px;
+            background-color: #1e1e1e;
+            border-right: 1px solid #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar h2 {
+            color: #4CAF50;
+            font-size: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .config-box {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .config-box label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .config-box input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #121212;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn-salvar {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-salvar:hover {
+            background-color: #45a049;
+        }
+
+        /* ÁREA PRINCIPAL DO CHAT */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #121212;
+        }
+
+        .chat-historico {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* BALÕES DE MENSAGEM */
+        .mensagem {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 10px;
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+
+        .mensagem.usuario {
+            background-color: #2b5278;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .mensagem.ia {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+            border: 1px solid #333;
+        }
+
+        /* ÁREA DE DIGITAR MENSAGEM */
+        .chat-input-area {
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: #121212;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .btn-enviar {
+            padding: 0 25px;
+            background-color: #2b5278;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-enviar:hover {
+            background-color: #1f3d5a;
+        }
+
+        /* MENSAGEM DE SISTEMA */
+        .sistema-msg {
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA LATERAL -->
+    <div class="sidebar">
+        <h2>Meu Chat IA</h2>
+        
+        <div class="config-box">
+            <label for="apiKey">Chave da API (Gemini):</label>
+            <input type="password" id="apiKey" placeholder="Cole sua chave aqui...">
+            <button class="btn-salvar" onclick="salvarChave()">Salvar Chave</button>
+            <div id="status-chave" class="sistema-msg"></div>
+        </div>
+
+        <div class="config-box" style="margin-top: auto; text-align: center; color: #666; font-size: 0.8rem;">
+            Ambiente 100% Privado<br>Nenhum dado sai do seu PC
+        </div>
+    </div>
+
+    <!-- ÁREA DO CHAT -->
+    <div class="chat-container">
+        <div class="chat-historico" id="historico">
+            <!-- Mensagem de boas vindas -->
+            <div class="mensagem ia">
+                Olá! Eu sou o seu ambiente de Chat Privado. Salve sua chave de API na barra lateral e digite uma mensagem abaixo para começarmos.
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="entradaMensagem" placeholder="Digite sua mensagem aqui..." onkeypress="verificarEnter(event)">
+            <button class="btn-enviar" onclick="enviarMensagem()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        /* LÓGICA DO SISTEMA (JAVASCRIPT) */
+
+        // Quando a página carrega, verifica se já tem uma chave salva
+        window.onload = function() {
+            var chaveSalva = localStorage.getItem("minhaChaveAPI");
+            if (chaveSalva) {
+                document.getElementById("apiKey").value = chaveSalva;
+                document.getElementById("status-chave").innerText = "Chave carregada com sucesso!";
+                document.getElementById("status-chave").style.color = "#4CAF50";
+            }
+        };
+
+        // Função para salvar a chave no computador do usuário
+        function salvarChave() {
+            var chave = document.getElementById("apiKey").value;
+            if (chave.trim() === "") {
+                alert("Por favor, digite uma chave válida.");
+                return;
+            }
+            localStorage.setItem("minhaChaveAPI", chave);
+            document.getElementById("status-chave").innerText = "Chave salva com segurança!";
+            document.getElementById("status-chave").style.color = "#4CAF50";
+        }
+
+        // Função para verificar se apertou ENTER no teclado
+        function verificarEnter(event) {
+            if (event.key === "Enter") {
+                enviarMensagem();
+            }
+        }
+
+        // Função principal para enviar a mensagem
+        function enviarMensagem() {
+            var input = document.getElementById("entradaMensagem");
+            var texto = input.value.trim();
+
+            if (texto === "") {
+                return; // Não faz nada se estiver vazio
+            }
+
+            // 1. Mostra a mensagem do usuário na tela
+            adicionarBalao(texto, "usuario");
+            
+            // Limpa a caixa de texto
+            input.value = "";
+
+            // 2. Verifica se tem chave para responder (Simulação por enquanto)
+            var chave = localStorage.getItem("minhaChaveAPI");
+            if (!chave) {
+                setTimeout(function() {
+                    adicionarBalao("⚠️ Sistema: Você precisa salvar uma chave de API na barra lateral para que eu possa responder de verdade.", "ia");
+                }, 500);
+                return;
+            }
+
+            // 3. Simula a IA "pensando" e respondendo (Aqui depois conectamos de verdade)
+            setTimeout(function() {
+                adicionarBalao("Mensagem recebida! (O sistema visual está 100% pronto. O próximo passo é apenas plugar a conexão real da API).", "ia");
+            }, 1000);
+        }
+
+        // Função que cria o balão visual na tela
+        function adicionarBalao(texto, remetente) {
+            var historico = document.getElementById("historico");
+            
+            var divBalao = document.createElement("div");
+            divBalao.className = "mensagem " + remetente;
+            divBalao.innerText = texto;
+            
+            historico.appendChild(divBalao);
+            
+            // Rola a tela para baixo automaticamente
+            historico.scrollTop = historico.scrollHeight;
+        }
+    </script>
+</body>
+</html>
