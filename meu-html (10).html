@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 MiniBrowser PT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #1a1a2e;
+            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOOLBAR */
+        .toolbar {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .toolbar-row1 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 8px;
+            padding: 7px 11px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+        .url-bar {
+            flex: 1;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .url-bar:focus {
+            border-color: #4d96ff;
+            background: rgba(77,150,255,0.1);
+            box-shadow: 0 0 0 3px rgba(77,150,255,0.2);
+        }
+
+        .btn-go {
+            background: linear-gradient(135deg, #4d96ff, #1a5fc8);
+            border: none;
+            color: #fff;
+            border-radius: 20px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-go:hover { filter: brightness(1.2); transform: scale(1.03); }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #00b894, #00795c);
+            border: none;
+            color: #fff;
+            border-radius: 20px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-translate:hover { filter: brightness(1.2); transform: scale(1.03); }
+        .btn-translate.active {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            box-shadow: 0 0 10px rgba(253,203,110,0.4);
+        }
+
+        .btn-fav {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            border: none;
+            color: #fff;
+            border-radius: 20px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-fav:hover { filter: brightness(1.2); transform: scale(1.03); }
+
+        /* ABAS */
+        .tabs-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 0 4px;
+        }
+        .tabs-bar::-webkit-scrollbar { height: 3px; }
+        .tabs-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px 8px 0 0;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            white-space: nowrap;
+            max-width: 160px;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+        .tab:hover { background: rgba(255,255,255,0.12); }
+        .tab.active {
+            background: rgba(77,150,255,0.25);
+            border-color: #4d96ff;
+            color: #4d96ff;
+        }
+        .tab-title { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .tab-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 2px;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        .tab-close:hover { background: rgba(255,68,68,0.3); color: #ff6b6b; }
+
+        .btn-new-tab {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-new-tab:hover { background: rgba(255,255,255,0.2); }
+
+        /* STATUS BAR */
+        .status-bar {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 12px;
+            font-size: 0.72rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #555;
+        }
+        .status-dot.loading { background: #fdcb6e; animation: blink 0.8s infinite; }
+        .status-dot.ok { background: #00b894; }
+        .status-dot.error { background: #ff6b6b; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* CONTEÚDO PRINCIPAL */
+        .browser-content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-frame {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+        .tab-frame.active { display: flex; flex-direction: column; }
+
+        iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: #fff;
+        }
+
+        /* PÁGINA INICIAL */
+        .home-page {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .home-logo {
+            font-size: 3rem;
+            text-align: center;
+        }
+        .home-logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #4d96ff, #00b894, #fdcb6e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .home-logo p { color: #888; font-size: 0.85rem; margin-top: 5px; }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .quick-link {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #fff;
+        }
+        .quick-link:hover {
+            background: rgba(77,150,255,0.15);
+            border-color: #4d96ff;
+            transform: translateY(-3px);
+        }
+        .quick-link div:first-child { font-size: 1.8rem; margin-bottom: 6px; }
+        .quick-link div:last-child { font-size: 0.72rem; color: #aaa; }
+
+        /* BLOQUEADO */
+        .blocked-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: linear-gradient(135deg, #1a1a2e, #2d1b3d);
+            text-align: center;
+            padding: 30px;
+        }
+
+        .blocked-icon { font-size: 4rem; }
+        .blocked-title { font-size: 1.4rem; font-weight: 700; color: #ff6b6b; }
+        .blocked-msg { color: #aaa; font-size: 0.9rem; max-width: 400px; line-height: 1.6; }
+
+        .open-external {
+            background: linear-gradient(135deg, #4d96ff, #1a5fc8);
+            border: none;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .open-external:hover { filter: brightness(1.2); transform: scale(1.03); }
+
+        .open-translate {
+            background: linear-gradient(135deg, #00b894, #00795c);
+            border: none;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .open-translate:hover { filter: brightness(1.2); transform: scale(1.03); }
+
+        /* PAINEL LATERAL - HISTÓRICO/FAVORITOS */
+        .side-panel {
+            position: fixed;
+            right: -320px;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            background: #16213e;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            z-index: 999;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+        }
+        .side-panel.open { right: 0; }
+
+        .side-panel-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .side-panel-header h3 { font-size: 1rem; }
+
+        .panel-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #888;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .panel-tab.active { color: #4d96ff; border-bottom-color: #4d96ff; }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+        .history-item, .fav-item {
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .history-item:hover, .fav-item:hover {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .item-icon { font-size: 1.1rem; flex-shrink: 0; }
+        .item-info { flex: 1; overflow: hidden; }
+        .item-title { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-url { font-size: 0.7rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-date { font-size: 0.65rem; color: #555; }
+        .item-del {
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .item-del:hover { background: rgba(255,68,68,0.2); color: #ff6b6b; }
+
+        .empty-panel {
+            text-align: center;
+            color: #555;
+            padding: 30px 10px;
+            font-size: 0.85rem;
+        }
+
+        .close-panel {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .close-panel:hover { background: rgba(255,68,68,0.2); }
+
+        /* OVERLAY */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 998;
+            display: none;
+        }
+        .overlay.show { display: block; }
+
+        /* TRANSLATE BADGE */
+        .translate-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00b894, #00795c);
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            z-index: 500;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,184,148,0.4);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            .quick-links { grid-template-columns: repeat(3, 1fr); }
+            .btn-translate span.label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeSidePanel()"></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+    <div class="toolbar-row1">
+        <button class="nav-btn" id="btnBack" onclick="goBack()" disabled title="Voltar">◀</button>
+        <button class="nav-btn" id="btnForward" onclick="goForward()" disabled title="Avançar">▶</button>
+        <button class="nav-btn" onclick="reloadPage()" title="Recarregar">🔄</button>
+        <button class="nav-btn" onclick="goHome()" title="Início">🏠</button>
+
+        <input type="text" class="url-bar" id="urlBar"
+               placeholder="Digite um endereço ou pesquise..."
+               onkeydown="if(event.key==='Enter') navigate()">
+
+        <button class="btn-go" onclick="navigate()">IR</button>
+        <button class="btn-translate" id="btnTranslate" onclick="toggleTranslate()" title="Traduzir para Português">
+            🇧🇷 <span class="label">PT-BR</span>
+        </button>
+        <button class="btn-fav" onclick="addFavorite()" title="Adicionar favorito">⭐</button>
+        <button class="nav-btn" onclick="toggleSidePanel()" title="Histórico e Favoritos">☰</button>
+    </div>
+
+    <!-- ABAS -->
+    <div class="tabs-bar" id="tabsBar">
+        <button class="btn-new-tab" onclick="newTab()" title="Nova aba">＋</button>
+    </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Pronto</span>
+    <span style="margin-left:auto;font-size:0.7rem;color:#555" id="translateStatus"></span>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="browser-content" id="browserContent"></div>
+
+<!-- TRANSLATE BADGE -->
+<div class="translate-badge" id="translateBadge">🇧🇷 Tradução PT-BR ativa</div>
+
+<!-- PAINEL LATERAL -->
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-header">
+        <h3>📚 Histórico & Favoritos</h3>
+        <button class="close-panel" onclick="closeSidePanel()">✕</button>
+    </div>
+    <div class="panel-tabs">
+        <div class="panel-tab active" onclick="switchPanelTab('history', this)">🕐 Histórico</div>
+        <div class="panel-tab" onclick="switchPanelTab('favorites', this)">⭐ Favoritos</div>
+    </div>
+    <div class="panel-content" id="panelContent"></div>
+</div>
+
+<script>
+// ============================================================
+// ESTADO
+// ============================================================
+let tabs = [];
+let activeTabId = null;
+let translateActive = false;
+let currentPanelTab = 'history';
+
+let history_data = JSON.parse(localStorage.getItem('mb_history') || '[]');
+let favorites = JSON.parse(localStorage.getItem('mb_favorites') || '[]');
+
+// Sites que bloqueiam iframe
+const BLOCKED_DOMAINS = [
+    'google.com', 'youtube.com', 'facebook.com', 'instagram.com',
+    'twitter.com', 'x.com', 'linkedin.com', 'github.com',
+    'amazon.com', 'netflix.com', 'tiktok.com', 'reddit.com',
+    'wikipedia.org', 'whatsapp.com', 'telegram.org'
+];
+
+// Links rápidos na home
+const quickLinks = [
+    { icon: '🔍', name: 'Google', url: 'https://www.google.com/search?hl=pt-BR' },
+    { icon: '📰', name: 'G1', url: 'https://g1.globo.com' },
+    { icon: '🌤️', name: 'Clima', url: 'https://weather.com/pt-BR' },
+    { icon: '📺', name: 'YouTube', url: 'https://www.youtube.com' },
+    { icon: '🛒', name: 'Mercado Livre', url: 'https://www.mercadolivre.com.br' },
+    { icon: '📖', name: 'Wikipedia', url: 'https://pt.wikipedia.org' },
+    { icon: '💼', name: 'LinkedIn', url: 'https://www.linkedin.com' },
+    { icon: '🐦', name: 'Twitter/X', url: 'https://x.com' },
+];
+
+// ============================================================
+// ABAS
+// ============================================================
+function createTab(url = null, title = 'Nova Aba') {
+    const id = Date.now() + Math.random();
+    const tab = { id, url, title, history: [], historyIndex: -1, translateActive: false };
+    tabs.push(tab);
+    renderTabs();
+    setActiveTab(id);
+    if (url) loadUrl(url);
+    else showHome();
+    return id;
+}
+
+function setActiveTab(id) {
+    activeTabId = id;
+    renderTabs();
+    const tab = getActiveTab();
+    if (tab) {
+        document.getElementById('urlBar').value = tab.url || '';
+        document.getElementById('btnBack').disabled = tab.historyIndex <= 0;
+        document.getElementById('btnForward').disabled = tab.historyIndex >= tab.history.length - 1;
+        translateActive = tab.translateActive || false;
+        updateTranslateBtn();
+    }
+    // Mostrar frame correto
+    document.querySelectorAll('.tab-frame').forEach(f => {
+        f.classList.toggle('active', f.dataset.tabid == id);
+    });
+}
+
+function getActiveTab() {
+    return tabs.find(t => t.id == activeTabId);
+}
+
+function closeTab(id, e) {
+    e.stopPropagation();
+    tabs = tabs.filter(t => t.id != id);
+    // Remove frame
+    const frame = document.querySelector(`.tab-frame[data-tabid="${id}"]`);
+    if (frame) frame.remove();
+
+    if (tabs.length === 0) {
+        newTab();
+    } else if (activeTabId == id) {
+        setActiveTab(tabs[tabs.length - 1].id);
+    } else {
+        renderTabs();
+    }
+}
+
+function newTab(url = null) {
+    createTab(url);
+}
+
+function renderTabs() {
+    const bar = document.getElementById('tabsBar');
+    // Manter botão +
+    const newTabBtn = bar.querySelector('.btn-new-tab');
+    bar.innerHTML = '';
+    bar.appendChild(newTabBtn);
+
+    tabs.forEach(tab => {
+        const el = document.createElement('div');
+        el.className = 'tab' + (tab.id == activeTabId ? ' active' : '');
+        el.innerHTML = `
+            <span class="tab-title">${tab.title}</span>
+            <button class="tab-close" onclick="closeTab(${tab.id}, event)">✕</button>
+        `;
+        el.addEventListener('click', () => setActiveTab(tab.id));
+        bar.insertBefore(el, newTabBtn);
+    });
+}
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function navigate() {
+    let url = document.getElementById('urlBar').value.trim();
+    if (!url) return;
+
+    // Se não tem protocolo e não parece URL, faz busca
+    if (!url.startsWith('http') && !url.startsWith('//')) {
+        if (url.includes('.') && !url.includes(' ')) {
+            url = 'https://' + url;
+        } else {
+            url = `https://www.google.com/search?q=${encodeURIComponent(url)}&hl=pt-BR`;
+        }
+    }
+
+    loadUrl(url);
+}
+
+function loadUrl(url) {
+    const tab = getActiveTab();
+    if (!tab) return;
+
+    tab.url = url;
+    tab.history = tab.history.slice(0, tab.historyIndex + 1);
+    tab.history.push(url);
+    tab.historyIndex = tab.history.length - 1;
+
+    document.getElementById('urlBar').value = url;
+    document.getElementById('btnBack').disabled = tab.historyIndex <= 0;
+    document.getElementById('btnForward').disabled = true;
+
+    setStatus('loading', 'Carregando...');
+
+    // Verificar se é site bloqueado
+    const isBlocked = BLOCKED_DOMAINS.some(d => url.includes(d));
+
+    // Pegar ou criar frame para esta aba
+    let frame = document.querySelector(`.tab-frame[data-tabid="${tab.id}"]`);
+    if (!frame) {
+        frame = document.createElement('div');
+        frame.className = 'tab-frame active';
+        frame.dataset.tabid = tab.id;
+        document.getElementById('browserContent').appendChild(frame);
+    }
+
+    // Esconder todos, mostrar este
+    document.querySelectorAll('.tab-frame').forEach(f => f.classList.remove('active'));
+    frame.classList.add('active');
+    frame.innerHTML = '';
+
+    if (isBlocked) {
+        showBlockedPage(frame, url);
+        setStatus('error', 'Site bloqueado por política de segurança do navegador');
+        tab.title = getDomain(url);
+        renderTabs();
+    } else {
+        // Tentar carregar no iframe
+        const finalUrl = translateActive ? getTranslateUrl(url) : url;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = finalUrl;
+        iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation';
+        iframe.allow = 'fullscreen';
+
+        iframe.onload = () => {
+            setStatus('ok', 'Pronto');
+            try {
+                const title = iframe.contentDocument?.title || getDomain(url);
+                tab.title = title.substring(0, 20) || getDomain(url);
+            } catch(e) {
+                tab.title = getDomain(url);
+            }
+            renderTabs();
+            addToHistory(url, tab.title);
+        };
+
+        iframe.onerror = () => {
+            showBlockedPage(frame, url);
+            setStatus('error', 'Não foi possível carregar');
+        };
+
+        frame.appendChild(iframe);
+
+        // Timeout para detectar bloqueio
+        setTimeout(() => {
+            try {
+                if (iframe.contentDocument === null) {
+                    showBlockedPage(frame, url);
+                    setStatus('error', 'Site bloqueado (X-Frame-Options)');
+                }
+            } catch(e) {
+                // Cross-origin, mas pode ter carregado
+                setStatus('ok', 'Carregado (cross-origin)');
+                tab.title = getDomain(url);
+                renderTabs();
+                addToHistory(url, tab.title);
+            }
+        }, 3000);
+    }
+}
+
+function showBlockedPage(frame, url) {
+    const domain = getDomain(url);
+    const translateUrl = getTranslateUrl(url);
+    frame.innerHTML = `
+        <div class="blocked-page">
+            <div class="blocked-icon">🔒</div>
+            <div class="blocked-title">Site não pode ser incorporado</div>
+            <div class="blocked-msg">
+                <strong>${domain}</strong> bloqueia a exibição dentro de outros apps por segurança.<br><br>
+                Você pode abrir no navegador principal ou ver a versão traduzida via Google Tradutor.
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+                <a href="${url}" target="_blank" class="open-external">🌐 Abrir no Navegador</a>
+                <a href="${translateUrl}" target="_blank" class="open-translate">🇧🇷 Abrir Traduzido (PT-BR)</a>
+            </div>
+            <div style="margin-top:20px;color:#555;font-size:0.8rem">
+                Sites como Google, YouTube, Facebook, Instagram<br>bloqueiam incorporação por padrão.
+            </div>
+        </div>
+    `;
+}
+
+function showHome() {
+    const tab = getActiveTab();
+    if (!tab) return;
+
+    let frame = document.querySelector(`.tab-frame[data-tabid="${tab.id}"]`);
+    if (!frame) {
+        frame = document.createElement('div');
+        frame.className = 'tab-frame active';
+        frame.dataset.tabid = tab.id;
+        document.getElementById('browserContent').appendChild(frame);
+    }
+
+    document.querySelectorAll('.tab-frame').forEach(f => f.classList.remove('active'));
+    frame.classList.add('active');
+
+    frame.innerHTML = `
+        <div class="home-page">
+            <div class="home-logo">
+                <div>🌐</div>
+                <h1>MiniBrowser PT</h1>
+                <p>Seu navegador com tradução automática</p>
+            </div>
+            <div class="quick-links">
+                ${quickLinks.map(l => `
+                    <div class="quick-link" onclick="loadFromHome('${l.url}')">
+                        <div>${l.icon}</div>
+                        <div>${l.name}</div>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="color:#555;font-size:0.8rem;text-align:center">
+                💡 Dica: Sites como Google, YouTube e redes sociais abrirão no seu navegador principal.<br>
+                Use o botão 🇧🇷 PT-BR para traduzir qualquer site automaticamente!
+            </div>
+        </div>
+    `;
+
+    tab.title = '🏠 Início';
+    renderTabs();
+    setStatus('ok', 'Pronto');
+}
+
+function loadFromHome(url) {
+    document.getElementById('urlBar').value = url;
+    loadUrl(url);
+}
+
+// ============================================================
+// TRADUÇÃO
+// ============================================================
+function getTranslateUrl(url) {
+    const encoded = encodeURIComponent(url);
+    return `https://translate.google.com/translate?sl=auto&tl=pt&u=${encoded}`;
+}
+
+function toggleTranslate() {
+    translateActive = !translateActive;
+    const tab = getActiveTab();
+    if (tab) tab.translateActive = translateActive;
+    updateTranslateBtn();
+
+    const badge = document.getElementById('translateBadge');
+    if (translateActive) {
+        badge.style.display = 'block';
+        setTimeout(() => badge.style.display = 'none', 3000);
+        // Recarregar com tradução
+        if (tab && tab.url) loadUrl(tab.url);
+    } else {
+        badge.style.display = 'none';
+        if (tab && tab.url) loadUrl(tab.url);
+    }
+}
+
+function updateTranslateBtn() {
+    const btn = document.getElementById('btnTranslate');
+    btn.classList.toggle('active', translateActive);
+    document.getElementById('translateStatus').textContent = translateActive ? '🇧🇷 Tradução PT-BR ativa' : '';
+}
+
+// ============================================================
+// NAVEGAÇÃO HISTÓRICO
+// ============================================================
+function goBack() {
+    const tab = getActiveTab();
+    if (!tab || tab.historyIndex <= 0) return;
+    tab.historyIndex--;
+    const url = tab.history[tab.historyIndex];
+    tab.url = url;
+    document.getElementById('urlBar').value = url;
+    loadUrl(url);
+    document.getElementById('btnBack').disabled = tab.historyIndex <= 0;
+    document.getElementById('btnForward').disabled = false;
+}
+
+function goForward() {
+    const tab = getActiveTab();
+    if (!tab || tab.historyIndex >= tab.history.length - 1) return;
+    tab.historyIndex++;
+    const url = tab.history[tab.historyIndex];
+    tab.url = url;
+    document.getElementById('urlBar').value = url;
+    loadUrl(url);
+    document.getElementById('btnForward').disabled = tab.historyIndex >= tab.history.length - 1;
+    document.getElementById('btnBack').disabled = false;
+}
+
+function reloadPage() {
+    const tab = getActiveTab();
+    if (tab && tab.url) loadUrl(tab.url);
+    else showHome();
+}
+
+function goHome() {
+    const tab = getActiveTab();
+    if (tab) { tab.url = null; document.getElementById('urlBar').value = ''; }
+    showHome();
+}
+
+// ============================================================
+// HISTÓRICO & FAVORITOS
+// ============================================================
+function addToHistory(url, title) {
+    const item = { url, title, date: new Date().toLocaleString('pt-BR'), id: Date.now() };
+    history_data.unshift(item);
+    if (history_data.length > 100) history_data = history_data.slice(0, 100);
+    localStorage.setItem('mb_history', JSON.stringify(history_data));
+}
+
+function addFavorite() {
+    const tab = getActiveTab();
+    if (!tab || !tab.url) { alert('Navegue para um site primeiro!'); return; }
+    const exists = favorites.find(f => f.url === tab.url);
+    if (exists) { alert('Já está nos favoritos!'); return; }
+    favorites.unshift({ url: tab.url, title: tab.title, date: new Date().toLocaleString('pt-BR'), id: Date.now() });
+    localStorage.setItem('mb_favorites', JSON.stringify(favorites));
+    alert(`⭐ "${tab.title}" adicionado aos favoritos!`);
+}
+
+function toggleSidePanel() {
+    const panel = document.getElementById('sidePanel');
+    const overlay = document.getElementById('overlay');
+    panel.classList.toggle('open');
+    overlay.classList.toggle('show');
+    if (panel.classList.contains('open')) renderPanelContent();
+}
+
+function closeSidePanel() {
+    document.getElementById('sidePanel').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+}
+
+function switchPanelTab(tab, el) {
+    currentPanelTab = tab;
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderPanelContent();
+}
+
+function renderPanelContent() {
+    const content = document.getElementById('panelContent');
+    const data = currentPanelTab === 'history' ? history_data : favorites;
+
+    if (data.length === 0) {
+        content.innerHTML = `<div class="empty-panel">${currentPanelTab === 'history' ? '🕐 Nenhum histórico ainda' : '⭐ Nenhum favorito ainda'}</div>`;
+        return;
+    }
+
+    content.innerHTML = data.map(item => `
+        <div class="history-item" onclick="loadFromPanel('${item.url}')">
+            <div class="item-icon">${currentPanelTab === 'history' ? '🕐' : '⭐'}</div>
+            <div class="item-info">
+                <div class="item-title">${item.title || getDomain(item.url)}</div>
+                <div class="item-url">${item.url}</div>
+                <div class="item-date">${item.date}</div>
+            </div>
+            <button class="item-del" onclick="deleteItem(${item.id}, event)">🗑</button>
+        </div>
+    `).join('');
+}
+
+function loadFromPanel(url) {
+    closeSidePanel();
+    document.getElementById('urlBar').value = url;
+    loadUrl(url);
+}
+
+function deleteItem(id, e) {
+    e.stopPropagation();
+    if (currentPanelTab === 'history') {
+        history_data = history_data.filter(i => i.id != id);
+        localStorage.setItem('mb_history', JSON.stringify(history_data));
+    } else {
+        favorites = favorites.filter(i => i.id != id);
+        localStorage.setItem('mb_favorites', JSON.stringify(favorites));
+    }
+    renderPanelContent();
+}
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+function getDomain(url) {
+    try { return new URL(url).hostname.replace('www.', ''); } catch(e) { return url.substring(0, 20); }
+}
+
+function setStatus(state, text) {
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot ' + state;
+    document.getElementById('statusText').textContent = text;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+createTab();
+</script>
+</body>
+</html>
