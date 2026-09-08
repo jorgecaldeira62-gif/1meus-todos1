@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 TTS Realista - Jurídico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .secao {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .secao h2 {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+        }
+
+        .controle {
+            margin-bottom: 15px;
+        }
+
+        .controle label {
+            display: block;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .controle-flex {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"],
+        input[type="number"],
+        select {
+            padding: 8px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 12px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .valor {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .botoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-parar {
+            background: #ef4444;
+        }
+
+        .btn-parar:hover {
+            background: #dc2626;
+        }
+
+        .status {
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 14px;
+            border-left: 4px solid #22c55e;
+        }
+
+        .status.falando {
+            border-left-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .status.erro {
+            border-left-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .info {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 10px;
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .preset-btn {
+            background: #475569;
+            padding: 8px 12px;
+            font-size: 12px;
+            min-width: auto;
+            flex: none;
+        }
+
+        .preset-btn:hover {
+            background: #64748b;
+        }
+
+        .comparacao {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .comparacao-item {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .comparacao-item h3 {
+            font-size: 13px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .comparacao-item p {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 TTS Realista - Configuração Jurídica</h1>
+
+        <div class="grid">
+            <!-- CONFIGURAÇÕES -->
+            <div class="secao">
+                <h2>⚙️ Configurações de Voz</h2>
+
+                <div class="controle">
+                    <label>🗣️ Voz</label>
+                    <select id="voz">
+                        <option value="">Padrão do sistema</option>
+                    </select>
+                </div>
+
+                <div class="controle">
+                    <label>⚡ Velocidade (Rate)</label>
+                    <div class="controle-flex">
+                        <input type="range" id="velocidade" min="0.5" max="2" step="0.05" value="1.15">
+                        <span class="valor" id="velocidadeValor">1.15x</span>
+                    </div>
+                    <div class="info">Recomendado: 1.15 (mais natural)</div>
+                </div>
+
+                <div class="controle">
+                    <label>🎵 Tom (Pitch)</label>
+                    <div class="controle-flex">
+                        <input type="range" id="tom" min="0.5" max="2" step="0.05" value="0.95">
+                        <span class="valor" id="tomValor">0.95x</span>
+                    </div>
+                    <div class="info">Recomendado: 0.95 (mais grave)</div>
+                </div>
+
+                <div class="controle">
+                    <label>🔊 Volume</label>
+                    <div class="controle-flex">
+                        <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+                        <span class="valor" id="volumeValor">100%</span>
+                    </div>
+                </div>
+
+                <div class="controle">
+                    <label>⏱️ Delay de Resposta (ms)</label>
+                    <div class="controle-flex">
+                        <input type="number" id="delay" min="1000" max="10000" step="500" value="3500">
+                        <span class="valor" id="delayValor">3.5s</span>
+                    </div>
+                    <div class="info">Tempo antes de responder (3-4s)</div>
+                </div>
+
+                <div class="presets">
+                    <button class="preset-btn" onclick="aplicarPreset('natural')">
+                        🎤 Natural
+                    </button>
+                    <button class="preset-btn" onclick="aplicarPreset('rapido')">
+                        ⚡ Rápido
+                    </button>
+                    <button class="preset-btn" onclick="aplicarPreset('lento')">
+                        🐢 Lento
+                    </button>
+                    <button class="preset-btn" onclick="aplicarPreset('grave')">
+                        🔊 Grave
+                    </button>
+                </div>
+            </div>
+
+            <!-- COMPARAÇÃO -->
+            <div class="secao">
+                <h2>📊 Comparação</h2>
+
+                <div class="comparacao">
+                    <div class="comparacao-item">
+                        <h3>❌ Robótico (Padrão)</h3>
+                        <p>
+                            <strong>Velocidade:</strong> 1.0x<br>
+                            <strong>Tom:</strong> 1.0x<br>
+                            <strong>Som:</strong> Artificial<br>
+                            <strong>Resultado:</strong> Irritante
+                        </p>
+                    </div>
+
+                    <div class="comparacao-item">
+                        <h3>✅ Realista (Recomendado)</h3>
+                        <p>
+                            <strong>Velocidade:</strong> 1.15x<br>
+                            <strong>Tom:</strong> 0.95x<br>
+                            <strong>Som:</strong> Natural<br>
+                            <strong>Resultado:</strong> Agradável
+                        </p>
+                    </div>
+                </div>
+
+                <div class="info" style="margin-top: 15px;">
+                    💡 A combinação de velocidade 1.15 + tom 0.95 cria um efeito mais natural e menos robótico.
+                </div>
+            </div>
+        </div>
+
+        <!-- TEXTO -->
+        <div class="secao">
+            <h2>📝 Texto para Falar</h2>
+            <textarea id="texto" placeholder="Digite o texto que deseja ouvir com configuração realista...">Este é um exemplo de texto com configuração realista. A velocidade está em 1.15 e o tom em 0.95, criando uma voz mais natural e menos robótica. Você pode digitar qualquer coisa aqui e testar as diferentes configurações.</textarea>
+
+            <div class="botoes">
+                <button onclick="falar()">🎤 Falar</button>
+                <button class="btn-parar" onclick="parar()" id="btnParar" disabled>⏹️ Parar</button>
+                <button onclick="pausar()" id="btnPausar" disabled>⏸️ Pausar</button>
+                <button onclick="retomar()" id="btnRetomar" disabled>▶️ Retomar</button>
+            </div>
+
+            <div class="status" id="status">
+                ✅ Pronto para falar
+            </div>
+        </div>
+
+        <!-- EXEMPLOS -->
+        <div class="secao" style="margin-top: 20px;">
+            <h2>📚 Exemplos Jurídicos</h2>
+            <div class="botoes">
+                <button onclick="exemplo('Conforme estabelecido no artigo 5º da Constituição Federal, todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade.')">
+                    📜 Constituição
+                </button>
+                <button onclick="exemplo('O contrato é um acordo de vontades que gera obrigações para as partes. Conforme o Código Civil Brasileiro, a validade do contrato depende de capacidade das partes, objeto lícito e forma prescrita ou não defesa em lei.')">
+                    📋 Contrato
+                </button>
+                <button onclick="exemplo('A responsabilidade civil é a obrigação de reparar o dano causado a terceiros. Ela pode ser contratual ou extracontratual, dependendo da origem da obrigação que foi descumprida.')">
+                    ⚖️ Responsabilidade
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let utterance = null;
+        let vozesSistema = [];
+
+        // ── ATUALIZAR VALORES ──
+        document.getElementById('velocidade').addEventListener('input', (e) => {
+            document.getElementById('velocidadeValor').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('tom').addEventListener('input', (e) => {
+            document.getElementById('tomValor').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('volume').addEventListener('input', (e) => {
+            document.getElementById('volumeValor').textContent = Math.round(e.target.value * 100) + '%';
+        });
+
+        document.getElementById('delay').addEventListener('input', (e) => {
+            document.getElementById('delayValor').textContent = (e.target.value / 1000).toFixed(1) + 's';
+        });
+
+        // ── CARREGAR VOZES ──
+        function carregarVozes() {
+            vozesSistema = window.speechSynthesis.getVoices();
+            const selectVoz = document.getElementById('voz');
+            selectVoz.innerHTML = '<option value="">Padrão do sistema</option>';
+            
+            vozesSistema.forEach((voz, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voz.name} (${voz.lang})`;
+                selectVoz.appendChild(option);
+            });
+        }
+
+        window.speechSynthesis.onvoiceschanged = carregarVozes;
+        carregarVozes();
+
+        // ── APLICAR PRESETS ──
+        function aplicarPreset(tipo) {
+            const presets = {
+                'natural': { velocidade: 1.15, tom: 0.95, volume: 1 },
+                'rapido': { velocidade: 1.5, tom: 1, volume: 1 },
+                'lento': { velocidade: 0.8, tom: 0.9, volume: 1 },
+                'grave': { velocidade: 1.15, tom: 0.7, volume: 1 }
+            };
+
+            const p = presets[tipo];
+            document.getElementById('velocidade').value = p.velocidade;
+            document.getElementById('tom').value = p.tom;
+            document.getElementById('volume').value = p.volume;
+
+            document.getElementById('velocidadeValor').textContent = p.velocidade + 'x';
+            document.getElementById('tomValor').textContent = p.tom + 'x';
+            document.getElementById('volumeValor').textContent = Math.round(p.volume * 100) + '%';
+        }
+
+        // ── FALAR ──
+        function falar() {
+            const texto = document.getElementById('texto').value;
+            if (!texto.trim()) {
+                alert('Digite algo para falar!');
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            utterance = new SpeechSynthesisUtterance(texto);
+
+            const vozeIndex = document.getElementById('voz').value;
+            if (vozeIndex && vozesSistema[vozeIndex]) {
+                utterance.voice = vozesSistema[vozeIndex];
+            }
+
+            utterance.rate = parseFloat(document.getElementById('velocidade').value);
+            utterance.pitch = parseFloat(document.getElementById('tom').value);
+            utterance.volume = parseFloat(document.getElementById('volume').value);
+            utterance.lang = 'pt-BR';
+
+            utterance.onstart = () => {
+                document.getElementById('status').textContent = '🎤 Falando...';
+                document.getElementById('status').className = 'status falando';
+                document.getElementById('btnParar').disabled = false;
+                document.getElementById('btnPausar').disabled = false;
+            };
+
+            utterance.onend = () => {
+                document.getElementById('status').textContent = '✅ Concluído';
+                document.getElementById('status').className = 'status';
+                document.getElementById('btnParar').disabled = true;
+                document.getElementById('btnPausar').disabled = true;
+                document.getElementById('btnRetomar').disabled = true;
+            };
+
+            utterance.onerror = (event) => {
+                document.getElementById('status').textContent = '❌ Erro: ' + event.error;
+                document.getElementById('status').className = 'status erro';
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function parar() {
+            window.speechSynthesis.cancel();
+            document.getElementById('status').textContent = '⏹️ Parado';
+            document.getElementById('status').className = 'status';
+            document.getElementById('btnParar').disabled = true;
+            document.getElementById('btnPausar').disabled = true;
+            document.getElementById('btnRetomar').disabled = true;
+        }
+
+        function pausar() {
+            window.speechSynthesis.pause();
+            document.getElementById('status').textContent = '⏸️ Pausado';
+            document.getElementById('btnPausar').disabled = true;
+            document.getElementById('btnRetomar').disabled = false;
+        }
+
+        function retomar() {
+            window.speechSynthesis.resume();
+            document.getElementById('status').textContent = '🎤 Retomando...';
+            document.getElementById('status').className = 'status falando';
+            document.getElementById('btnPausar').disabled = false;
+            document.getElementById('btnRetomar').disabled = true;
+        }
+
+        function exemplo(texto) {
+            document.getElementById('texto').value = texto;
+            falar();
+        }
+    </script>
+</body>
+</html>
