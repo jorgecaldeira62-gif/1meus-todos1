@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🎤 Gravador de Voz</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+        }
+        
+        .gravacoes {
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .gravacao-item {
+            background: #0f172a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #22c55e;
+        }
+        
+        audio {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 6px;
+            min-height: 20px;
+        }
+        
+        .gravando {
+            color: #ef4444;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Gravador de Voz</h1>
+        
+        <div class="status" id="status">Pronto para gravar</div>
+        
+        <div>
+            <button id="btnGravar" onclick="iniciarGravacao()">🔴 Gravar</button>
+            <button id="btnParar" onclick="pararGravacao()" disabled>⏹️ Parar</button>
+        </div>
+        
+        <div class="gravacoes" id="gravacoes"></div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let gravacoes = [];
+
+        async function iniciarGravacao() {
+            try {
+                // Pedir permissão para usar o microfone
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: true 
+                });
+                
+                // Criar gravador
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                // Quando receber dados de áudio
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                // Quando parar de gravar
+                mediaRecorder.onstop = () => {
+                    // Criar blob (arquivo de áudio)
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Salvar gravação
+                    const gravacao = {
+                        id: Date.now(),
+                        url: audioUrl,
+                        data: new Date().toLocaleString('pt-BR')
+                    };
+                    
+                    gravacoes.push(gravacao);
+                    exibirGravacoes();
+                    
+                    // Parar o stream
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                // Iniciar gravação
+                mediaRecorder.start();
+                
+                // Atualizar UI
+                document.getElementById('btnGravar').disabled = true;
+                document.getElementById('btnParar').disabled = false;
+                document.getElementById('status').innerHTML = 
+                    '<span class="gravando">🔴 Gravando...</span>';
+                
+            } catch (erro) {
+                alert('❌ Erro: ' + erro.message);
+                console.error(erro);
+            }
+        }
+
+        function pararGravacao() {
+            mediaRecorder.stop();
+            
+            document.getElementById('btnGravar').disabled = false;
+            document.getElementById('btnParar').disabled = true;
+            document.getElementById('status').textContent = 
+                '✅ Gravação salva!';
+        }
+
+        function exibirGravacoes() {
+            const container = document.getElementById('gravacoes');
+            container.innerHTML = '<h2>📝 Gravações (' + gravacoes.length + ')</h2>';
+            
+            gravacoes.forEach((gravacao, index) => {
+                container.innerHTML += `
+                    <div class="gravacao-item">
+                        <strong>Gravação ${index + 1}</strong><br>
+                        <small>${gravacao.data}</small>
+                        <audio controls>
+                            <source src="${gravacao.url}" type="audio/wav">
+                        </audio>
+                        <button onclick="baixarGravacao(${gravacao.id})">
+                            💾 Baixar
+                        </button>
+                        <button onclick="deletarGravacao(${gravacao.id})" 
+                                style="background: #ef4444;">
+                            🗑️ Deletar
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function baixarGravacao(id) {
+            const gravacao = gravacoes.find(g => g.id === id);
+            if (gravacao) {
+                const a = document.createElement('a');
+                a.href = gravacao.url;
+                a.download = `gravacao-${id}.wav`;
+                a.click();
+            }
+        }
+
+        function deletarGravacao(id) {
+            gravacoes = gravacoes.filter(g => g.id !== id);
+            exibirGravacoes();
+        }
+    </script>
+</body>
+</html>
