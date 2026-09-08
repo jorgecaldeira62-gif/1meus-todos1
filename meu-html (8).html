@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 PWA Builder — Gerador de Instalação</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    background: linear-gradient(135deg,#0a0a1a,#1a0a2e);
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+    padding: 20px;
+}
+h1 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg,#4d96ff,#c77dff,#00b894);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.subtitle { text-align:center; color:#888; font-size:0.85rem; margin-bottom:25px; }
+
+.card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #c77dff;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+label {
+    display: block;
+    font-size: 0.82rem;
+    color: #aaa;
+    margin-bottom: 5px;
+    margin-top: 12px;
+}
+input[type=text], select, textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+input[type=text]:focus, select:focus, textarea:focus {
+    border-color: #c77dff;
+}
+select option { background: #1a1a2e; }
+textarea { resize: vertical; min-height: 180px; font-family: monospace; font-size: 0.8rem; }
+
+.color-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.color-row > div { flex: 1; min-width: 140px; }
+input[type=color] {
+    width: 100%;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    cursor: pointer;
+    padding: 3px;
+}
+
+.icon-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+.icon-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: #888;
+}
+.icon-box canvas { display: block; border-radius: 8px; margin-bottom: 4px; }
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 5px;
+}
+.step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 12px;
+}
+.step-num {
+    background: linear-gradient(135deg,#4d96ff,#c77dff);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.step-text { font-size: 0.83rem; color: #ccc; line-height: 1.5; }
+.step-text strong { color: #fff; }
+.step-text code {
+    background: rgba(255,255,255,0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #ffd93d;
+}
+
+.btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    justify-content: center;
+}
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.btn-primary { background: linear-gradient(135deg,#4d96ff,#1a5fc8); color:#fff; box-shadow:0 4px 20px rgba(77,150,255,0.3); }
+.btn-success { background: linear-gradient(135deg,#00b894,#00795c); color:#fff; box-shadow:0 4px 20px rgba(0,184,148,0.3); }
+.btn-purple { background: linear-gradient(135deg,#c77dff,#7b2fff); color:#fff; box-shadow:0 4px 20px rgba(199,125,255,0.3); }
+.btn-orange { background: linear-gradient(135deg,#fdcb6e,#e17055); color:#fff; }
+
+.output-area {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #6bcb77;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+    display: none;
+}
+.output-area.show { display: block; }
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    display: none;
+}
+.alert.show { display: block; }
+.alert-success { background: rgba(0,184,148,0.15); border: 1px solid rgba(0,184,148,0.3); color: #00b894; }
+.alert-info { background: rgba(77,150,255,0.15); border: 1px solid rgba(77,150,255,0.3); color: #4d96ff; }
+.alert-warn { background: rgba(253,203,110,0.15); border: 1px solid rgba(253,203,110,0.3); color: #fdcb6e; }
+
+.file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    color: #ccc;
+    margin: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.file-badge:hover { background: rgba(77,150,255,0.2); border-color: #4d96ff; color: #4d96ff; }
+
+.progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    margin-top: 12px;
+    overflow: hidden;
+    display: none;
+}
+.progress-bar.show { display: block; }
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg,#4d96ff,#c77dff,#00b894);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.4s ease;
+}
+</style>
+</head>
+<body>
+
+<h1>🔧 PWA Builder</h1>
+<p class="subtitle">Gera os arquivos de instalação para qualquer projeto virar PWA</p>
+
+<!-- PASSO 1: INFORMAÇÕES -->
+<div class="card">
+    <div class="card-title">📋 1. Informações do App</div>
+
+    <label>Nome do App</label>
+    <input type="text" id="appName" placeholder="Ex: Meu Playground, VoiceStudio..." value="Meu App">
+
+    <label>Nome Curto (aparece no ícone)</label>
+    <input type="text" id="appShort" placeholder="Ex: Studio, Play..." value="App">
+
+    <label>Descrição</label>
+    <input type="text" id="appDesc" placeholder="Descrição breve do app" value="Meu aplicativo PWA">
+
+    <label>Emoji ou letra para o ícone</label>
+    <input type="text" id="appEmoji" placeholder="Ex: 🎙️ ou P ou S" value="🚀" maxlength="4" oninput="updateIconPreview()">
+
+    <div class="color-row" style="margin-top:12px">
+        <div>
+            <label>Cor de fundo do ícone</label>
+            <input type="color" id="iconBg" value="#1a1a2e" oninput="updateIconPreview()">
+        </div>
+        <div>
+            <label>Cor do tema (barra do celular)</label>
+            <input type="color" id="themeColor" value="#1a1a2e">
+        </div>
+        <div>
+            <label>Categoria</label>
+            <select id="appCategory">
+                <option value="utilities">Utilitários</option>
+                <option value="productivity">Produtividade</option>
+                <option value="entertainment">Entretenimento</option>
+                <option value="music">Música</option>
+                <option value="education">Educação</option>
+            </select>
+        </div>
+    </div>
+
+    <label>Prévia dos ícones gerados:</label>
+    <div class="icon-preview" id="iconPreview"></div>
+</div>
+
+<!-- PASSO 2: CÓDIGO HTML -->
+<div class="card">
+    <div class="card-title">📄 2. Cole o HTML do seu projeto</div>
+    <label>Cole aqui o conteúdo do seu index.html (ou deixe em branco para gerar só os arquivos extras)</label>
+    <textarea id="htmlCode" placeholder="<!DOCTYPE html>&#10;<html>&#10;...seu código aqui...&#10;</html>"></textarea>
+    <div style="margin-top:8px;font-size:0.78rem;color:#666">
+        💡 Se já tem o HTML hospedado, pode deixar em branco e só baixar o manifest.json e service-worker.js
+    </div>
+</div>
+
+<!-- PASSO 3: GERAR -->
+<div class="card">
+    <div class="card-title">⚡ 3. Gerar Arquivos PWA</div>
+
+    <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateAll()">🔧 Gerar Tudo</button>
+        <button class="btn btn-purple" onclick="downloadManifest()">📄 Baixar manifest.json</button>
+        <button class="btn btn-success" onclick="downloadSW()">⚙️ Baixar service-worker.js</button>
+        <button class="btn btn-orange" onclick="downloadHTML()">🌐 Baixar index.html completo</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="alert alert-success" id="alertSuccess"></div>
+    <div class="alert alert-info" id="alertInfo"></div>
+    <div class="alert alert-warn" id="alertWarn"></div>
+
+    <div id="filesList" style="margin-top:12px;display:none">
+        <div style="font-size:0.82rem;color:#888;margin-bottom:8px">📁 Arquivos gerados — clique para baixar:</div>
+        <div id="filesContainer"></div>
+    </div>
+
+    <div class="output-area" id="outputArea"></div>
+</div>
+
+<!-- PASSO 4: INSTRUÇÕES -->
+<div class="card">
+    <div class="card-title">📖 4. Como instalar no Netlify/servidor</div>
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+                Baixe os 3 arquivos: <strong>index.html</strong>, <strong>manifest.json</strong> e <strong>service-worker.js</strong>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+                Coloque os <strong>3 arquivos na mesma pasta</strong> — é obrigatório que fiquem juntos na raiz do site
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+                Suba para o <strong>Netlify Drop</strong>: acesse <code>app.netlify.com/drop</code> e arraste a pasta inteira
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-text">
+                Acesse o link gerado pelo Netlify no celular → toque em <strong>"Adicionar à tela inicial"</strong> → pronto, instalado! ✅
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-text">
+                No Chrome desktop: aparece um <strong>ícone de instalar</strong> (➕) na barra de endereço automaticamente
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warn show" style="margin-top:14px">
+        ⚠️ <strong>Importante:</strong> O site PRECISA estar em HTTPS para o PWA instalar. Netlify, GitHub Pages e Glitch já têm HTTPS grátis.
+    </div>
+</div>
+
+<script>
+// ============================================================
+// PREVIEW DE ÍCONE
+// ============================================================
+function updateIconPreview() {
+    const emoji = document.getElementById('appEmoji').value || '🚀';
+    const bg = document.getElementById('iconBg').value;
+    const sizes = [48, 72, 96, 192];
+    const preview = document.getElementById('iconPreview');
+    preview.innerHTML = '';
+
+    sizes.forEach(size => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Fundo
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, size * 0.2);
+        ctx.fill();
+
+        // Emoji/texto
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${size * 0.55}px serif`;
+        ctx.fillText(emoji, size / 2, size / 2);
+
+        const box = document.createElement('div');
+        box.className = 'icon-box';
+        box.appendChild(canvas);
+        box.innerHTML += `${size}×${size}`;
+        preview.appendChild(box);
+    });
+}
+
+// ============================================================
+// GERAR MANIFEST
+// ============================================================
+function generateManifest() {
+    const name = document.getElementById('appName').value || 'Meu App';
+    const short = document.getElementById('appShort').value || 'App';
+    const desc = document.getElementById('appDesc').value || '';
+    const theme = document.getElementById('themeColor').value;
+    const bg = document.getElementById('iconBg').value;
+    const cat = document.getElementById('appCategory').value;
+
+    return JSON.stringify({
+        name,
+        short_name: short,
+        description: desc,
+        start_url: "./index.html",
+        display: "standalone",
+        orientation: "any",
+        background_color: bg,
+        theme_color: theme,
+        lang: "pt-BR",
+        scope: "./",
+        categories: [cat],
+        icons: [
+            { src: "icon-48.png",  sizes: "48x48",   type: "image/png", purpose: "any maskable" },
+            { src: "icon-72.png",  sizes: "72x72",   type: "image/png", purpose: "any maskable" },
+            { src: "icon-96.png",  sizes: "96x96",   type: "image/png", purpose: "any maskable" },
+            { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
+        ],
+        screenshots: [],
+        prefer_related_applications: false
+    }, null, 2);
+}
+
+// ============================================================
+// GERAR SERVICE WORKER
+// ============================================================
+function generateSW() {
+    const name = (document.getElementById('appName').value || 'app').replace(/\s+/g, '-').toLowerCase();
+    return `// Service Worker — ${document.getElementById('appName').value || 'Meu App'}
+// Gerado pelo PWA Builder
+const CACHE_NAME = '${name}-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
+];
+
+// Instalar: salva os arquivos no cache
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Cache criado');
+      return cache.addAll(ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// Ativar: limpa caches antigos
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+// Interceptar requisições — cache first
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+`;
+}
+
+// ============================================================
+// GERAR HTML COMPLETO
+// ============================================================
+function generateHTML() {
+    const name = document.getElementById('appName').value || 'Meu App';
+    const theme = document.getElementById('themeColor').value;
+    const userHTML = document.getElementById('htmlCode').value.trim();
+
+    if (userHTML) {
+        // Injetar tags PWA no HTML existente
+        let html = userHTML;
+
+        // Remover </head> existente e injetar antes
+        const pwaHead = `
+  <!-- PWA: Gerado pelo PWA Builder -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="${theme}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="${name}">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(r => console.log('[PWA] Service Worker registrado!', r.scope))
+          .catch(e => console.error('[PWA] Erro:', e));
+      });
+    }
+  <\/script>`;
+
+        if (html.includes('</head>')) {
+            html = html.replace('</head>', pwaHead + '\n</head>');
+        } else if (html.includes('<body')) {
+            html = html.replace('<body', pwaHead + '\n<body');
+        } else {
+            html = pwaHead + '\n' + html;
+        }
+
+        // Garantir charset e viewport
+        if (!html.includes('charset')) {
+            html = html.replace('<head>', '<head>\n  <meta charset="UTF-8">');
+        }
+        if (!html.includes('viewport')) {
+            html = html.replace('<head>', '<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">');
+        }
+
+        return html;
+    } else {
+        // Gerar HTML mínimo de exemplo
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${name}</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="${theme}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="${name}">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(r => console.log('[PWA] Registrado!', r.scope))
+          .catch(e => console.error('[PWA] Erro:', e));
+      });
+    }
+  <\/script>
+</head>
+<body>
+  <!-- Cole o conteúdo do seu app aqui -->
+  <h1>${name}</h1>
+</body>
+</html>`;
+    }
+}
+
+// ============================================================
+// GERAR ÍCONE PNG (canvas → blob)
+// ============================================================
+function generateIconBlob(size) {
+    return new Promise(resolve => {
+        const emoji = document.getElementById('appEmoji').value || '🚀';
+        const bg = document.getElementById('iconBg').value;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(0, 0, size, size, size * 0.2);
+        else ctx.rect(0, 0, size, size);
+        ctx.fill();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${size * 0.55}px serif`;
+        ctx.fillText(emoji, size / 2, size / 2);
+        canvas.toBlob(blob => resolve(blob), 'image/png');
+    });
+}
+
+// ============================================================
+// DOWNLOAD HELPERS
+// ============================================================
+function downloadFile(content, filename, type = 'text/plain') {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function downloadManifest() {
+    downloadFile(generateManifest(), 'manifest.json', 'application/json');
+    showAlert('success', '✅ manifest.json baixado!');
+}
+
+function downloadSW() {
+    downloadFile(generateSW(), 'service-worker.js', 'application/javascript');
+    showAlert('success', '✅ service-worker.js baixado!');
+}
+
+function downloadHTML() {
+    downloadFile(generateHTML(), 'index.html', 'text/html');
+    showAlert('success', '✅ index.html baixado com tags PWA!');
+}
+
+// ============================================================
+// GERAR TUDO
+// ============================================================
+async function generateAll() {
+    const bar = document.getElementById('progressBar');
+    const fill = document.getElementById('progressFill');
+    bar.classList.add('show');
+
+    const steps = [
+        { pct: 20, label: 'Gerando manifest.json...' },
+        { pct: 40, label: 'Gerando service-worker.js...' },
+        { pct: 60, label: 'Gerando index.html...' },
+        { pct: 80, label: 'Gerando ícones...' },
+        { pct: 100, label: 'Concluído!' },
+    ];
+
+    for (const step of steps) {
+        fill.style.width = step.pct + '%';
+        showAlert('info', '⚙️ ' + step.label);
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    // Downloads automáticos com delay
+    setTimeout(() => downloadFile(generateManifest(), 'manifest.json', 'application/json'), 100);
+    setTimeout(() => downloadFile(generateSW(), 'service-worker.js', 'application/javascript'), 400);
+    setTimeout(() => downloadFile(generateHTML(), 'index.html', 'text/html'), 700);
+
+    // Ícones
+    const iconSizes = [48, 72, 96, 192, 512];
+    for (let i = 0; i < iconSizes.size; i++) {
+        const size = iconSizes[i];
+        const blob = await generateIconBlob(size);
+        setTimeout(() => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `icon-${size}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }, 1000 + i * 200);
+    }
+
+    // Ícones
+    for (let i = 0; i < iconSizes.length; i++) {
+        const size = iconSizes[i];
+        const blob = await generateIconBlob(size);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon-${size}.png`;
+        setTimeout(() => { a.click(); URL.revokeObjectURL(url); }, 1000 + i * 250);
+    }
+
+    showAlert('success', `✅ Todos os arquivos gerados! Coloque-os na mesma pasta e suba no Netlify.`);
+    showOutput();
+}
+
+function showOutput() {
+    const out = document.getElementById('outputArea');
+    out.classList.add('show');
+    out.textContent = `📁 Estrutura de arquivos necessária:
+─────────────────────────────
+📂 meu-app/
+ ├── 📄 index.html          ← seu app principal
+ ├── 📄 manifest.json       ← gerado aqui ✅
+ ├── ⚙️  service-worker.js  ← gerado aqui ✅
+ ├── 🖼️  icon-48.png        ← gerado aqui ✅
+ ├── 🖼️  icon-72.png        ← gerado aqui ✅
+ ├── 🖼️  icon-96.png        ← gerado aqui ✅
+ ├── 🖼️  icon-192.png       ← gerado aqui ✅
+ └── 🖼️  icon-512.png       ← gerado aqui ✅
+─────────────────────────────
+✅ Suba a pasta inteira no Netlify Drop
+✅ Acesse pelo celular → "Adicionar à tela inicial"
+✅ No Chrome desktop → ícone ➕ na barra de endereço`;
+}
+
+function showAlert(type, msg) {
+    ['success','info','warn'].forEach(t => {
+        const el = document.getElementById('alert' + t.charAt(0).toUpperCase() + t.slice(1));
+        el.classList.remove('show');
+    });
+    const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+    el.textContent = msg;
+    el.classList.add('show');
+}
+
+// Init
+updateIconPreview();
+</script>
+</body>
+</html>
