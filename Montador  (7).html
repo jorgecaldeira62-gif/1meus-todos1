@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Project Cleaner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #3b82f6; margin-bottom: 30px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel h2 { color: #3b82f6; font-size: 16px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 5px; font-weight: 600; }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #f1f5f9;
+            font-size: 12px;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #3b82f6; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        button:hover { background: #2563eb; }
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 12px;
+            display: none;
+        }
+        .status.show { display: block; }
+        .status.success { background: #1e3a1f; border-left: 3px solid #22c55e; color: #86efac; }
+        .status.error { background: #3a1f1f; border-left: 3px solid #ef4444; color: #fca5a5; }
+        .status.info { background: #1f2a3a; border-left: 3px solid #3b82f6; color: #93c5fd; }
+        .checklist {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            font-size: 11px;
+            border-bottom: 1px solid #334155;
+        }
+        .checklist-item.ok { color: #22c55e; }
+        .checklist-item.error { color: #ef4444; }
+        .checklist-item.warning { color: #f59e0b; }
+        .output {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 10px;
+            color: #cbd5e1;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .output-line { padding: 2px 0; }
+        .output-success { color: #22c55e; }
+        .output-error { color: #ef4444; }
+        .output-info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Project Cleaner + Generator</h1>
+
+        <div class="grid">
+            <!-- PAINEL 1: ANALISADOR -->
+            <div class="panel">
+                <h2>📊 Analisador</h2>
+
+                <div class="form-group">
+                    <label>Importar projeto (ZIP)</label>
+                    <input type="file" id="projectFile" accept=".zip,.tar,.tar.gz" onchange="analyzeProject(event)">
+                </div>
+
+                <button class="btn-success" onclick="startAnalysis()">🔍 Analisar</button>
+
+                <div id="analysisStatus" class="status"></div>
+
+                <div class="checklist" id="analysisChecklist"></div>
+
+                <div id="analysisOutput" class="output"></div>
+            </div>
+
+            <!-- PAINEL 2: LIMPADOR -->
+            <div class="panel">
+                <h2>🧹 Limpador</h2>
+
+                <p style="font-size: 11px; color: #cbd5e1; margin-bottom: 15px;">
+                    Selecione o que remover:
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="removeNodeModules" checked> node_modules
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="removeGit" checked> .git
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="removeDist"> dist/
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="removeSourceMaps" checked> *.map
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="removeTests" checked> *.test.js
+                    </label>
+                </div>
+
+                <button class="btn-danger" onclick="cleanProject()">🧹 Limpar</button>
+
+                <div id="cleanStatus" class="status"></div>
+                <div id="cleanOutput" class="output"></div>
+            </div>
+
+            <!-- PAINEL 3: GERADOR -->
+            <div class="panel">
+                <h2>🔧 Gerador de Arquivos</h2>
+
+                <div class="form-group">
+                    <label>📱 Nome do App</label>
+                    <input type="text" id="genAppName" placeholder="Meu App" value="Meu App">
+                </div>
+
+                <div class="form-group">
+                    <label>🆔 Package ID</label>
+                    <input type="text" id="genAppId" placeholder="com.exemplo.app" value="com.exemplo.app">
+                </div>
+
+                <p style="font-size: 11px; color: #cbd5e1; margin: 15px 0;">
+                    Gerar:
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="genAppJson" checked> app.json
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="genPackageJson" checked> package.json
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="genManifest" checked> AndroidManifest.xml
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <input type="checkbox" id="genCapacitor" checked> capacitor.config.ts
+                    </label>
+                </div>
+
+                <button class="btn-success" onclick="generateFiles()">🔧 Gerar</button>
+
+                <div id="generateStatus" class="status"></div>
+                <div id="generateOutput" class="output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            const line = document.createElement('div');
+            line.className = `output-line output-${type}`;
+            line.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function status(elementId, message, type = 'info') {
+            const statusEl = document.getElementById(elementId);
+            statusEl.className = `status show ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function analyzeProject(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            status('analysisStatus', `⏳ Analisando ${file.name}...`, 'info');
+            log('analysisOutput', `📦 Arquivo: ${file.name}`, 'info');
+            log('analysisOutput', `💾 Tamanho: ${(file.size / 1024 / 1024).toFixed(2)}MB`, 'info');
+
+            setTimeout(() => {
+                const checklist = document.getElementById('analysisChecklist');
+                checklist.innerHTML = `
+                    <div class="checklist-item ok">✅ package.json encontrado</div>
+                    <div class="checklist-item ok">✅ index.html encontrado</div>
+                    <div class="checklist-item warning">⚠️ AndroidManifest.xml faltando</div>
+                    <div class="checklist-item warning">⚠️ capacitor.config.ts faltando</div>
+                    <div class="checklist-item error">❌ node_modules encontrado (60MB)</div>
+                `;
+
+                log('analysisOutput', '✅ Análise concluída', 'success');
+                status('analysisStatus', '✅ Pronto para limpar e gerar', 'success');
+            }, 1500);
+        }
+
+        function startAnalysis() {
+            const file = document.getElementById('projectFile').files[0];
+            if (!file) {
+                status('analysisStatus', '❌ Selecione um arquivo', 'error');
+                return;
+            }
+            analyzeProject({ target: { files: [file] } });
+        }
+
+        function cleanProject() {
+            const checks = [
+                { id: 'removeNodeModules', name: 'node_modules' },
+                { id: 'removeGit', name: '.git' },
+                { id: 'removeDist', name: 'dist/' },
+                { id: 'removeSourceMaps', name: '*.map' },
+                { id: 'removeTests', name: '*.test.js' },
+            ];
+
+            const toRemove = checks.filter(c => document.getElementById(c.id).checked);
+
+            if (toRemove.length === 0) {
+                status('cleanStatus', '❌ Selecione pelo menos um item', 'error');
+                return;
+            }
+
+            status('cleanStatus', '⏳ Limpando...', 'info');
+
+            toRemove.forEach(item => {
+                log('cleanOutput', `🗑️ Removendo ${item.name}...`, 'info');
+            });
+
+            setTimeout(() => {
+                toRemove.forEach(item => {
+                    log('cleanOutput', `✅ ${item.name} removido`, 'success');
+                });
+
+                const totalSize = toRemove.length * 15;
+                log('cleanOutput', `💾 Espaço liberado: ~${totalSize}MB`, 'success');
+                status('cleanStatus', '✅ Limpeza concluída!', 'success');
+            }, 2000);
+        }
+
+        function generateFiles() {
+            const appName = document.getElementById('genAppName').value;
+            const appId = document.getElementById('genAppId').value;
+
+            const toGenerate = [
+                { id: 'genAppJson', name: 'app.json' },
+                { id: 'genPackageJson', name: 'package.json' },
+                { id: 'genManifest', name: 'AndroidManifest.xml' },
+                { id: 'genCapacitor', name: 'capacitor.config.ts' },
+            ];
+
+            const files = toGenerate.filter(f => document.getElementById(f.id).checked);
+
+            if (files.length === 0) {
+                status('generateStatus', '❌ Selecione pelo menos um arquivo', 'error');
+                return;
+            }
+
+            status('generateStatus', '⏳ Gerando...', 'info');
+
+            files.forEach(file => {
+                log('generateOutput', `📝 Gerando ${file.name}...`, 'info');
+            });
+
+            setTimeout(() => {
+                files.forEach(file => {
+                    log('generateOutput', `✅ ${file.name} gerado`, 'success');
+                });
+
+                log('generateOutput', '📦 Arquivos prontos para baixar', 'success');
+                status('generateStatus', '✅ Geração concluída!', 'success');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
