@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>📺 Espelhamento de Tela</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+            background: #000;
+            border-radius: 6px;
+        }
+        
+        .status {
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .ativo {
+            color: #22c55e;
+        }
+        
+        .inativo {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📺 Espelhamento de Tela</h1>
+        
+        <div class="status inativo" id="status">
+            ❌ Não está espelhando
+        </div>
+        
+        <button onclick="iniciarEspelhamento()">
+            📺 Iniciar Espelhamento
+        </button>
+        <button onclick="pararEspelhamento()" id="btnParar" disabled>
+            ⏹️ Parar Espelhamento
+        </button>
+        
+        <video id="video" autoplay></video>
+    </div>
+
+    <script>
+        let screenStream = null;
+
+        async function iniciarEspelhamento() {
+            try {
+                // Pedir para capturar a tela
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: false
+                });
+                
+                // Mostrar no vídeo
+                const video = document.getElementById('video');
+                video.srcObject = screenStream;
+                
+                // Atualizar UI
+                document.getElementById('status').innerHTML = 
+                    '✅ Espelhando...';
+                document.getElementById('status').className = 'status ativo';
+                document.querySelector('button').disabled = true;
+                document.getElementById('btnParar').disabled = false;
+                
+                // Se o usuário parar manualmente
+                screenStream.getVideoTracks()[0].onended = () => {
+                    pararEspelhamento();
+                };
+                
+            } catch (erro) {
+                console.error('Erro:', erro);
+                alert('❌ Erro ao capturar tela');
+            }
+        }
+
+        function pararEspelhamento() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            
+            document.getElementById('video').srcObject = null;
+            document.getElementById('status').innerHTML = 
+                '❌ Não está espelhando';
+            document.getElementById('status').className = 'status inativo';
+            document.querySelector('button').disabled = false;
+            document.getElementById('btnParar').disabled = true;
+        }
+    </script>
+</body>
+</html>
