@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Guia Interativo - Chat IA Profissional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .step {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .step:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        }
+
+        .step.ativo {
+            border-color: #2563eb;
+            background: #0f172a;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+        }
+
+        .step.completo {
+            border-color: #10b981;
+        }
+
+        .step-numero {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #2563eb;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .step.completo .step-numero {
+            background: #10b981;
+        }
+
+        .step h3 {
+            margin-bottom: 10px;
+            color: #f1f5f9;
+        }
+
+        .step p {
+            color: #cbd5e1;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .step-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .status-pendente {
+            background: #334155;
+            color: #cbd5e1;
+        }
+
+        .status-ativo {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .status-completo {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .conteudo-step {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .conteudo-step.ativo {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .conteudo-step h2 {
+            color: #f1f5f9;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+        }
+
+        .instrucoes {
+            background: #1e293b;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .instrucoes h4 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .instrucoes ol, .instrucoes ul {
+            margin-left: 20px;
+            color: #cbd5e1;
+        }
+
+        .instrucoes li {
+            margin-bottom: 8px;
+        }
+
+        .codigo-bloco {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .codigo-bloco pre {
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        .btn-copiar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-copiar:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+        }
+
+        .btn-copiar.copiado {
+            background: #10b981;
+        }
+
+        .checklist {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #0f172a;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checklist-item:hover {
+            background: #1e293b;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: #10b981;
+            text-decoration: line-through;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #cbd5e1;
+        }
+
+        .botoes-acao {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primario {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primario:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secundario {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secundario:hover {
+            background: #475569;
+        }
+
+        .btn-sucesso {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-sucesso:hover {
+            background: #059669;
+        }
+
+        .btn-pequeno {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .notificacao {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notificacao.erro {
+            background: #ef4444;
+        }
+
+        .notificacao.aviso {
+            background: #f59e0b;
+        }
+
+        .notificacao.info {
+            background: #3b82f6;
+        }
+
+        .resumo-final {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .resumo-final h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .resumo-final p {
+            color: #cbd5e1;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-numero {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .barra-lateral {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: #0f172a;
+            border-right: 2px solid #334155;
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        @media (max-width: 1024px) {
+            .barra-lateral {
+                display: none;
+            }
+        }
+
+        .container {
+            margin-left: 320px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                margin-left: 0;
+            }
+        }
+
+        .item-menu {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #1e293b;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #cbd5e1;
+        }
+
+        .item-menu:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .item-menu.ativo {
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+        }
+
+        .item-menu.completo {
+            border-left: 3px solid #10b981;
+        }
+
+        .titulo-menu {
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .tabela-arquivos {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .tabela-arquivos th,
+        .tabela-arquivos td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        .tabela-arquivos th {
+            background: #1e293b;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .tabela-arquivos tr:hover {
+            background: #1e293b;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #334155;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .tag.novo {
+            background: #2563eb;
+            color: white;
+        }
+
+        .tag.importante {
+            background: #ef4444;
+            color: white;
+        }
+
+        .tag.opcional {
+            background: #f59e0b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- BARRA LATERAL -->
+    <div class="barra-lateral">
+        <div class="titulo-menu">📋 GUIA IMPLANTAÇÃO</div>
+        <div id="menuLateral"></div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>🚀 Chat IA Profissional v1.1</h1>
+            <p>Guia Interativo de Implantação Completa</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+            <p id="progressText" style="color: #94a3b8; margin-top: 10px;">0 de 15 passos completos</p>
+        </header>
+
+        <!-- GRID DE PASSOS -->
+        <div class="steps-container" id="stepsContainer"></div>
+
+        <!-- CONTEÚDO DOS PASSOS -->
+        <div id="conteudoSteps"></div>
+
+        <!-- RESUMO FINAL -->
+        <div id="resumoFinal" style="display: none;">
+            <div class="resumo-final">
+                <h2>✅ PARABÉNS! Sistema Pronto!</h2>
+                <p>Você completou com sucesso a implantação do Chat IA Profissional v1.1</p>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-numero">15</div>
+                        <div class="stat-label">Passos</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-numero">5100+</div>
+                        <div class="stat-label">Linhas de Código</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-numero">100%</div>
+                        <div class="stat-label">Funcional</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-numero">∞</div>
+                        <div class="stat-label">Possibilidades</div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 20px; font-size: 1.2em;">
+                    🎉 Seu Chat IA está pronto para produção!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICAÇÃO -->
+    <div id="notificacao" class="notificacao" style="display: none;"></div>
+
+    <script>
+        // ============================================
+        // DADOS DOS PASSOS
+        // ============================================
+
+        const PASSOS = [
+            {
+                numero: 1,
+                titulo: '⚙️ Preparar Ambiente',
+                descricao: 'Configurar pasta e servidor local',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📋 Requisitos</h4>
+                        <ul>
+                            <li>Navegador moderno (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)</li>
+                            <li>Editor de texto (VSCode, Sublime, Notepad++)</li>
+                            <li>Servidor local (Python, Node.js, ou Live Server)</li>
+                            <li>Conexão com internet</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📁 Criar Pasta do Projeto</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>mkdir chat-ia-profissional
+cd chat-ia-profissional
+mkdir icons
+mkdir screenshots
+mkdir docs</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🌐 Iniciar Servidor Local</h4>
+                        <p><strong>Opção 1: Python</strong></p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>python -m http.server 8000</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>Opção 2: Node.js</strong></p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>npm install -g http-server
+http-server</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>Opção 3: VSCode Live Server</strong></p>
+                        <p>Instale extensão "Live Server" e clique em "Go Live"</p>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1-1">
+                            <label for="check1-1">Pasta criada e navegada</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1-2">
+                            <label for="check1-2">Subpastas criadas (/icons, /screenshots, /docs)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1-3">
+                            <label for="check1-3">Servidor local rodando</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1-4">
+                            <label for="check1-4">Navegador aberto em http://localhost:8000</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">
+                            Próximo Passo →
+                        </button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 2,
+                titulo: '📄 Criar index.html',
+                descricao: 'Arquivo HTML com CSS responsivo',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📝 Criar Arquivo</h4>
+                        <p>Crie um novo arquivo chamado <strong>index.html</strong> na raiz do projeto</p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚠️ IMPORTANTE</h4>
+                        <p>Cole a <strong>PARTE 1 COMPLETA</strong> do código HTML (com CSS integrado)</p>
+                        <p style="color: #f59e0b; margin-top: 10px;">
+                            ⚠️ Este é um arquivo grande (~800 linhas). Copie tudo!
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔗 Link para PARTE 1</h4>
+                        <p>Procure por: <strong>"PARTE 1: HTML + CSS RESPONSIVO"</strong></p>
+                        <p style="color: #94a3b8; margin-top: 10px;">
+                            Contém: DOCTYPE, meta tags, CSS completo, HTML estruturado, modais
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Validar</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Abra http://localhost:8000/index.html
+2. Verifique se a página carrega
+3. Verifique layout responsivo
+4. Clique em botões (devem abrir modais)</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2-1">
+                            <label for="check2-1">Arquivo index.html criado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2-2">
+                            <label for="check2-2">PARTE 1 colada completamente</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2-3">
+                            <label for="check2-3">Página carrega sem erros</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2-4">
+                            <label for="check2-4">Layout responsivo funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2-5">
+                            <label for="check2-5">Botões abrem modais</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(1)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 3,
+                titulo: '🔧 Criar app.js',
+                descricao: 'Arquivo JavaScript com todas as partes',
+                tempo: '10 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📝 Criar Arquivo</h4>
+                        <p>Crie um novo arquivo chamado <strong>app.js</strong> na raiz do projeto</p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚠️ ORDEM DE CÓPIA IMPORTANTE</h4>
+                        <p>Cole as partes <strong>NESTA ORDEM EXATA</strong>:</p>
+                        <ol>
+                            <li>PARTE 0: Documentação</li>
+                            <li>PARTE 0B: Guia Rápido</li>
+                            <li>PARTE 2: ConfigManager</li>
+                            <li>PARTE 3: GerenciadorIA</li>
+                            <li>PARTE 4: Interface Chat</li>
+                            <li>PARTE 5: Modais</li>
+                            <li>PARTE 6: Responsividade</li>
+                            <li>PARTE 7: Temas</li>
+                            <li>PARTE 8: Exportação</li>
+                            <li>PARTE 9: IA Local</li>
+                            <li>PARTE 10: Inicialização</li>
+                            <li>PARTE 11: Briefing</li>
+                            <li>PARTE 12: Validação</li>
+                            <li>PARTE 13: PWA</li>
+                            <li>PARTE 14: Criptografia</li>
+                            <li>PARTE 15: Dashboard</li>
+                        </ol>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📋 Estrutura do Arquivo</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// PARTE 0: DOCUMENTAÇÃO
+[Cole PARTE 0 completa]
+
+// PARTE 0B: GUIA RÁPIDO
+[Cole PARTE 0B completa]
+
+// PARTE 2: CONFIG MANAGER
+[Cole PARTE 2 completa]
+
+// ... continuar com PARTES 3-15 ...
+
+// PARTE 15: DASHBOARD
+[Cole PARTE 15 completa]</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Validar no Console</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// Abra DevTools (F12)
+// Cole cada linha no console e pressione Enter
+
+console.log(DOCUMENTACAO_PROJETO)
+console.log(GUIA_RAPIDO_RECUPERACAO)
+console.log(BRIEFING_TECNICO)
+console.log(configManager)
+console.log(gerenciadorIA)
+console.log(gerenciadorTemas)
+console.log(ValidadorIntegridade)
+console.log(gerenciadorPWA)
+console.log(gerenciadorCriptografia)
+console.log(gerenciadorDashboard)</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3-1">
+                            <label for="check3-1">Arquivo app.js criado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3-2">
+                            <label for="check3-2">Todas as 15 partes coladas em ordem</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3-3">
+                            <label for="check3-3">Nenhum erro no console (F12)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3-4">
+                            <label for="check3-4">Todos os objetos globais existem</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(2)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 4,
+                titulo: '🧪 Executar Testes',
+                descricao: 'Validar integridade do sistema',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🔍 Teste 1: Validação Completa</h4>
+                        <p>Cole no console (F12):</p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>validador.gerarRelatorio()</pre>
+                        </div>
+                        <p style="margin-top: 10px; color: #10b981;">✓ Esperado: "Status Geral: PASSOU"</p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🧪 Teste 2: Funcionalidade Básica</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// Teste 1: Novo chat
+novoChat()
+
+// Teste 2: Enviar mensagem
+document.getElementById('inputChat').value = 'Olá'
+enviarMensagem()
+
+// Teste 3: Abrir configurações
+abrirConfiguracoes()
+
+// Teste 4: Abrir memória
+abrirMemoria()</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚠️ Se Houver Erros</h4>
+                        <p>Consulte a seção "ERROS" do relatório de validação</p>
+                        <p style="margin-top: 10px;">Verifique:</p>
+                        <ul>
+                            <li>Se todas as PARTES foram coladas</li>
+                            <li>Se não há erros de sintaxe</li>
+                            <li>Se localStorage está disponível</li>
+                            <li>Se o navegador é moderno</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check4-1">
+                            <label for="check4-1">validador.gerarRelatorio() = "PASSOU"</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check4-2">
+                            <label for="check4-2">Novo chat pode ser criado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check4-3">
+                            <label for="check4-3">Mensagem pode ser enviada</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check4-4">
+                            <label for="check4-4">Modais abrem corretamente</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(3)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 5,
+                titulo: '🔐 Configurar Chaves API',
+                descricao: 'Adicionar chaves de diferentes modelos de IA',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📝 Monica</h4>
+                        <ol>
+                            <li>Acesse: <strong>https://monica.im</strong></li>
+                            <li>Faça login ou crie conta</li>
+                            <li>Vá para "API Keys"</li>
+                            <li>Copie sua chave</li>
+                        </ol>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📝 OpenAI</h4>
+                        <ol>
+                            <li>Acesse: <strong>https://platform.openai.com</strong></li>
+                            <li>Faça login ou crie conta</li>
+                            <li>Vá para "API Keys"</li>
+                            <li>Clique em "Create new secret key"</li>
+                            <li>Copie a chave</li>
+                        </ol>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📝 Google Gemini</h4>
+                        <ol>
+                            <li>Acesse: <strong>https://makersuite.google.com/app/apikey</strong></li>
+                            <li>Clique em "Create API Key"</li>
+                            <li>Copie a chave</li>
+                        </ol>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📝 Busca Internet</h4>
+                        <ol>
+                            <li>Acesse: <strong>https://programmablesearchengine.google.com</strong></li>
+                            <li>Crie um search engine</li>
+                            <li>Obtenha a chave de API</li>
+                        </ol>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚙️ Configurar no App</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em ⚙️ Config no sidebar
+2. Vá para aba "Chaves API"
+3. Cole cada chave nos campos
+4. Clique em "Salvar Chaves"</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Verificar Configuração</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>console.log(configManager.config.chaves)</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check5-1">
+                            <label for="check5-1">Chave Monica obtida (opcional)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check5-2">
+                            <label for="check5-2">Chave OpenAI obtida (opcional)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check5-3">
+                            <label for="check5-3">Chave Gemini obtida (opcional)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check5-4">
+                            <label for="check5-4">Chaves configuradas no app</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(4)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 6,
+                titulo: '🎤 Configurar Voz',
+                descricao: 'Reconhecimento de voz e TTS',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🎤 Testar Reconhecimento de Voz</h4>
+                        <ol>
+                            <li>Clique em <strong>🎤</strong> no input de chat</li>
+                            <li>Fale algo (ex: "Olá")</li>
+                            <li>O texto deve aparecer no input</li>
+                        </ol>
+                        <p style="margin-top: 10px; color: #f59e0b;">
+                            ⚠️ Se não funcionar: Verifique permissão de microfone
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔊 Testar TTS (Text-to-Speech)</h4>
+                        <ol>
+                            <li>Clique em <strong>🔊</strong> no input de chat</li>
+                            <li>Digite uma mensagem</li>
+                            <li>Envie a mensagem</li>
+                            <li>A IA deve falar a resposta</li>
+                        </ol>
+                        <p style="margin-top: 10px; color: #f59e0b;">
+                            ⚠️ Se não funcionar: Verifique volume do sistema
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚙️ Configurar Velocidade</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em ⚙️ Config
+2. Vá para aba "Perfil Usuário"
+3. Procure por configuração de TTS
+4. Ajuste velocidade (padrão: 1.15)</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔧 Troubleshooting</h4>
+                        <ul>
+                            <li>Verifique permissão de microfone</li>
+                            <li>Tente em Chrome (melhor suporte)</li>
+                            <li>Verifique console para erros (F12)</li>
+                            <li>Recarregue a página</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check6-1">
+                            <label for="check6-1">Reconhecimento de voz funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check6-2">
+                            <label for="check6-2">TTS funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check6-3">
+                            <label for="check6-3">Velocidade configurada</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(5)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 7,
+                titulo: '📱 Configurar PWA',
+                descricao: 'Progressive Web App - Instalar como app',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📋 Criar manifest.json</h4>
+                        <p>Crie arquivo <strong>manifest.json</strong> na raiz do projeto</p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>{
+  "name": "Chat IA Profissional",
+  "short_name": "Chat IA",
+  "description": "Aplicação profissional para interação com múltiplos modelos de IA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔧 Criar service-worker.js</h4>
+                        <p>Crie arquivo <strong>service-worker.js</strong> na raiz</p>
+                        <p style="color: #94a3b8; margin-top: 10px;">
+                            Cole o código da constante SERVICE_WORKER_CODE da PARTE 13
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📝 Adicionar ao HTML</h4>
+                        <p>No <strong>&lt;head&gt;</strong> do index.html, adicione:</p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>&lt;link rel="manifest" href="/manifest.json"&gt;
+&lt;meta name="theme-color" content="#2563eb"&gt;
+&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;
+&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Testar PWA</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// Verificar status PWA
+gerenciadorPWA.gerarRelatorio()
+
+// Esperado:
+// {
+//   serviceWorkerRegistrado: true,
+//   manifestCarregado: true,
+//   podeInstalar: true,
+//   status: 'PRONTO'
+// }</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check7-1">
+                            <label for="check7-1">Arquivo manifest.json criado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check7-2">
+                            <label for="check7-2">Arquivo service-worker.js criado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check7-3">
+                            <label for="check7-3">Meta tags adicionadas ao HTML</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check7-4">
+                            <label for="check7-4">PWA status = "PRONTO"</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(6)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 8,
+                titulo: '🔒 Configurar Criptografia',
+                descricao: 'AES-256 para proteger chaves de API',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🔐 Abrir Modal de Criptografia</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em ⚙️ Config
+2. Vá para aba "Perfil Usuário"
+3. Clique em 🔐 Criptografia</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔑 Criar Senha Mestre</h4>
+                        <p><strong>Requisitos:</strong></p>
+                        <ul>
+                            <li>Mínimo 12 caracteres</li>
+                            <li>Maiúsculas (A-Z)</li>
+                            <li>Minúsculas (a-z)</li>
+                            <li>Números (0-9)</li>
+                            <li>Símbolos (@$!%*?&)</li>
+                        </ul>
+                        <p style="margin-top: 10px; color: #10b981;">
+                            ✓ Exemplo: <strong>Chat@IA2026!Seguro</strong>
+                        </p>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Ativar Criptografia</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Digite a senha em "Senha Mestre"
+2. Confirme em "Confirmar Senha"
+3. Clique em 🔒 Ativar Criptografia</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Verificar Criptografia</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>gerenciadorCriptografia.gerarRelatorio()
+
+// Esperado:
+// {
+//   criptografiaSuportada: true,
+//   algoritmo: 'AES-256-GCM',
+//   chaveMestreGerada: true,
+//   status: 'ATIVA'
+// }</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>⚠️ IMPORTANTE</h4>
+                        <ul>
+                            <li>⚠️ Se esquecer a senha, suas chaves não poderão ser recuperadas</li>
+                            <li>✓ Use uma senha forte e única</li>
+                            <li>✓ Guarde a senha em local seguro</li>
+                            <li>✓ A criptografia usa AES-256-GCM (padrão militar)</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check8-1">
+                            <label for="check8-1">Senha mestre criada (forte)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check8-2">
+                            <label for="check8-2">Criptografia ativada</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check8-3">
+                            <label for="check8-3">Status = "ATIVA"</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check8-4">
+                            <label for="check8-4">Senha guardada em local seguro</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(7)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 9,
+                titulo: '📊 Acessar Dashboard',
+                descricao: 'Ver estatísticas e análises',
+                tempo: '2 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📊 Abrir Dashboard</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 📊 Dashboard no sidebar</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📈 Visualizar Estatísticas</h4>
+                        <ul>
+                            <li>Total de chats</li>
+                            <li>Total de mensagens</li>
+                            <li>Espaço usado</li>
+                            <li>Registros de memória</li>
+                            <li>Recomendações</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📥 Exportar Dashboard</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 📥 Exportar
+2. Arquivo será baixado como dashboard-[timestamp].txt</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Testar Dashboard</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>gerenciadorDashboard.gerarRelatorioEstatisticas()</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check9-1">
+                            <label for="check9-1">Dashboard abre corretamente</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check9-2">
+                            <label for="check9-2">Estatísticas são exibidas</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check9-3">
+                            <label for="check9-3">Exportação funciona</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(8)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 10,
+                titulo: '🧠 Configurar Memória',
+                descricao: 'Histórico e contexto automático',
+                tempo: '2 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>💾 Entender Memória</h4>
+                        <ul>
+                            <li><strong>Mínimo:</strong> 15 registros</li>
+                            <li><strong>Máximo:</strong> 100 registros</li>
+                            <li><strong>Automático:</strong> Mantém contexto de conversas</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>💾 Acessar Memória</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 💾 Memória no sidebar</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📋 Visualizar Registros</h4>
+                        <ul>
+                            <li>Data e hora</li>
+                            <li>Tipo (conversa, configuração, nota)</li>
+                            <li>Conteúdo (preview)</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🗑️ Limpar Memória</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em Limpar Memória
+2. Confirme a ação</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check10-1">
+                            <label for="check10-1">Modal de memória abre</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check10-2">
+                            <label for="check10-2">Registros são exibidos</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check10-3">
+                            <label for="check10-3">Memória pode ser limpa</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(9)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 11,
+                titulo: '💾 Backup e Importação',
+                descricao: 'Salvar e restaurar dados',
+                tempo: '3 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>📦 Fazer Backup</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 📦 Backup no sidebar
+2. Arquivo será baixado como backup-ia-[timestamp].json</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📋 Conteúdo do Backup</h4>
+                        <ul>
+                            <li>Todas as configurações</li>
+                            <li>Histórico de memória</li>
+                            <li>Todos os chats</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📥 Importar Backup</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 📥 Importar no sidebar
+2. Selecione arquivo backup-*.json
+3. Página será recarregada com dados restaurados</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Boas Práticas</h4>
+                        <ul>
+                            <li>✓ Fazer backup regularmente (semanal)</li>
+                            <li>✓ Armazenar em local seguro</li>
+                            <li>✓ Testar importação periodicamente</li>
+                            <li>✓ Manter versões anteriores</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check11-1">
+                            <label for="check11-1">Primeiro backup feito</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check11-2">
+                            <label for="check11-2">Arquivo armazenado com segurança</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check11-3">
+                            <label for="check11-3">Importação testada</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(10)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 12,
+                titulo: '📚 Documentação',
+                descricao: 'Exportar e consultar documentação',
+                tempo: '2 min',
+                conteudo: `
+                                        <div class="instrucoes">
+                        <h4>📚 Exportar Documentação</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Clique em 📚 Docs no sidebar
+2. Arquivo será baixado como documentacao-chat-ia-[timestamp].md</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📋 Conteúdo da Documentação</h4>
+                        <ul>
+                            <li>Estrutura completa do projeto</li>
+                            <li>Módulos e responsabilidades</li>
+                            <li>Fluxo de dados</li>
+                            <li>Pontos de extensão</li>
+                            <li>Guia de manutenção</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✓ Usar Documentação</h4>
+                        <ul>
+                            <li>Consulte quando precisar entender o projeto</li>
+                            <li>Compartilhe com outras IAs para manutenção</li>
+                            <li>Mantenha atualizada com mudanças</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check12-1">
+                            <label for="check12-1">Documentação exportada</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check12-2">
+                            <label for="check12-2">Arquivo salvo em local seguro</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check12-3">
+                            <label for="check12-3">Conteúdo revisado</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(11)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 13,
+                titulo: '🧪 Teste Completo',
+                descricao: 'Validar todas as funcionalidades',
+                tempo: '10 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🧪 Teste de Funcionalidade Básica</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// 1. Novo chat
+novoChat()
+console.log('✓ Novo chat criado')
+
+// 2. Enviar mensagem
+document.getElementById('inputChat').value = 'Teste'
+enviarMensagem()
+console.log('✓ Mensagem enviada')
+
+// 3. Abrir configurações
+abrirConfiguracoes()
+console.log('✓ Configurações abertas')
+
+// 4. Abrir memória
+abrirMemoria()
+console.log('✓ Memória aberta')
+
+// 5. Fazer backup
+fazerBackup()
+console.log('✓ Backup feito')</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📱 Teste de Responsividade</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Abra DevTools (F12)
+2. Clique em "Toggle device toolbar"
+3. Teste resoluções:
+   - iPhone SE (375px)
+   - iPhone 12 (390px)
+   - iPad (768px)
+   - Desktop (1920px)
+
+4. Teste orientações:
+   - Retrato
+   - Paisagem</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🌐 Teste de Navegadores</h4>
+                        <p>Teste em cada navegador:</p>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>- Chrome
+- Firefox
+- Safari
+- Edge</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🤖 Teste de APIs</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// Testar cada modelo
+// (requer chaves configuradas)
+
+// Monica
+gerenciadorIA.enviarMonica('Olá', [])
+
+// OpenAI
+gerenciadorIA.enviarOpenAI('Olá', [])
+
+// Gemini
+gerenciadorIA.enviarGemini('Olá', [])
+
+// Local
+gerenciadorIA.enviarLocal('Olá', [])</pre>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-1">
+                            <label for="check13-1">Novo chat funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-2">
+                            <label for="check13-2">Mensagem pode ser enviada</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-3">
+                            <label for="check13-3">Modais abrem corretamente</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-4">
+                            <label for="check13-4">Sidebar funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-5">
+                            <label for="check13-5">Responsividade funciona</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-6">
+                            <label for="check13-6">Chrome: OK</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-7">
+                            <label for="check13-7">Firefox: OK</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-8">
+                            <label for="check13-8">Safari: OK</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check13-9">
+                            <label for="check13-9">Edge: OK</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(12)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 14,
+                titulo: '✅ Validação Final',
+                descricao: 'Executar todos os testes finais',
+                tempo: '5 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🔍 Executar Todos os Testes</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>// Teste 1: Integridade
+validador.gerarRelatorio()
+
+// Teste 2: PWA
+gerenciadorPWA.gerarRelatorio()
+
+// Teste 3: Criptografia
+gerenciadorCriptografia.gerarRelatorio()
+
+// Teste 4: Dashboard
+gerenciadorDashboard.gerarRelatorioEstatisticas()</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>✅ Checklist Final</h4>
+                        <ul>
+                            <li>✓ Validação: PASSOU</li>
+                            <li>✓ PWA: PRONTO</li>
+                            <li>✓ Criptografia: ATIVA</li>
+                            <li>✓ Dashboard: Funcionando</li>
+                            <li>✓ Todos os navegadores: OK</li>
+                            <li>✓ Todas as resoluções: OK</li>
+                            <li>✓ Backup: Funcionando</li>
+                            <li>✓ Importação: Funcionando</li>
+                        </ul>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📊 Relatório de Validação</h4>
+                        <p style="color: #10b981; font-weight: bold;">Se tudo passou:</p>
+                        <div style="background: #1e293b; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                            <p>✓ SISTEMA PRONTO PARA PRODUÇÃO</p>
+                            <p>✓ Todos os testes passaram</p>
+                            <p>✓ Documentação completa</p>
+                            <p>✓ Segurança ativada</p>
+                            <p>✓ Performance otimizada</p>
+                        </div>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist Final</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-1">
+                            <label for="check14-1">Validação: PASSOU</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-2">
+                            <label for="check14-2">PWA: PRONTO</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-3">
+                            <label for="check14-3">Criptografia: ATIVA</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-4">
+                            <label for="check14-4">Dashboard: Funcionando</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-5">
+                            <label for="check14-5">Todos os navegadores: OK</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-6">
+                            <label for="check14-6">Todas as resoluções: OK</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-7">
+                            <label for="check14-7">Backup: Funcionando</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check14-8">
+                            <label for="check14-8">Importação: Funcionando</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(13)">← Anterior</button>
+                        <button class="btn btn-primario" onclick="irParaProximoPasso()">Próximo Passo →</button>
+                    </div>
+                `
+            },
+
+            {
+                numero: 15,
+                titulo: '🚀 Deploy (Opcional)',
+                descricao: 'Colocar em produção',
+                tempo: '10 min',
+                conteudo: `
+                    <div class="instrucoes">
+                        <h4>🌐 Opções de Deploy</h4>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📌 Opção 1: Vercel (Recomendado)</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>npm i -g vercel
+vercel</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📌 Opção 2: Netlify</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Acesse: https://netlify.com
+2. Faça login com GitHub
+3. Arraste a pasta do projeto
+4. Pronto!</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📌 Opção 3: GitHub Pages</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>git init
+git add .
+git commit -m "Initial commit"
+git push origin main</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>📌 Opção 4: Servidor Próprio</h4>
+                        <div class="codigo-bloco">
+                            <button class="btn-copiar" onclick="copiarCodigo(this)">📋 Copiar</button>
+                            <pre>1. Copie todos os arquivos
+2. Faça upload para servidor
+3. Configure HTTPS
+4. Pronto!</pre>
+                        </div>
+                    </div>
+
+                    <div class="instrucoes">
+                        <h4>🔒 Configuração HTTPS</h4>
+                        <p><strong>IMPORTANTE:</strong> PWA requer HTTPS em produção</p>
+                        <p style="margin-top: 10px;">Opções:</p>
+                        <ul>
+                            <li>Let's Encrypt (gratuito)</li>
+                            <li>Cloudflare (gratuito)</li>
+                            <li>Certificado pago</li>
+                        </ul>
+                    </div>
+
+                    <div class="checklist">
+                        <h4 style="color: #2563eb; margin-bottom: 10px;">✓ Checklist</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check15-1">
+                            <label for="check15-1">Plataforma de deploy escolhida</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check15-2">
+                            <label for="check15-2">Arquivos enviados</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check15-3">
+                            <label for="check15-3">HTTPS configurado</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check15-4">
+                            <label for="check15-4">PWA testado em produção</label>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button class="btn btn-secundario" onclick="irParaPasso(14)">← Anterior</button>
+                        <button class="btn btn-sucesso" onclick="finalizarGuia()" style="flex: 1;">
+                            ✅ Finalizar Guia
+                        </button>
+                    </div>
+                `
+            }
+        ];
+
+        // ============================================
+        // FUNÇÕES PRINCIPAIS
+        // ============================================
+
+        let passoAtual = 0;
+
+        function inicializarGuia() {
+            renderizarSteps();
+            renderizarConteudo();
+            renderizarMenu();
+            atualizarProgress();
+        }
+
+        function renderizarSteps() {
+            const container = document.getElementById('stepsContainer');
+            container.innerHTML = PASSOS.map((passo, idx) => `
+                <div class="step ${idx === passoAtual ? 'ativo' : ''} ${verificarStepCompleto(idx) ? 'completo' : ''}" 
+                     onclick="irParaPasso(${idx})">
+                    <div class="step-numero">${passo.numero}</div>
+                    <h3>${passo.titulo}</h3>
+                    <p>${passo.descricao}</p>
+                    <span class="step-status ${idx === passoAtual ? 'status-ativo' : verificarStepCompleto(idx) ? 'status-completo' : 'status-pendente'}">
+                        ${idx === passoAtual ? 'Em Progresso' : verificarStepCompleto(idx) ? '✓ Completo' : 'Pendente'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function renderizarConteudo() {
+            const container = document.getElementById('conteudoSteps');
+            container.innerHTML = PASSOS.map((passo, idx) => `
+                <div class="conteudo-step ${idx === passoAtual ? 'ativo' : ''}">
+                    <h2>${passo.numero}. ${passo.titulo}</h2>
+                    <p style="color: #94a3b8; margin-bottom: 20px;">⏱️ Tempo estimado: ${passo.tempo}</p>
+                    ${passo.conteudo}
+                </div>
+            `).join('');
+        }
+
+        function renderizarMenu() {
+            const menu = document.getElementById('menuLateral');
+            menu.innerHTML = PASSOS.map((passo, idx) => `
+                <div class="item-menu ${idx === passoAtual ? 'ativo' : ''} ${verificarStepCompleto(idx) ? 'completo' : ''}"
+                     onclick="irParaPasso(${idx})">
+                    ${passo.numero}. ${passo.titulo.substring(0, 20)}...
+                </div>
+            `).join('');
+        }
+
+        function irParaPasso(idx) {
+            passoAtual = idx;
+            renderizarSteps();
+            renderizarConteudo();
+            renderizarMenu();
+            atualizarProgress();
+            window.scrollTo(0, 0);
+        }
+
+        function irParaProximoPasso() {
+            if (passoAtual < PASSOS.length - 1) {
+                marcarStepCompleto(passoAtual);
+                irParaPasso(passoAtual + 1);
+            }
+        }
+
+        function verificarStepCompleto(idx) {
+            const chaves = Object.keys(localStorage).filter(k => k.startsWith('check'));
+            const checksDoStep = chaves.filter(k => k.includes(`${idx + 1}-`));
+            if (checksDoStep.length === 0) return false;
+            return checksDoStep.every(k => localStorage.getItem(k) === 'true');
+        }
+
+        function marcarStepCompleto(idx) {
+            const checkboxes = document.querySelectorAll(`input[id^="check${idx + 1}-"]`);
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    localStorage.setItem(cb.id, 'true');
+                }
+            });
+        }
+
+        function atualizarProgress() {
+            const completos = PASSOS.filter((_, idx) => verificarStepCompleto(idx)).length;
+            const percentual = (completos / PASSOS.length) * 100;
+            document.getElementById('progressBar').style.width = percentual + '%';
+            document.getElementById('progressText').textContent = `${completos} de ${PASSOS.length} passos completos`;
+        }
+
+        function copiarCodigo(btn) {
+            const codigo = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(codigo).then(() => {
+                btn.textContent = '✓ Copiado!';
+                btn.classList.add('copiado');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copiar';
+                    btn.classList.remove('copiado');
+                }, 2000);
+                mostrarNotificacao('Código copiado para clipboard!', 'sucesso');
+            });
+        }
+
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+            const notif = document.getElementById('notificacao');
+            notif.textContent = mensagem;
+            notif.className = `notificacao ${tipo}`;
+            notif.style.display = 'block';
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 3000);
+        }
+
+        function finalizarGuia() {
+            marcarStepCompleto(passoAtual);
+            document.getElementById('stepsContainer').style.display = 'none';
+            document.getElementById('conteudoSteps').style.display = 'none';
+            document.getElementById('resumoFinal').style.display = 'block';
+            window.scrollTo(0, 0);
+            mostrarNotificacao('🎉 Parabéns! Guia completo!', 'sucesso');
+        }
+
+        // Restaurar checkboxes do localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarGuia();
+            
+            // Restaurar estado dos checkboxes
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('check')) {
+                    const checkbox = document.getElementById(key);
+                    if (checkbox) {
+                        checkbox.checked = localStorage.getItem(key) === 'true';
+                    }
+                }
+            });
+
+            // Salvar estado dos checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    localStorage.setItem(cb.id, cb.checked);
+                    atualizarProgress();
+                    renderizarSteps();
+                    renderizarMenu();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
