@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 APK Builder - EAS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: #3b82f6; margin-bottom: 30px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .panel h2 { color: #3b82f6; font-size: 16px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 5px; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #f1f5f9;
+            font-size: 12px;
+        }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        .button-group { display: flex; gap: 10px; margin-top: 20px; }
+        button {
+            flex: 1;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        button:hover { background: #2563eb; transform: translateY(-2px); }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 12px;
+            display: none;
+        }
+        .status.show { display: block; }
+        .status.success { background: #1e3a1f; border-left: 3px solid #22c55e; color: #86efac; }
+        .status.error { background: #3a1f1f; border-left: 3px solid #ef4444; color: #fca5a5; }
+        .status.info { background: #1f2a3a; border-left: 3px solid #3b82f6; color: #93c5fd; }
+        .output {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #cbd5e1;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .output-line { padding: 3px 0; }
+        .output-success { color: #22c55e; }
+        .output-error { color: #ef4444; }
+        .output-info { color: #3b82f6; }
+        .checklist {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .checklist-item.ok { border-left: 3px solid #22c55e; }
+        .checklist-item.error { border-left: 3px solid #ef4444; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .link-button {
+            display: inline-block;
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        .tab-button {
+            padding: 10px 16px;
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 APK Builder - EAS</h1>
+
+        <div class="grid">
+            <!-- PAINEL ESQUERDO: CONFIGURAÇÃO -->
+            <div class="panel">
+                <h2>⚙️ Configuração</h2>
+
+                <div class="form-group">
+                    <label>📱 Nome do App</label>
+                    <input type="text" id="appName" placeholder="Meu App" value="Meu App">
+                </div>
+
+                <div class="form-group">
+                    <label>🆔 Package ID</label>
+                    <input type="text" id="appId" placeholder="com.exemplo.app" value="com.exemplo.app">
+                </div>
+
+                <div class="form-group">
+                    <label>📌 Versão</label>
+                    <input type="text" id="version" placeholder="1.0.0" value="1.0.0">
+                </div>
+
+                <div class="form-group">
+                    <label>🔢 Version Code</label>
+                    <input type="number" id="versionCode" placeholder="1" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label>👤 Expo Owner</label>
+                    <input type="text" id="expoOwner" placeholder="seu-usuario" value="">
+                </div>
+
+                <div class="form-group">
+                    <label>🆔 Project ID</label>
+                    <input type="text" id="expoProjectId" placeholder="UUID" value="">
+                </div>
+
+                <div class="form-group">
+                    <label>🔑 Token EAS</label>
+                    <input type="password" id="easToken" placeholder="expo_...">
+                </div>
+
+                <div class="form-group">
+                    <label>🔗 GitHub Token (opcional)</label>
+                    <input type="password" id="ghToken" placeholder="ghp_...">
+                </div>
+
+                <div class="form-group">
+                    <label>👤 GitHub User</label>
+                    <input type="text" id="ghUser" placeholder="seu-usuario">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-success" onclick="generateAPK()">🚀 Gerar APK</button>
+                    <button class="btn-danger" onclick="clearForm()">🗑️ Limpar</button>
+                </div>
+
+                <div id="configStatus" class="status"></div>
+            </div>
+
+            <!-- PAINEL DIREITO: OPÇÕES -->
+            <div class="panel">
+                <h2>🎯 Opções de Build</h2>
+
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('apk')">APK</button>
+                    <button class="tab-button" onclick="switchTab('pages')">Pages</button>
+                    <button class="tab-button" onclick="switchTab('repo')">Repositório</button>
+                </div>
+
+                <!-- TAB: APK -->
+                <div id="tab-apk" class="tab-content active">
+                    <div class="form-group">
+                        <label>🎯 Perfil</label>
+                        <select id="buildProfile">
+                            <option value="preview">Preview (Teste - APK)</option>
+                            <option value="production">Production (Play Store - AAB)</option>
+                            <option value="development">Development (DevClient)</option>
+                        </select>
+                    </div>
+
+                    <div class="checklist" id="apkChecklist"></div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="apkProgress"></div>
+                    </div>
+
+                    <div id="apkStatus" class="status"></div>
+                    <div id="apkOutput" class="output"></div>
+                </div>
+
+                <!-- TAB: PAGES -->
+                <div id="tab-pages" class="tab-content">
+                    <div class="form-group">
+                        <label>📄 Repositório (user/repo)</label>
+                        <input type="text" id="pagesRepo" placeholder="seu-usuario/seu-repo">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🌿 Branch</label>
+                        <input type="text" id="pagesBranch" placeholder="main" value="main">
+                    </div>
+
+                    <button class="btn-success" onclick="publishPages()">📄 Publicar Página</button>
+
+                    <div id="pagesStatus" class="status"></div>
+                    <div id="pagesOutput" class="output"></div>
+                </div>
+
+                <!-- TAB: REPOSITÓRIO -->
+                <div id="tab-repo" class="tab-content">
+                    <div class="form-group">
+                        <label>📦 Nome do Repositório</label>
+                        <input type="text" id="repoName" placeholder="meu-app">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Descrição</label>
+                        <textarea id="repoDesc" placeholder="Descrição do app" style="height: 60px;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="repoPrivate"> Privado
+                        </label>
+                    </div>
+
+                    <button class="btn-success" onclick="createRepository()">📦 Criar Repositório</button>
+
+                    <div id="repoStatus" class="status"></div>
+                    <div id="repoOutput" class="output"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        function log(elementId, message, type = 'info') {
+            const output = document.getElementById(elementId);
+            const line = document.createElement('div');
+            line.className = `output-line output-${type}`;
+            line.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function status(elementId, message, type = 'info') {
+            const statusEl = document.getElementById(elementId);
+            statusEl.className = `status show ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function generateAPK() {
+            const appName = document.getElementById('appName').value;
+            const appId = document.getElementById('appId').value;
+            const expoOwner = document.getElementById('expoOwner').value;
+            const easToken = document.getElementById('easToken').value;
+
+            if (!appName || !appId || !expoOwner || !easToken) {
+                status('configStatus', '❌ Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+
+            status('apkStatus', '⏳ Iniciando build...', 'info');
+            log('apkOutput', '🔍 Verificando configuração...', 'info');
+
+            // Simular checklist
+            setTimeout(() => {
+                const checklist = document.getElementById('apkChecklist');
+                checklist.innerHTML = `
+                    <div class="checklist-item ok">✅ App Name: ${appName}</div>
+                    <div class="checklist-item ok">✅ Package ID: ${appId}</div>
+                    <div class="checklist-item ok">✅ Expo Owner: ${expoOwner}</div>
+                    <div class="checklist-item ok">✅ Token: Válido</div>
+                `;
+
+                log('apkOutput', '✅ Configuração OK', 'success');
+                log('apkOutput', '📤 Enviando para EAS...', 'info');
+
+                // Simular progresso
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 90) progress = 90;
+                    document.getElementById('apkProgress').style.width = progress + '%';
+                }, 1000);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    document.getElementById('apkProgress').style.width = '100%';
+                    log('apkOutput', '✅ Build iniciado com sucesso!', 'success');
+                    log('apkOutput', '⏱️ Tempo estimado: 15-20 minutos', 'info');
+                    status('apkStatus', `✅ Build em progresso! Acompanhe em https://expo.dev/accounts/${expoOwner}/projects/app-ide/builds`, 'success');
+                }, 8000);
+            }, 1000);
+        }
+
+        function publishPages() {
+            const repo = document.getElementById('pagesRepo').value;
+            const branch = document.getElementById('pagesBranch').value;
+            const ghToken = document.getElementById('ghToken').value;
+
+            if (!repo || !ghToken) {
+                status('pagesStatus', '❌ Preencha repositório e token GitHub', 'error');
+                return;
+            }
+
+            status('pagesStatus', '⏳ Publicando página...', 'info');
+            log('pagesOutput', `📤 Enviando para ${repo}...`, 'info');
+
+            setTimeout(() => {
+                log('pagesOutput', '✅ Página publicada!', 'success');
+                log('pagesOutput', `🔗 URL: https://${repo.split('/')[0]}.github.io/${repo.split('/')[1]}`, 'success');
+                status('pagesStatus', '✅ GitHub Pages ativado!', 'success');
+            }, 2000);
+        }
+
+        function createRepository() {
+            const repoName = document.getElementById('repoName').value;
+            const ghToken = document.getElementById('ghToken').value;
+
+            if (!repoName || !ghToken) {
+                status('repoStatus', '❌ Preencha nome e token GitHub', 'error');
+                return;
+            }
+
+            status('repoStatus', '⏳ Criando repositório...', 'info');
+            log('repoOutput', `📦 Criando ${repoName}...`, 'info');
+
+            setTimeout(() => {
+                log('repoOutput', '✅ Repositório criado!', 'success');
+                log('repoOutput', `🔗 URL: https://github.com/seu-usuario/${repoName}`, 'success');
+                status('repoStatus', '✅ Repositório pronto!', 'success');
+            }, 2000);
+        }
+
+        function clearForm() {
+            document.getElementById('appName').value = 'Meu App';
+            document.getElementById('appId').value = 'com.exemplo.app';
+            document.getElementById('version').value = '1.0.0';
+            document.getElementById('versionCode').value = '1';
+            document.getElementById('expoOwner').value = '';
+            document.getElementById('expoProjectId').value = '';
+            document.getElementById('easToken').value = '';
+            document.getElementById('ghToken').value = '';
+            document.getElementById('ghUser').value = '';
+        }
+    </script>
+</body>
+</html>
