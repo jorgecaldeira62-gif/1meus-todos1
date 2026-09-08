@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>📱 Gerador DevMobile EAS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:12px}
+h1{color:#58a6ff;font-size:15px;margin-bottom:4px;text-align:center}
+.sub{text-align:center;color:#8b949e;font-size:11px;margin-bottom:12px}
+.tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.tab{padding:6px 12px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#8b949e;cursor:pointer;font-size:11px}
+.tab.active{background:#1f3a5f;border-color:#58a6ff;color:#58a6ff;font-weight:700}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:10px}
+.card h2{font-size:12px;color:#58a6ff;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #21262d}
+label{display:block;font-size:11px;color:#8b949e;margin-bottom:3px;margin-top:8px}
+label:first-of-type{margin-top:0}
+input,select{width:100%;padding:7px 10px;background:#21262d;border:1px solid #30363d;border-radius:5px;color:#c9d1d9;font-size:12px;outline:none}
+input:focus,select:focus{border-color:#58a6ff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.b-blue{background:#1f6feb;color:#fff}
+.b-green{background:#238636;color:#fff}
+.b-gray{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.b-full{width:100%;margin-top:6px}
+.alerta{border-radius:6px;padding:8px 10px;font-size:11px;margin-bottom:8px;display:flex;gap:7px;align-items:flex-start}
+.alerta.info{background:#0d1f3a;border-left:3px solid #58a6ff;color:#79c0ff}
+.alerta.ok{background:#0d2818;border-left:3px solid #3fb950;color:#3fb950}
+.alerta.warn{background:#2d1f00;border-left:3px solid #e3b341;color:#e3b341}
+.alerta.err{background:#2d0f0f;border-left:3px solid #f85149;color:#f85149}
+.res-card{background:#0d1117;border:1px solid #30363d;border-radius:6px;margin-bottom:8px;overflow:hidden}
+.res-header{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#161b22;font-size:11px}
+.res-header .rh-name{flex:1;color:#58a6ff;font-weight:700}
+.res-header .rh-copy{padding:3px 8px;border-radius:4px;border:none;cursor:pointer;font-size:10px;background:#1f6feb;color:#fff}
+pre{padding:10px;font-size:10px;line-height:1.5;overflow-x:auto;color:#c9d1d9;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto}
+.chk{display:flex;align-items:flex-start;gap:7px;padding:6px 0;font-size:11px;border-bottom:1px solid #21262d}
+.chk:last-child{border-bottom:none}
+.chk .ci{font-size:14px;flex-shrink:0;margin-top:1px}
+.chk .ct{flex:1}
+.chk .cs{color:#8b949e;font-size:10px;margin-top:2px}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;color:#fff;margin-left:4px}
+.bg-ok{background:#238636}.bg-warn{background:#9a6700}.bg-info{background:#1f6feb}.bg-err{background:#da3633}
+.original{background:#21262d;border-radius:4px;padding:4px 7px;font-family:monospace;font-size:10px;color:#8b949e;margin:3px 0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+</style>
+</head>
+<body>
+
+<h1>📱 Gerador EAS Build — Baseado no DevMobile</h1>
+<p class="sub">Configuração exata que gerou APKs com sucesso · Adaptado para nova conta</p>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('config')">⚙️ Sua Conta</div>
+  <div class="tab" onclick="switchTab('gerar')">📄 Arquivos</div>
+  <div class="tab" onclick="switchTab('secrets')">🔑 Secrets</div>
+  <div class="tab" onclick="switchTab('passos')">📋 Passos</div>
+</div>
+
+<!-- ══════════════════ TAB CONFIG ══════════════════ -->
+<div id="tab-config">
+
+  <div class="alerta ok">
+    <span>✅</span>
+    <div>Baseado nos arquivos reais do DevMobile que gerou APKs com sucesso. Só troque os dados da conta.</div>
+  </div>
+
+  <div class="card">
+    <h2>👤 Dados originais (referência)</h2>
+    <div class="original">owner: "maikonrocha"</div>
+    <div class="original">projectId: "13df5db9-8f1a-421b-aadc-976799facd31"</div>
+    <div class="original">package: "com.devmobile.ide"</div>
+    <div class="original">name: "DevMobile" · slug: "app-ide"</div>
+  </div>
+
+  <div class="card">
+    <h2>👤 Sua conta nova</h2>
+    <label>Seu usuário no Expo (expo.dev)</label>
+    <input id="novoOwner" placeholder="ex: meuusuario" oninput="atualizar()"/>
+    <div style="font-size:10px;color:#8b949e;margin-top:3px">
+      Crie em <b>expo.dev</b> → Sign Up (grátis)
+    </div>
+
+    <label>Project ID do novo projeto</label>
+    <input id="novoProjectId" placeholder="ex: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" oninput="atualizar()"/>
+    <div style="font-size:10px;color:#8b949e;margin-top:3px">
+      Após criar projeto em expo.dev → Project Settings → Project ID
+    </div>
+    <button class="b-gray" style="font-size:10px;padding:3px 8px;margin-top:4px" onclick="alert('Acesse expo.dev → faça login → clique em New Project → copie o Project ID que aparece nas configurações')">❓ Como obter o Project ID</button>
+  </div>
+
+  <div class="card">
+    <h2>📱 Dados do App</h2>
+    <label>Nome do app</label>
+    <input id="appName" value="DevMobile" oninput="atualizar()"/>
+    <label>Slug (identificador URL)</label>
+    <input id="appSlug" value="app-ide" oninput="atualizar()"/>
+    <label>Package Android</label>
+    <input id="appPackage" value="com.devmobile.ide" oninput="atualizar()"/>
+    <button class="b-gray" style="font-size:10px;padding:3px 8px;margin-top:4px" onclick="autoPackage()">⚡ Gerar package automaticamente</button>
+    <div class="row" style="margin-top:8px">
+      <div>
+        <label>Versão</label>
+        <input id="appVersion" value="1.0.0" oninput="atualizar()"/>
+      </div>
+      <div>
+        <label>Version Code</label>
+        <input id="versionCode" value="1" type="number" oninput="atualizar()"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔑 Token</h2>
+    <div class="alerta warn">
+      <span>⚠️</span>
+      <div>O token NÃO vai dentro dos arquivos. Ele fica como Secret no GitHub com o nome <b>EXPO_TOKEN</b>.</div>
+    </div>
+    <label>Nome do Secret no GitHub</label>
+    <input id="tokenSecret" value="EXPO_TOKEN" oninput="atualizar()"/>
+  </div>
+
+  <div class="card">
+    <h2>🔄 GitHub Actions</h2>
+    <label>Branch principal</label>
+    <select id="branch" onchange="atualizar()">
+      <option value="main">main</option>
+      <option value="master">master</option>
+    </select>
+  </div>
+
+  <button class="b-green b-full" onclick="switchTab('gerar');gerarTudo()">
+    ⚡ Gerar Arquivos Baseados no DevMobile →
+  </button>
+</div>
+
+<!-- ══════════════════ TAB GERAR ══════════════════ -->
+<div id="tab-gerar" style="display:none">
+  <div class="alerta info" id="gerar-aviso">
+    <span>💡</span><div>Configure na aba ⚙️ e clique em Gerar</div>
+  </div>
+  <div id="arquivos-gerados"></div>
+  <div id="btn-exp" style="display:none;margin-top:6px">
+    <button class="b-green b-full" onclick="exportarZip()">💾 Baixar ZIP com todos os arquivos</button>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB SECRETS ══════════════════ -->
+<div id="tab-secrets" style="display:none">
+  <div class="alerta info">
+    <span>💡</span>
+    <div>O token era o segredo que fez funcionar. Veja como configurar na conta nova.</div>
+  </div>
+
+  <div class="card">
+    <h2>🔑 Como gerar o EXPO_TOKEN</h2>
+    <div class="chk"><span class="ci">1️⃣</span><div class="ct">Acesse <b>expo.dev</b> e faça login<div class="cs">Crie conta grátis se não tiver</div></div></div>
+    <div class="chk"><span class="ci">2️⃣</span><div class="ct">Clique no seu avatar → <b>Account Settings</b></div></div>
+    <div class="chk"><span class="ci">3️⃣</span><div class="ct">Menu lateral: <b>Access Tokens</b></div></div>
+    <div class="chk"><span class="ci">4️⃣</span><div class="ct">Clique em <b>Create Token</b><div class="cs">Dê um nome ex: "github-actions"</div></div></div>
+    <div class="chk"><span class="ci">5️⃣</span><div class="ct"><b>Copie o token</b> — só aparece uma vez!<div class="cs">Começa com: expo_...</div></div></div>
+  </div>
+
+  <div class="card">
+    <h2>🔑 Como adicionar no GitHub</h2>
+    <div class="chk"><span class="ci">1️⃣</span><div class="ct">Abra seu repositório no GitHub</div></div>
+    <div class="chk"><span class="ci">2️⃣</span><div class="ct"><b>Settings</b> → <b>Secrets and variables</b> → <b>Actions</b></div></div>
+    <div class="chk"><span class="ci">3️⃣</span><div class="ct">Clique em <b>New repository secret</b></div></div>
+    <div class="chk"><span class="ci">4️⃣</span><div class="ct">
+      Name: <b id="s-token">EXPO_TOKEN</b><br>
+      Secret: <i>cole seu token aqui</i>
+    </div></div>
+    <div class="chk"><span class="ci">5️⃣</span><div class="ct">Clique <b>Add secret</b></div></div>
+  </div>
+
+  <div class="card">
+    <h2>🆔 Como obter o Project ID</h2>
+    <div class="chk"><span class="ci">1️⃣</span><div class="ct">Acesse <b>expo.dev</b> → faça login</div></div>
+    <div class="chk"><span class="ci">2️⃣</span><div class="ct">Clique em <b>Projects</b> → <b>New Project</b><div class="cs">Ou use um projeto existente</div></div></div>
+    <div class="chk"><span class="ci">3️⃣</span><div class="ct">Abra o projeto → <b>Project Settings</b></div></div>
+    <div class="chk"><span class="ci">4️⃣</span><div class="ct">Copie o <b>Project ID</b><div class="cs">Formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</div></div></div>
+    <div class="chk"><span class="ci">5️⃣</span><div class="ct">Cole no campo "Project ID" na aba ⚙️</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB PASSOS ══════════════════ -->
+<div id="tab-passos" style="display:none">
+  <div class="card">
+    <h2>📋 Passo a Passo Completo</h2>
+    <div class="chk"><span class="ci">1️⃣</span><div class="ct"><b>Crie conta no expo.dev</b><div class="cs">Grátis — 30 builds/mês</div></div></div>
+    <div class="chk"><span class="ci">2️⃣</span><div class="ct"><b>Crie um projeto no expo.dev</b><div class="cs">Copie o Project ID gerado</div></div></div>
+    <div class="chk"><span class="ci">3️⃣</span><div class="ct"><b>Gere um Access Token</b><div class="cs">expo.dev → Account Settings → Access Tokens</div></div></div>
+    <div class="chk"><span class="ci">4️⃣</span><div class="ct"><b>Preencha a aba ⚙️ aqui</b><div class="cs">Seu usuário, Project ID, nome do app</div></div></div>
+    <div class="chk"><span class="ci">5️⃣</span><div class="ct"><b>Gere e baixe o ZIP</b><div class="cs">Clique em "Gerar Arquivos" → Baixar ZIP</div></div></div>
+    <div class="chk"><span class="ci">6️⃣</span><div class="ct"><b>Extraia na pasta do projeto</b><div class="cs">Substitua app.json, eas.json, etc</div></div></div>
+    <div class="chk"><span class="ci">7️⃣</span><div class="ct"><b>Suba no GitHub</b><div class="cs">git add . && git commit -m "eas config" && git push</div></div></div>
+    <div class="chk"><span class="ci">8️⃣</span><div class="ct"><b>Adicione EXPO_TOKEN nos Secrets</b><div class="cs">GitHub → Settings → Secrets → Actions</div></div></div>
+    <div class="chk"><span class="ci">9️⃣</span><div class="ct"><b>Dispare o workflow</b><div class="cs">Actions → Build APK EAS → Run workflow</div></div></div>
+    <div class="chk"><span class="ci">🔟</span><div class="ct"><b>Baixe o APK</b><div class="cs">~15 min → Actions → build → Artifacts</div></div></div>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Erros comuns e soluções</h2>
+    <div class="chk"><span class="ci">❌</span><div class="ct"><b>Unauthorized / 401</b><div class="cs">Token inválido → gere novo em expo.dev → Access Tokens</div></div></div>
+    <div class="chk"><span class="ci">❌</span><div class="ct"><b>Project not found</b><div class="cs">Project ID errado → verifique em expo.dev → Project Settings</div></div></div>
+    <div class="chk"><span class="ci">❌</span><div class="ct"><b>owner mismatch</b><div class="cs">O "owner" no app.json deve ser igual ao seu usuário Expo</div></div></div>
+    <div class="chk"><span class="ci">❌</span><div class="ct"><b>@workspace não encontrado</b><div class="cs">Use o arquivo package.json gerado aqui — já corrige isso</div></div></div>
+    <div class="chk"><span class="ci">❌</span><div class="ct"><b>metro.config workspaceRoot</b><div class="cs">Use o metro.config.js gerado aqui — já corrige isso</div></div></div>
+  </div>
+</div>
+
+<script>
+let GERADOS={};
+
+function switchTab(t){
+  ['config','gerar','secrets','passos'].forEach(id=>{
+    document.getElementById('tab-'+id).style.display=id===t?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',['config','gerar','secrets','passos'][i]===t);
+  });
+}
+
+function atualizar(){
+  const tn=document.getElementById('tokenSecret').value||'EXPO_TOKEN';
+  const el=document.getElementById('s-token');
+  if(el) el.textContent=tn;
+}
+
+function autoPackage(){
+  const owner=(document.getElementById('novoOwner').value||'usuario').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const app=(document.getElementById('appName').value||'meuapp').toLowerCase().replace(/[^a-z0-9]/g,'');
+  document.getElementById('appPackage').value=`com.${owner}.${app}`;
+}
+
+// ══════════════════════════════════════════
+// GERAR — baseado exatamente nos arquivos do DevMobile
+// ══════════════════════════════════════════
+function gerarTudo(){
+  const owner=document.getElementById('novoOwner').value||'SEU_USUARIO_EXPO';
+  const projectId=document.getElementById('novoProjectId').value||'SEU_PROJECT_ID_AQUI';
+  const appName=document.getElementById('appName').value||'DevMobile';
+  const appSlug=document.getElementById('appSlug').value||'app-ide';
+  const appPackage=document.getElementById('appPackage').value||'com.devmobile.ide';
+  const appVersion=document.getElementById('appVersion').value||'1.0.0';
+  const versionCode=parseInt(document.getElementById('versionCode').value||'1');
+  const branch=document.getElementById('branch').value||'main';
+  const tokenSecret=document.getElementById('tokenSecret').value||'EXPO_TOKEN';
+
+  GERADOS={};
+
+  // ── app.json (baseado exatamente no original) ──
+  GERADOS['app.json']=JSON.stringify({
+    expo:{
+      name:appName,
+      slug:appSlug,
+      version:appVersion,
+      orientation:"portrait",
+      icon:"./assets/images/icon.png",
+      scheme:appSlug.replace(/-/g,''),
+      userInterfaceStyle:"dark",
+      newArchEnabled:true,
+      splash:{
+        image:"./assets/images/icon.png",
+        resizeMode:"contain",
+        backgroundColor:"#0d1117"
+      },
+      ios:{
+        supportsTablet:false,
+        bundleIdentifier:appPackage
+      },
+      android:{
+        package:appPackage,
+        versionCode:versionCode,
+        softwareKeyboardLayoutMode:"resize",
+        adaptiveIcon:{
+          foregroundImage:"./assets/images/icon.png",
+          backgroundColor:"#0d1117"
+        },
+        permissions:[
+          "android.permission.INTERNET",
+          "android.permission.READ_EXTERNAL_STORAGE",
+          "android.permission.WRITE_EXTERNAL_STORAGE"
+        ]
+      },
+      web:{
+        favicon:"./assets/images/icon.png",
+        bundler:"metro"
+      },
+      plugins:[
+        "expo-router",
+        "expo-font",
+        "expo-web-browser",
+        ["expo-sqlite",{enableFTS:true,useSQLCipher:false}]
+      ],
+      experiments:{
+        typedRoutes:true,
+        reactCompiler:false
+      },
+      owner:owner,
+      extra:{
+        eas:{
+          projectId:projectId
+        }
+      }
+    }
+  },null,2);
+
+  // ── eas.json (idêntico ao original que funcionou) ──
+  GERADOS['eas.json']=JSON.stringify({
+    cli:{
+      version:">= 16.0.0",
+      appVersionSource:"local"
+    },
+    build:{
+      preview:{
+        android:{
+          buildType:"apk",
+          gradleCommand:":app:assembleRelease",
+          resourceClass:"medium"
+        },
+        distribution:"internal",
+        cache:{disabled:false},
+        node:"20.18.0",
+        env:{}
+      },
+      development:{
+        developmentClient:true,
+        distribution:"internal",
+        android:{
+          buildType:"apk",
+          resourceClass:"medium"
+        },
+        node:"20.18.0",
+        cache:{disabled:false}
+      },
+      production:{
+        android:{
+          buildType:"app-bundle",
+          resourceClass:"medium"
+        },
+        node:"20.18.0",
+        cache:{disabled:false}
+      }
+    },
+    submit:{production:{}}
+  },null,2);
+
+  // ── package.json (corrigido — remove @workspace) ──
+  GERADOS['package.json']=JSON.stringify({
+    name:appSlug,
+    version:appVersion,
+    private:true,
+    main:"expo-router/entry",
+    scripts:{
+      dev:"expo start",
+      start:"expo start",
+      android:"expo run:android",
+      ios:"expo run:ios",
+      web:"expo start --web",
+      "build:apk":"eas build --platform android --profile preview --non-interactive",
+      "build:prod":"eas build --platform android --profile production --non-interactive"
+    },
+    devDependencies:{
+      "@babel/core":"^7.25.2",
+      "@expo-google-fonts/inter":"^0.4.0",
+      "@expo/cli":"54.0.23",
+      "@expo/vector-icons":"^15.0.3",
+      "@react-native-async-storage/async-storage":"2.2.0",
+      "@tanstack/react-query":"^5.90.21",
+      "@types/react":"~19.1.10",
+      "@types/react-dom":"~19.1.7",
+      "expo":"~54.0.34",
+      "expo-blur":"~15.0.8",
+      "expo-constants":"~18.0.11",
+      "expo-font":"~14.0.10",
+      "expo-haptics":"~15.0.8",
+      "expo-image":"~3.0.11",
+      "expo-linking":"~8.0.12",
+      "expo-router":"~6.0.17",
+      "expo-splash-screen":"~31.0.12",
+      "expo-status-bar":"~3.0.9",
+      "expo-system-ui":"~6.0.9",
+      "expo-web-browser":"~15.0.11",
+      "react":"19.1.0",
+      "react-dom":"19.1.0",
+      "react-native":"0.81.5",
+      "react-native-gesture-handler":"~2.28.0",
+      "react-native-reanimated":"~4.1.1",
+      "react-native-safe-area-context":"~5.6.0",
+      "react-native-screens":"~4.16.0",
+      "react-native-web":"^0.21.0",
+      "typescript":"~5.9.2",
+      "zod":"^3.25.76"
+    },
+    dependencies:{
+      "expo-clipboard":"~8.0.8",
+      "expo-document-picker":"^14.0.8",
+      "expo-file-system":"^19.0.22",
+      "expo-sqlite":"~15.1.4",
+      "expo-sharing":"^14.0.8",
+      "expo-speech":"^14.0.8",
+      "jszip":"^3.10.1",
+      "pako":"^2.1.0",
+      "react-native-webview":"^13.15.0"
+    }
+  },null,2);
+
+  // ── metro.config.js (corrigido — remove monorepo) ──
+  GERADOS['metro.config.js']=`const { getDefaultConfig } = require("expo/metro-config");
+
+const config = getDefaultConfig(__dirname);
+
+// Sem monorepo — standalone
+config.resolver.sourceExts = [
+  ...config.resolver.sourceExts,
+  "mjs",
+  "cjs",
+];
+
+module.exports = config;`;
+
+  // ── babel.config.js (igual ao original) ──
+  GERADOS['babel.config.js']=`module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ["babel-preset-expo"],
+    plugins: [],
+  };
+};`;
+
+  // ── tsconfig.json (standalone) ──
+  GERADOS['tsconfig.json']=JSON.stringify({
+    extends:"expo/tsconfig.base",
+    compilerOptions:{
+      strict:true,
+      baseUrl:".",
+      paths:{"@/*":["./src/*","./app/*"]}
+    },
+    include:["**/*.ts","**/*.tsx",".expo/types/**/*.d.ts","expo-env.d.ts"]
+  },null,2);
+
+  // ── expo-env.d.ts ──
+  GERADOS['expo-env.d.ts']=`/// <reference types="expo/types" />
+
+// NOTE: This file should not be edited and should be in your git ignore`;
+
+  // ── workflow GitHub Actions ──
+  GERADOS['.github/workflows/build-apk-eas.yml']=`name: 📱 Build APK via EAS
+
+on:
+  push:
+    branches: [${branch}]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Perfil de build (preview=APK, production=AAB)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - development
+          - production
+
+jobs:
+  build:
+    name: Build Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20.18.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.0'
+          cache: 'npm'
+
+      - name: 📦 Instalar dependências
+        run: npm install
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: 📱 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: \${{ secrets.${tokenSecret} }}
+
+      - name: 🔨 Build via EAS
+        run: |
+          eas build \\
+            --platform android \\
+            --profile \${{ github.event.inputs.profile || 'preview' }} \\
+            --non-interactive
+        env:
+          EXPO_TOKEN: \${{ secrets.${tokenSecret} }}
+
+      - name: 📋 Listar builds recentes
+        run: eas build:list --platform android --limit 3 --non-interactive
+        env:
+          EXPO_TOKEN: \${{ secrets.${tokenSecret} }}
+        continue-on-error: true`;
+
+  // ── README ──
+  GERADOS['README-BUILD.md']=`# Build APK — ${appName}
+
+## Configuração
+- **Expo Owner:** ${owner}
+- **Project ID:** ${projectId}
+- **Package:** ${appPackage}
+- **Versão:** ${appVersion}
+
+## Como gerar APK
+
+### Via GitHub Actions (recomendado)
+1. Adicione o Secret \`${tokenSecret}\` no GitHub
+2. Actions → "Build APK via EAS" → Run workflow
+3. Escolha perfil: \`preview\` (APK)
+4. Aguarde ~15 min → baixe em Artifacts
+
+### Via terminal local
+\`\`\`bash
+npm install
+eas login
+eas build --platform android --profile preview
+\`\`\`
+
+## Perfis
+| Perfil | Tipo | Uso |
+|--------|------|-----|
+| preview | APK | Instalar direto no celular |
+| development | APK | Desenvolvimento |
+| production | AAB | Google Play Store |
+
+## Secret necessário
+- \`${tokenSecret}\` → Token do Expo (expo.dev → Account Settings → Access Tokens)
+`;
+
+  renderArquivos();
+  document.getElementById('gerar-aviso').style.display='none';
+  document.getElementById('btn-exp').style.display='block';
+}
+
+function renderArquivos(){
+  const el=document.getElementById('arquivos-gerados');
+  el.innerHTML=Object.entries(GERADOS).map(([path,content])=>`
+    <div class="res-card">
+      <div class="res-header">
+        <span>${fIcon(path)}</span>
+        <span class="rh-name">${path}</span>
+        <button class="rh-copy" onclick="copiar('${esc(path)}')">📋 Copiar</button>
+      </div>
+      <pre>${escHtml(content.substring(0,2000))}${content.length>2000?'\n\n... (use o botão Copiar para o conteúdo completo)':''}</pre>
+    </div>`).join('');
+}
+
+function copiar(path){
+  const txt=GERADOS[path]||'';
+  navigator.clipboard.writeText(txt).then(()=>showToast('✅ Copiado: '+path)).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=txt;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');ta.remove();
+    showToast('✅ Copiado: '+path);
+  });
+}
+
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:16px;right:16px;background:#238636;color:#fff;padding:8px 14px;border-radius:7px;font-size:12px;z-index:9999';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+async function exportarZip(){
+  if(!Object.keys(GERADOS).length){alert('Gere os arquivos primeiro!');return;}
+  try{
+    const JSZ=await loadJSZ();
+    const zip=new JSZ();
+    for(const[path,content]of Object.entries(GERADOS)) zip.file(path,content);
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const name=document.getElementById('appSlug').value||'eas-config';
+    a.href=url;a.download=`${name}-eas-config.zip`;
+    a.click();URL.revokeObjectURL(url);
+    showToast('✅ ZIP baixado!');
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+function fIcon(p){
+  if(p.endsWith('.json'))return'📋';
+  if(p.endsWith('.ts')||p.endsWith('.js'))return'📜';
+  if(p.endsWith('.yml'))return'⚙️';
+  if(p.endsWith('.md'))return'📝';
+  return'📄';
+}
+function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function loadJSZ(){
+  return new Promise((res,rej)=>{
+    if(window.JSZip){res(window.JSZip);return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=()=>res(window.JSZip);s.onerror=()=>rej(new Error('JSZip falhou'));
+    document.head.appendChild(s);
+  });
+}
+</script>
+</body>
+</html>
